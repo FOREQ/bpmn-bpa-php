@@ -170,6 +170,12 @@ function escapeHtml(text) {
     <a href="student_dashboard.php" class="rp-home">
         Личный кабинет
     </a>
+
+    ${practical.isGraded ? `
+        <a href="../api/certificate.php?sessionId=${encodeURIComponent(sessionId)}" class="rp-home">
+            Скачать сертификат
+        </a>
+    ` : ''}
 </div>
             `;
         } catch (error) {

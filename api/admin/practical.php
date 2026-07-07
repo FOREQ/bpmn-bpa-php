@@ -87,6 +87,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                     'total' => $participant['practicalScoreTotal'],
                     'gradedAt' => $participant['practicalGradedAt'],
                 ]
+            ],
+            'certificate' => [
+                'number' => $participant['certificateNumber'] ?? null,
+                'generatedAt' => $participant['certificateGeneratedAt'] ?? null,
+                'emailedAt' => $participant['certificateEmailedAt'] ?? null,
             ]
         ]);
     } catch (Throwable $e) {
@@ -202,6 +207,64 @@ writeAdminLog(
     'admin_practical_score_saved',
     'sessionId=' . $sessionId . '; total=' . $total
 );
+
+        // Автоматическая генерация сертификата и отправка на email
+        $certificateInfo = null;
+
+        try {
+            require_once __DIR__ . '/../../lib/certificate.php';
+            require_once __DIR__ . '/../../lib/mailer.php';
+
+            $stmt = $pdo->prepare("SELECT * FROM Participant WHERE sessionId = :sessionId LIMIT 1");
+            $stmt->execute([':sessionId' => $sessionId]);
+            $fresh = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            $certificate = generateCertificate($pdo, $fresh);
+
+            $alreadyEmailed = !empty($fresh['certificateEmailedAt']);
+            $emailSent = false;
+
+            if (!$alreadyEmailed) {
+                $emailSent = sendCertificateEmail(
+                    $fresh['email'],
+                    $fresh['fullName'],
+                    $certificate['number'],
+                    $certificate['levelText'],
+                    $certificate['total'],
+                    $certificate['percent'],
+                    $certificate['verifyUrl'],
+                    $certificate['filePath']
+                );
+
+                if ($emailSent) {
+                    $pdo->prepare("
+                        UPDATE Participant
+                        SET certificateEmailedAt = CURRENT_TIMESTAMP
+                        WHERE sessionId = :sessionId
+                    ")->execute([':sessionId' => $sessionId]);
+
+                    writeAdminLog(
+                        'admin_certificate_emailed',
+                        'sessionId=' . $sessionId . '; number=' . $certificate['number']
+                    );
+                }
+            }
+
+            $certificateInfo = [
+                'number' => $certificate['number'],
+                'levelText' => $certificate['levelText'],
+                'percent' => $certificate['percent'],
+                'emailed' => $alreadyEmailed || $emailSent,
+                'emailSentNow' => $emailSent
+            ];
+        } catch (Throwable $e) {
+            logError($e, 'api/admin/practical.php certificate');
+
+            $certificateInfo = [
+                'error' => 'Не удалось сформировать или отправить сертификат'
+            ];
+        }
+
         respondJson([
             'success' => true,
             'message' => 'Оценка практики сохранена',
@@ -210,7 +273,8 @@ writeAdminLog(
                 'newTaskScore' => $newTaskScore,
                 'metricsScore' => $metricsScore,
                 'total' => $total
-            ]
+            ],
+            'certificate' => $certificateInfo
         ]);
     } catch (Throwable $e) {
     logError($e, 'api/admin/practical.php POST');

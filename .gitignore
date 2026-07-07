@@ -20,3 +20,6 @@ Thumbs.db
 
 # Composer dependencies
 vendor/
+
+# Generated certificates
+database/certificates/
