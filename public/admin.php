@@ -352,7 +352,34 @@ ${Number(row.passwordResetRequested) === 1 ? `
 
                 <div id="scoreMessage"></div>
             </section>
+
+            <section class="admin-review-task" id="certificateSection" style="display:none;">
+                <h3>Сертификат</h3>
+
+                <div id="certificateInfo"></div>
+
+                <a
+                    id="certificateDownload"
+                    class="admin-action-btn"
+                    href="#"
+                    style="display:inline-block; text-decoration:none; margin-right:8px;"
+                >
+                    Скачать сертификат
+                </a>
+
+                <button
+                    class="admin-action-btn"
+                    onclick="resendCertificate('${p.sessionId}')"
+                    type="button"
+                >
+                    Отправить на email
+                </button>
+
+                <div id="certificateMessage"></div>
+            </section>
         `;
+
+        renderCertificateSection(p.sessionId, json.certificate);
 
         practical.tasks.forEach((task, index) => {
             const answer = practical.answers?.diagrams?.[task.id]?.xml || '';
@@ -492,8 +519,79 @@ async function allowPasswordReset(sessionId) {
             return;
         }
 
-        scoreMessage.innerHTML = '<p style="color:green;">Оценка сохранена. Итог: ' + json.scores.total + ' / 30</p>';
+        let message = '<p style="color:green;">Оценка сохранена. Итог: ' + json.scores.total + ' / 30</p>';
+
+        if (json.certificate) {
+            if (json.certificate.error) {
+                message += '<p style="color:red;">' + escapeHtml(json.certificate.error) + '</p>';
+            } else {
+                message += '<p style="color:green;">Сертификат ' + escapeHtml(json.certificate.number)
+                    + (json.certificate.emailSentNow
+                        ? ' сформирован и отправлен участнику на email.'
+                        : ' сформирован.' + (json.certificate.emailed ? '' : ' Письмо не отправлено.'))
+                    + '</p>';
+
+                renderCertificateSection(sessionId, {
+                    number: json.certificate.number,
+                    generatedAt: 'только что',
+                    emailedAt: json.certificate.emailSentNow ? 'только что' : null
+                });
+            }
+        }
+
+        scoreMessage.innerHTML = message;
         await loadParticipants();
+    }
+
+    function renderCertificateSection(sessionId, certificate) {
+        const section = document.getElementById('certificateSection');
+        const info = document.getElementById('certificateInfo');
+        const download = document.getElementById('certificateDownload');
+
+        if (!section || !certificate || !certificate.number) {
+            return;
+        }
+
+        section.style.display = 'block';
+
+        info.innerHTML = `
+            <p><b>Номер:</b> ${escapeHtml(certificate.number)}</p>
+            <p><b>Сформирован:</b> ${escapeHtml(certificate.generatedAt || '—')}</p>
+            <p><b>Отправлен на email:</b> ${escapeHtml(certificate.emailedAt || 'нет')}</p>
+        `;
+
+        download.href = '../api/certificate.php?sessionId=' + encodeURIComponent(sessionId);
+    }
+
+    async function resendCertificate(sessionId) {
+        const certificateMessage = document.getElementById('certificateMessage');
+        certificateMessage.innerHTML = '<p>Отправка...</p>';
+
+        const response = await fetch('../api/admin/send_certificate.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                csrf_token: csrfToken,
+                sessionId: sessionId
+            })
+        });
+
+        const json = await response.json();
+
+        if (!json.success) {
+            certificateMessage.innerHTML = '<p style="color:red;">' + escapeHtml(json.message || 'Ошибка отправки') + '</p>';
+            return;
+        }
+
+        certificateMessage.innerHTML = '<p style="color:green;">' + escapeHtml(json.message) + '</p>';
+
+        renderCertificateSection(sessionId, {
+            number: json.certificate.number,
+            generatedAt: 'только что',
+            emailedAt: 'только что'
+        });
     }
 
     function escapeHtml(text) {

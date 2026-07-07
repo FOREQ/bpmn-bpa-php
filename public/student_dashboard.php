@@ -224,6 +224,16 @@ if (!$testSubmitted) {
                 <?= htmlspecialchars($mainActionText) ?>
             </a>
 
+            <?php if ($practicalGraded): ?>
+                <a
+                    class="button"
+                    href="../api/certificate.php?sessionId=<?= urlencode($sessionId) ?>"
+                    style="margin-left: 12px;"
+                >
+                    Скачать сертификат
+                </a>
+            <?php endif; ?>
+
             <a
                 class="button"
                 href="student_logout.php"
