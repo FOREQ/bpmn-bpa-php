@@ -19,7 +19,7 @@ require_once __DIR__ . '/../lib/student_logger.php';
 header('Content-Type: application/json; charset=utf-8');
 
 const STUDENT_MAX_LOGIN_ATTEMPTS = 5;
-const STUDENT_LOCK_SECONDS = 600; // 10 минут
+const STUDENT_LOCK_SECONDS = 600;
 
 function respondJson(array $data, int $statusCode = 200): void
 {
@@ -57,21 +57,27 @@ $password = trim($input['password'] ?? '');
 if ($email === '' || $password === '') {
     respondJson([
         'success' => false,
-        'message' => 'Введите email и пароль'
+        'message' => 'Введите email и временный пароль'
     ], 400);
 }
 
 try {
     $pdo = getDb();
 
-    $stmt = $pdo->prepare("SELECT * FROM Participant WHERE email = :email LIMIT 1");
+    $stmt = $pdo->prepare("
+        SELECT *
+        FROM Participant
+        WHERE email = :email
+        LIMIT 1
+    ");
+
     $stmt->execute([
         ':email' => $email
     ]);
 
     $participant = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$participant || empty($participant['passwordHash'])) {
+    if (!$participant) {
         writeStudentLog(
             'student_login_failed',
             'email=' . $email . '; reason=user_not_found'
@@ -79,8 +85,31 @@ try {
 
         respondJson([
             'success' => false,
-            'message' => 'Пользователь не найден'
+            'message' => 'Пользователь с таким email не найден'
         ], 404);
+    }
+
+    $accountStatus = $participant['accountStatus'] ?? 'pending';
+
+    if ($accountStatus === 'pending') {
+        respondJson([
+            'success' => false,
+            'message' => 'Ваша заявка еще ожидает подтверждения администратором.'
+        ], 403);
+    }
+
+    if ($accountStatus === 'rejected') {
+        respondJson([
+            'success' => false,
+            'message' => 'Ваша заявка была отклонена. Доступ к тестированию закрыт.'
+        ], 403);
+    }
+
+    if ($accountStatus !== 'approved') {
+        respondJson([
+            'success' => false,
+            'message' => 'Ваш аккаунт не подтвержден.'
+        ], 403);
     }
 
     if (!empty($participant['accountLockedUntil'])) {
@@ -102,7 +131,28 @@ try {
         }
     }
 
-    if (!password_verify($password, $participant['passwordHash'])) {
+    if (empty($participant['tempPasswordHash']) || empty($participant['tempPasswordExpiresAt'])) {
+        respondJson([
+            'success' => false,
+            'message' => 'Временный пароль не найден. Обратитесь к администратору.'
+        ], 401);
+    }
+
+    $expiresAt = strtotime($participant['tempPasswordExpiresAt']);
+
+    if ($expiresAt === false || time() > $expiresAt) {
+        writeStudentLog(
+            'student_login_failed',
+            'email=' . $email . '; reason=temp_password_expired'
+        );
+
+        respondJson([
+            'success' => false,
+            'message' => 'Срок действия временного пароля истек.'
+        ], 401);
+    }
+
+    if (!password_verify($password, $participant['tempPasswordHash'])) {
         $failedAttempts = (int)($participant['failedLoginAttempts'] ?? 0) + 1;
 
         if ($failedAttempts >= STUDENT_MAX_LOGIN_ATTEMPTS) {
@@ -124,7 +174,7 @@ try {
 
             writeStudentLog(
                 'student_login_locked',
-                'email=' . $email . '; attempts=' . $failedAttempts . '; locked_seconds=' . STUDENT_LOCK_SECONDS
+                'email=' . $email . '; attempts=' . $failedAttempts
             );
 
             respondJson([
@@ -147,12 +197,12 @@ try {
 
         writeStudentLog(
             'student_login_failed',
-            'email=' . $email . '; reason=wrong_password; attempts=' . $failedAttempts
+            'email=' . $email . '; reason=wrong_temp_password; attempts=' . $failedAttempts
         );
 
         respondJson([
             'success' => false,
-            'message' => 'Неверный email или пароль. Осталось попыток: ' . (STUDENT_MAX_LOGIN_ATTEMPTS - $failedAttempts)
+            'message' => 'Неверный email или временный пароль. Осталось попыток: ' . (STUDENT_MAX_LOGIN_ATTEMPTS - $failedAttempts)
         ], 401);
     }
 
@@ -174,19 +224,21 @@ try {
     $_SESSION['student_session_id'] = $participant['sessionId'];
 
     writeStudentLog(
-        'student_login_success',
+        'student_login_success_temp_password',
         'email=' . $email . '; sessionId=' . $participant['sessionId']
     );
 
     respondJson([
         'success' => true,
-        'message' => 'Вход выполнен'
+        'message' => 'Вход выполнен',
+        'redirect' => 'student_dashboard.php'
     ]);
+
 } catch (Throwable $e) {
     logError($e, 'api/student_login.php');
 
     respondJson([
         'success' => false,
-        'message' => 'Произошла ошибка сервера'
+        'message' => 'Ошибка сервера: ' . $e->getMessage()
     ], 500);
 }

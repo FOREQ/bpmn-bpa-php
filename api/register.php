@@ -32,6 +32,7 @@ if (!is_array($input)) {
         'message' => 'Некорректный JSON'
     ], 400);
 }
+
 if (!csrfVerify($input['csrf_token'] ?? '')) {
     respondJson([
         'success' => false,
@@ -43,13 +44,11 @@ $fullName = trim($input['fullName'] ?? '');
 $email = trim($input['email'] ?? '');
 $phone = trim($input['phone'] ?? '');
 $organization = trim($input['organization'] ?? '');
-$password = trim($input['password'] ?? '');
-$passwordConfirm = trim($input['passwordConfirm'] ?? '');
 
-if ($fullName === '' || $email === '' || $phone === '' || $organization === '' || $password === '' || $passwordConfirm === '') {
+if ($fullName === '' || $email === '' || $phone === '' || $organization === '') {
     respondJson([
         'success' => false,
-        'message' => 'Заполните все поля'
+        'message' => 'Заполните все обязательные поля'
     ], 400);
 }
 
@@ -60,17 +59,24 @@ if (!preg_match('/^[A-Za-zА-Яа-яЁёІіҢңҒғҚқҮүҰұӨөҺһӘә\s-]
     ], 400);
 }
 
-if (!preg_match('/^[A-Za-zА-Яа-яЁёІіҢңҒғҚқҮүҰұӨөҺһӘә0-9\s.,()-]+$/u', $organization)) {
-    respondJson([
-        'success' => false,
-        'message' => 'Некорректное название организации'
-    ], 400);
-}
-
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     respondJson([
         'success' => false,
         'message' => 'Некорректный email'
+    ], 400);
+}
+
+if (!preg_match('/^\+?[0-9]{10,15}$/', $phone)) {
+    respondJson([
+        'success' => false,
+        'message' => 'Телефон должен содержать только цифры и может начинаться с +'
+    ], 400);
+}
+
+if (!preg_match('/^[A-Za-zА-Яа-яЁёІіҢңҒғҚқҮүҰұӨөҺһӘә0-9\s.,()-]+$/u', $organization)) {
+    respondJson([
+        'success' => false,
+        'message' => 'Некорректное название организации'
     ], 400);
 }
 
@@ -98,63 +104,20 @@ if (mb_strlen($phone) > 20) {
 if (mb_strlen($organization) > 120) {
     respondJson([
         'success' => false,
-        'message' => 'Название организации не должно превышать 150 символов'
-    ], 400);
-}
-
-if (!preg_match('/^\+?[0-9]{10,15}$/', $phone)) {
-    respondJson([
-        'success' => false,
-        'message' => 'Телефон должен содержать только цифры и может начинаться с +'
-    ], 400);
-}
-
-if ($password !== $passwordConfirm) {
-    respondJson([
-        'success' => false,
-        'message' => 'Пароли не совпадают'
-    ], 400);
-}
-
-if (mb_strlen($password) < 8) {
-    respondJson([
-        'success' => false,
-        'message' => 'Пароль должен содержать минимум 8 символов'
-    ], 400);
-}
-
-if (!preg_match('/[A-ZА-Я]/u', $password)) {
-    respondJson([
-        'success' => false,
-        'message' => 'Пароль должен содержать хотя бы одну заглавную букву'
-    ], 400);
-}
-
-if (!preg_match('/[a-zа-я]/u', $password)) {
-    respondJson([
-        'success' => false,
-        'message' => 'Пароль должен содержать хотя бы одну строчную букву'
-    ], 400);
-}
-
-if (!preg_match('/\d/', $password)) {
-    respondJson([
-        'success' => false,
-        'message' => 'Пароль должен содержать хотя бы одну цифру'
-    ], 400);
-}
-
-if (!preg_match('/[^a-zA-Zа-яА-Я0-9]/u', $password)) {
-    respondJson([
-        'success' => false,
-        'message' => 'Пароль должен содержать хотя бы один специальный символ'
+        'message' => 'Название организации не должно превышать 120 символов'
     ], 400);
 }
 
 try {
     $pdo = getDb();
 
-    $checkStmt = $pdo->prepare("SELECT id FROM Participant WHERE email = :email LIMIT 1");
+    $checkStmt = $pdo->prepare("
+        SELECT id
+        FROM Participant
+        WHERE email = :email
+        LIMIT 1
+    ");
+
     $checkStmt->execute([
         ':email' => $email
     ]);
@@ -176,8 +139,8 @@ try {
         ], 500);
     }
 
-    $sessionId = createSessionId();
     $id = createSessionId();
+    $sessionId = createSessionId();
 
     $questionOrder = questionOrder($variant);
     $optionOrder = optionOrder($variant);
@@ -185,7 +148,15 @@ try {
     $practicalTaskIds = randomPracticalTaskIds();
     $complexityVariantId = randomComplexityVariantId();
 
-    $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+    /*
+     * Участник НЕ создает пароль при регистрации.
+     * Регистрация = заявка на доступ.
+     * Пароль будет создан автоматически после подтверждения администратором.
+     *
+     * passwordHash оставляем только как техническую заглушку,
+     * если поле в базе обязательное.
+     */
+    $technicalPasswordHash = password_hash(createSessionId(), PASSWORD_DEFAULT);
 
     $stmt = $pdo->prepare("
         INSERT INTO Participant (
@@ -201,6 +172,12 @@ try {
             practicalTaskIds,
             complexityVariantId,
             passwordHash,
+            accountStatus,
+            tempPasswordHash,
+            tempPasswordExpiresAt,
+            approvedAt,
+            rejectedAt,
+            rejectionReason,
             failedLoginAttempts,
             accountLockedUntil,
             lastLoginAt,
@@ -219,6 +196,12 @@ try {
             :practicalTaskIds,
             :complexityVariantId,
             :passwordHash,
+            'pending',
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
             0,
             NULL,
             NULL,
@@ -239,20 +222,20 @@ try {
         ':optionOrder' => json_encode($optionOrder, JSON_UNESCAPED_UNICODE),
         ':practicalTaskIds' => json_encode($practicalTaskIds, JSON_UNESCAPED_UNICODE),
         ':complexityVariantId' => $complexityVariantId,
-        ':passwordHash' => $passwordHash
+        ':passwordHash' => $technicalPasswordHash
     ]);
 
     respondJson([
         'success' => true,
-        'message' => 'Участник зарегистрирован',
-        'sessionId' => $sessionId,
-        'variantId' => $variantId
+        'message' => 'Заявка успешно отправлена. После подтверждения администратором временный пароль будет отправлен на вашу почту.',
+        'accountStatus' => 'pending'
     ]);
+
 } catch (Throwable $e) {
     logError($e, 'api/register.php');
 
     respondJson([
         'success' => false,
-        'message' => 'Произошла ошибка сервера'
+        'message' => 'Ошибка сервера: ' . $e->getMessage()
     ], 500);
 }

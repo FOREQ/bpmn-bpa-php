@@ -1,5 +1,6 @@
 # Logs
 Logs/
+logs/
 *.log
 
 # Local database with real data
@@ -16,3 +17,6 @@ Thumbs.db
 # IDE/editor files
 .vscode/
 .idea/
+
+# Composer dependencies
+vendor/

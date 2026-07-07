@@ -76,7 +76,7 @@ try {
         ],
         'test' => [
     'variantId' => $variantId,
-    'title' => 'Теоретический тест по BPA и BPMN',
+    'title' => 'Теоретический тест по BPMN',
     'questions' => $questions
         ]
     ]);

@@ -2,9 +2,9 @@
 
 require_once __DIR__ . '/../../lib/auth.php';
 requireAdmin();
+
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../lib/error_logger.php';
-
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -34,28 +34,57 @@ try {
             phone,
             organization,
             variantId,
+
             score,
             total,
             percent,
             status,
             submittedAt,
+
             practicalSubmittedAt,
             practicalPreviousScore,
             practicalNewScore,
             practicalMetricsScore,
-          practicalScoreTotal,
-practicalGradedAt,
-passwordResetRequested,
-passwordResetAllowed,
-passwordResetRequestedAt,
-passwordResetAllowedAt,
-createdAt,
-updatedAt
+            practicalScoreTotal,
+            practicalGradedAt,
+
+            accountStatus,
+            tempPasswordExpiresAt,
+            approvedAt,
+            rejectedAt,
+            rejectionReason,
+
+            createdAt,
+            updatedAt
         FROM Participant
         ORDER BY createdAt DESC
     ");
 
     $participants = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($participants as &$participant) {
+        if (empty($participant['accountStatus'])) {
+            $participant['accountStatus'] = 'pending';
+        }
+
+        $participant['score'] = is_numeric($participant['score'] ?? null)
+            ? (int)$participant['score']
+            : null;
+
+        $participant['total'] = is_numeric($participant['total'] ?? null)
+            ? (int)$participant['total']
+            : null;
+
+        $participant['percent'] = is_numeric($participant['percent'] ?? null)
+            ? (float)$participant['percent']
+            : null;
+
+        $participant['practicalScoreTotal'] = is_numeric($participant['practicalScoreTotal'] ?? null)
+            ? (int)$participant['practicalScoreTotal']
+            : null;
+    }
+
+    unset($participant);
 
     respondJson([
         'success' => true,
@@ -67,6 +96,6 @@ updatedAt
 
     respondJson([
         'success' => false,
-        'message' => 'Произошла ошибка сервера'
+        'message' => 'Ошибка сервера: ' . $e->getMessage()
     ], 500);
 }

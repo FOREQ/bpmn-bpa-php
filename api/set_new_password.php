@@ -114,18 +114,21 @@ try {
 
     $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
-    $stmt = $pdo->prepare("
-        UPDATE Participant
-        SET passwordHash = :passwordHash,
-            passwordResetRequested = 0,
-            passwordResetAllowed = 0,
-            passwordResetRequestedAt = NULL,
-            passwordResetAllowedAt = NULL,
-            failedLoginAttempts = 0,
-            accountLockedUntil = NULL,
-            updatedAt = CURRENT_TIMESTAMP
-        WHERE email = :email
-    ");
+   $stmt = $pdo->prepare("
+    UPDATE Participant
+    SET passwordHash = :passwordHash,
+        passwordResetRequested = 0,
+        passwordResetAllowed = 0,
+        passwordResetRequestedAt = NULL,
+        passwordResetAllowedAt = NULL,
+        tempPasswordHash = NULL,
+        tempPasswordExpiresAt = NULL,
+        mustChangePassword = 0,
+        failedLoginAttempts = 0,
+        accountLockedUntil = NULL,
+        updatedAt = CURRENT_TIMESTAMP
+    WHERE email = :email
+");
 
     $stmt->execute([
         ':passwordHash' => $passwordHash,
@@ -133,7 +136,7 @@ try {
     ]);
 
     writeStudentLog(
-        'password_changed_after_admin_reset',
+        'password_reset_completed',
         'email=' . $email . '; sessionId=' . $participant['sessionId']
     );
 
