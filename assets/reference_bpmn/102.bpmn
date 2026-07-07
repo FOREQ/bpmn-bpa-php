@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_17ilzom" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.29.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.6.0">
+  <bpmn:collaboration id="Collaboration_1mn94bx">
+    <bpmn:participant id="Participant_1vqj3zl" name="Задача 102" processRef="Process_0dkubyg" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_0dkubyg" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_1y9uafk">
+      <bpmn:lane id="Lane_0l1lzsg" name="Секретарь">
+        <bpmn:flowNodeRef>Activity_1886yex</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_1rfxok7</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_1n4nhof</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_06p7n0n</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>StartEvent_1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_0cax2kn</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:task id="Activity_1886yex" name="Сверить содержимое с реестром">
+      <bpmn:incoming>Flow_079kihi</bpmn:incoming>
+      <bpmn:outgoing>Flow_02q3v5c</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Activity_1rfxok7" name="Отсканировать все содержимое письма">
+      <bpmn:incoming>Flow_02q3v5c</bpmn:incoming>
+      <bpmn:outgoing>Flow_0kxhp3t</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Activity_1n4nhof" name="Сохранить содержимое в виде PDF на вн. портале">
+      <bpmn:incoming>Flow_0kxhp3t</bpmn:incoming>
+      <bpmn:outgoing>Flow_1kjoqf0</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_079kihi" sourceRef="StartEvent_1" targetRef="Activity_1886yex" />
+    <bpmn:sequenceFlow id="Flow_02q3v5c" sourceRef="Activity_1886yex" targetRef="Activity_1rfxok7" />
+    <bpmn:sequenceFlow id="Flow_0kxhp3t" sourceRef="Activity_1rfxok7" targetRef="Activity_1n4nhof" />
+    <bpmn:startEvent id="StartEvent_1" name="письмо от почтальона">
+      <bpmn:outgoing>Flow_079kihi</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1cddaaz" />
+    </bpmn:startEvent>
+    <bpmn:task id="Activity_06p7n0n" name="Создать и зарегистрировать письмо в СЭД">
+      <bpmn:incoming>Flow_1kjoqf0</bpmn:incoming>
+      <bpmn:outgoing>Flow_064imgw</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_1kjoqf0" sourceRef="Activity_1n4nhof" targetRef="Activity_06p7n0n" />
+    <bpmn:sequenceFlow id="Flow_064imgw" sourceRef="Activity_06p7n0n" targetRef="Event_0cax2kn" />
+    <bpmn:endEvent id="Event_0cax2kn" name="письмо в канцелярию">
+      <bpmn:incoming>Flow_064imgw</bpmn:incoming>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_14iz3og" />
+    </bpmn:endEvent>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1mn94bx">
+      <bpmndi:BPMNShape id="Participant_1vqj3zl_di" bpmnElement="Participant_1vqj3zl" isHorizontal="true">
+        <dc:Bounds x="160" y="90" width="870" height="200" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0l1lzsg_di" bpmnElement="Lane_0l1lzsg" isHorizontal="true">
+        <dc:Bounds x="190" y="90" width="840" height="200" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1886yex_di" bpmnElement="Activity_1886yex">
+        <dc:Bounds x="320" y="140" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1rfxok7_di" bpmnElement="Activity_1rfxok7">
+        <dc:Bounds x="480" y="140" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1n4nhof_di" bpmnElement="Activity_1n4nhof">
+        <dc:Bounds x="630" y="140" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_144cn01_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="232" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="220" y="205" width="60" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_06p7n0n_di" bpmnElement="Activity_06p7n0n">
+        <dc:Bounds x="780" y="140" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0mwb74w_di" bpmnElement="Event_0cax2kn">
+        <dc:Bounds x="932" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="919" y="205" width="63" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_079kihi_di" bpmnElement="Flow_079kihi">
+        <di:waypoint x="268" y="180" />
+        <di:waypoint x="320" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02q3v5c_di" bpmnElement="Flow_02q3v5c">
+        <di:waypoint x="420" y="180" />
+        <di:waypoint x="480" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0kxhp3t_di" bpmnElement="Flow_0kxhp3t">
+        <di:waypoint x="580" y="180" />
+        <di:waypoint x="630" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1kjoqf0_di" bpmnElement="Flow_1kjoqf0">
+        <di:waypoint x="730" y="180" />
+        <di:waypoint x="780" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_064imgw_di" bpmnElement="Flow_064imgw">
+        <di:waypoint x="880" y="180" />
+        <di:waypoint x="932" y="180" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

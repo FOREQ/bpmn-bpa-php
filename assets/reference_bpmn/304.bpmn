@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1m3wmgf" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.29.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.6.0">
+  <bpmn:collaboration id="Collaboration_194o0vu">
+    <bpmn:participant id="Participant_1hn4yiv" name="Задача 304" processRef="Process_1wrlvzt" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_1wrlvzt" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Задание от руководителя пресс-службы подготовить материалы">
+      <bpmn:outgoing>Flow_0ggzw2j</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_17y06qz" />
+    </bpmn:startEvent>
+    <bpmn:task id="Activity_127ekrq" name="Подготовить пакет материалов">
+      <bpmn:incoming>Flow_0ggzw2j</bpmn:incoming>
+      <bpmn:outgoing>Flow_0swlklw</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="Event_00471rp" name="Пакет материалов в типографию">
+      <bpmn:incoming>Flow_0swlklw</bpmn:incoming>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_08s9ido" />
+    </bpmn:endEvent>
+    <bpmn:task id="Activity_05lxs9g" name="Сохранить материалы в архив">
+      <bpmn:incoming>Flow_07bnhmb</bpmn:incoming>
+      <bpmn:outgoing>Flow_1e99342</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Activity_01zuozr" name="Оповестить участников об отмене мероприятия">
+      <bpmn:incoming>Flow_1e99342</bpmn:incoming>
+      <bpmn:outgoing>Flow_19hmful</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="Event_0ovvjsk">
+      <bpmn:incoming>Flow_19hmful</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:boundaryEvent id="Event_11yr58y" name="Звонок руководителя пресс службы по отмене мероприятия" attachedToRef="Activity_127ekrq">
+      <bpmn:outgoing>Flow_07bnhmb</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1be10v2" />
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="Flow_0ggzw2j" sourceRef="StartEvent_1" targetRef="Activity_127ekrq" />
+    <bpmn:sequenceFlow id="Flow_0swlklw" sourceRef="Activity_127ekrq" targetRef="Event_00471rp" />
+    <bpmn:sequenceFlow id="Flow_07bnhmb" sourceRef="Event_11yr58y" targetRef="Activity_05lxs9g" />
+    <bpmn:sequenceFlow id="Flow_1e99342" sourceRef="Activity_05lxs9g" targetRef="Activity_01zuozr" />
+    <bpmn:sequenceFlow id="Flow_19hmful" sourceRef="Activity_01zuozr" targetRef="Event_0ovvjsk" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_194o0vu">
+      <bpmndi:BPMNShape id="Participant_1hn4yiv_di" bpmnElement="Participant_1hn4yiv" isHorizontal="true">
+        <dc:Bounds x="160" y="55" width="738" height="345" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0ukhuld_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="232" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="214" y="87" width="73" height="66" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_127ekrq_di" bpmnElement="Activity_127ekrq">
+        <dc:Bounds x="320" y="140" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_042gle5_di" bpmnElement="Event_00471rp">
+        <dc:Bounds x="472" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="455" y="205" width="71" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_05lxs9g_di" bpmnElement="Activity_05lxs9g">
+        <dc:Bounds x="440" y="260" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_01zuozr_di" bpmnElement="Activity_01zuozr">
+        <dc:Bounds x="600" y="260" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0ovvjsk_di" bpmnElement="Event_0ovvjsk">
+        <dc:Bounds x="762" y="282" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_015czed_di" bpmnElement="Event_11yr58y">
+        <dc:Bounds x="352" y="202" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="276" y="227" width="87" height="66" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0ggzw2j_di" bpmnElement="Flow_0ggzw2j">
+        <di:waypoint x="268" y="180" />
+        <di:waypoint x="320" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0swlklw_di" bpmnElement="Flow_0swlklw">
+        <di:waypoint x="420" y="180" />
+        <di:waypoint x="472" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_07bnhmb_di" bpmnElement="Flow_07bnhmb">
+        <di:waypoint x="370" y="238" />
+        <di:waypoint x="370" y="300" />
+        <di:waypoint x="440" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1e99342_di" bpmnElement="Flow_1e99342">
+        <di:waypoint x="540" y="300" />
+        <di:waypoint x="600" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_19hmful_di" bpmnElement="Flow_19hmful">
+        <di:waypoint x="700" y="300" />
+        <di:waypoint x="762" y="300" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
