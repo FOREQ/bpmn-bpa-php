@@ -8,7 +8,7 @@ require_once __DIR__ . '/../lib/security.php';
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>DGSC | BPMN/BPA тестирование</title>
+    <title>DGSC | Реинжиниринг бизнес-процессов</title>
 
     <style>
         :root {
@@ -116,15 +116,15 @@ require_once __DIR__ . '/../lib/security.php';
 
         .content h1 {
             margin: 0;
-            font-size: 58px;
-            line-height: 1.08;
+            font-size: 52px;
+            line-height: 1.1;
             font-weight: 900;
-            max-width: 780px;
+            max-width: 820px;
         }
 
         .content p {
             margin-top: 24px;
-            max-width: 670px;
+            max-width: 710px;
             color: #e2e8f0;
             font-size: 20px;
             line-height: 1.7;
@@ -246,7 +246,7 @@ require_once __DIR__ . '/../lib/security.php';
             }
 
             .content h1 {
-                font-size: 40px;
+                font-size: 36px;
             }
 
             .content p {
@@ -257,6 +257,11 @@ require_once __DIR__ . '/../lib/security.php';
                 flex-direction: column;
                 gap: 18px;
                 align-items: flex-start;
+            }
+
+            .site-nav {
+                flex-wrap: wrap;
+                gap: 16px;
             }
         }
     </style>
@@ -276,26 +281,29 @@ require_once __DIR__ . '/../lib/security.php';
             </span>
         </a>
 
-       <nav class="site-nav">
-    <a href="index.php">Главная</a>
-    <a href="register.php">Регистрация</a>
-    <a href="student_login.php">Войти</a>
-    <a href="admin_login.php">Админ</a>
-</nav>
+        <nav class="site-nav">
+            <a href="index.php" class="active">Главная</a>
+            <a href="register.php">Регистрация</a>
+            <a href="student_login.php">Войти</a>
+            <a href="admin_login.php">Админ</a>
+        </nav>
     </header>
 
     <div class="container">
         <div class="content">
 
-            <h1>Электронное тестирование по основам BPA и нотации BPMN</h1>
+            <h1>
+                Практическое применение методики реинжиниринга бизнес-процессов государственных органов
+            </h1>
 
             <p>
-                Зарегистрируйтесь после обучения, получите индивидуальный вариант теста
-                и выполните практическое задание с BPMN-моделлером.
+                Подайте заявку на участие, дождитесь подтверждения администратора,
+                получите временный пароль на почту и пройдите тестирование с практическим заданием по BPMN-моделированию.
             </p>
 
             <div class="buttons">
-                <a class="btn btn-primary" href="register.php">Начать тест →</a>
+                <a class="btn btn-primary" href="register.php">Подать заявку →</a>
+                <a class="btn btn-secondary" href="student_login.php">Войти участнику</a>
                 <a class="btn btn-secondary" href="admin_login.php">Войти как администратор</a>
             </div>
         </div>
@@ -311,7 +319,7 @@ require_once __DIR__ . '/../lib/security.php';
                         <div class="step-icon">1</div>
                         <div>
                             <small>Шаг 1</small>
-                            <b>Зарегистрируйтесь</b>
+                            <b>Подайте заявку</b>
                             <span>Заполните ФИО, email, телефон и организацию.</span>
                         </div>
                     </div>
@@ -320,8 +328,8 @@ require_once __DIR__ . '/../lib/security.php';
                         <div class="step-icon">2</div>
                         <div>
                             <small>Шаг 2</small>
-                            <b>Пройдите тест</b>
-                            <span>Система назначит вариант A, B или C и сохранит результат.</span>
+                            <b>Дождитесь подтверждения</b>
+                            <span>Администратор проверит заявку и подтвердит доступ к тестированию.</span>
                         </div>
                     </div>
 
@@ -329,8 +337,8 @@ require_once __DIR__ . '/../lib/security.php';
                         <div class="step-icon">3</div>
                         <div>
                             <small>Шаг 3</small>
-                            <b>Выполните практику</b>
-                            <span>Постройте BPMN-схемы и заполните расчет сложности процесса.</span>
+                            <b>Получите временный пароль</b>
+                            <span>После подтверждения заявки временный пароль будет отправлен на вашу почту и будет действовать 3 дня.</span>
                         </div>
                     </div>
 
@@ -338,8 +346,26 @@ require_once __DIR__ . '/../lib/security.php';
                         <div class="step-icon">4</div>
                         <div>
                             <small>Шаг 4</small>
+                            <b>Войдите в личный кабинет</b>
+                            <span>Используйте email и временный пароль для входа в систему.</span>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-icon">5</div>
+                        <div>
+                            <small>Шаг 5</small>
+                            <b>Пройдите тест и практику</b>
+                            <span>Система назначит индивидуальный вариант теста, а затем откроет практическое задание.</span>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-icon">6</div>
+                        <div>
+                            <small>Шаг 6</small>
                             <b>Получите результат</b>
-                            <span>После отправки система сохранит данные, а администратор проверит практику.</span>
+                            <span>После проверки практического задания администратором итоговый результат будет отображен в личном кабинете.</span>
                         </div>
                     </div>
                 </div>

@@ -7,16 +7,152 @@ requireAdmin();
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../lib/csrf.php';
 
+$courseTitle = 'Практическое применение методики реинжиниринга бизнес-процессов государственных органов';
+
 ?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Админ-панель</title>
+    <title>Админ-панель | Реинжиниринг бизнес-процессов</title>
 
     <link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.9.1/dist/assets/diagram-js.css">
     <link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.9.1/dist/assets/bpmn-font/css/bpmn.css">
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: auto;
+        }
+
+        .admin-table th,
+        .admin-table td {
+            padding: 18px 20px !important;
+            vertical-align: top !important;
+            height: auto !important;
+            min-height: 0 !important;
+        }
+
+        .admin-table thead tr,
+        .admin-table tbody tr {
+            height: auto !important;
+            min-height: 0 !important;
+        }
+
+        .admin-table-wrap {
+            overflow-x: auto;
+        }
+
+        .admin-action-btn {
+            min-width: 150px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: none;
+            background: #173d5c;
+            color: #ffffff;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .admin-action-btn:hover {
+            opacity: 0.9;
+        }
+
+        .admin-action-btn.danger {
+            background: #991b1b;
+        }
+
+        .small {
+            font-size: 14px;
+            color: #48637a;
+        }
+
+        .email-cell,
+        .organization-cell {
+            word-break: break-word;
+        }
+
+        .course-title-box {
+            margin-top: 10px;
+            color: #48637a;
+            font-size: 15px;
+            line-height: 1.5;
+            max-width: 760px;
+        }
+        .admin-participants-list {
+    display: grid;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.admin-participant-card {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr 1fr 180px;
+    gap: 18px;
+    align-items: start;
+
+    padding: 20px;
+    border: 1px solid #d8e4ea;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 6px 18px rgba(24, 59, 89, 0.06);
+}
+
+.admin-participant-col {
+    min-width: 0;
+}
+
+.admin-participant-label {
+    margin-bottom: 8px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.admin-participant-value {
+    color: #183b59;
+    font-size: 15px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.admin-empty {
+    padding: 24px;
+    border: 1px solid #d8e4ea;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #64748b;
+    font-weight: 700;
+}
+
+.admin-participant-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.admin-participant-actions .admin-action-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+@media (max-width: 1200px) {
+    .admin-participant-card {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .admin-participant-card {
+        grid-template-columns: 1fr;
+    }
+}
+    </style>
 </head>
 <body>
 <header class="site-header">
@@ -31,19 +167,24 @@ require_once __DIR__ . '/../lib/csrf.php';
         </a>
 
         <nav class="site-nav">
-    <a href="index.php">Главная</a>
-    <a href="register.php">Регистрация</a>
-    <a href="student_login.php">Войти</a>
-    <a href="admin_login.php">Админ</a>
-</nav>
+            <a href="index.php">Главная</a>
+            <a href="register.php">Регистрация</a>
+            <a href="student_login.php">Войти</a>
+            <a href="admin_login.php" class="active">Админ</a>
+        </nav>
     </div>
 </header>
+
 <div class="container">
     <div class="admin-card">
         <div class="admin-header">
             <div>
                 <div class="admin-label">Администрирование</div>
                 <h1 class="admin-title">Результаты участников</h1>
+
+                <div class="course-title-box">
+                    Курс: «<?= htmlspecialchars($courseTitle) ?>»
+                </div>
             </div>
 
             <div class="admin-actions">
@@ -53,26 +194,9 @@ require_once __DIR__ . '/../lib/csrf.php';
             </div>
         </div>
 
-        <div class="admin-table-wrap">
-            <table class="admin-table">
-                <thead>
-                <tr>
-                    <th>Участник</th>
-                    <th>Организация</th>
-                    <th>Тест</th>
-                    <th>Практика</th>
-                    <th>Итог</th>
-                    <th>Дата</th>
-                    <th>Действие</th>
-                </tr>
-                </thead>
-                <tbody id="participantsBody">
-                <tr>
-                    <td colspan="7">Загрузка...</td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
+       <div id="participantsBody" class="admin-participants-list">
+    <div class="admin-empty">Загрузка...</div>
+</div>
     </div>
 </div>
 
@@ -81,7 +205,10 @@ require_once __DIR__ . '/../lib/csrf.php';
         <div class="admin-modal-top">
             <div>
                 <div class="admin-label">Практическая работа</div>
-                <h2 class="admin-modal-title">Проверка практики</h2>
+                <h2 class="admin-modal-title">Проверка практического задания</h2>
+                <p class="small">
+                    Курс: «<?= htmlspecialchars($courseTitle) ?>»
+                </p>
             </div>
 
             <button id="closeModal" class="admin-modal-close" type="button">Закрыть</button>
@@ -101,6 +228,15 @@ require_once __DIR__ . '/../lib/csrf.php';
 
     let currentViewers = [];
 
+    function escapeHtml(text) {
+        return String(text ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
     function testStatus(status) {
         if (status === 'passed') return '<span class="status passed">Пройден</span>';
         if (status === 'failed') return '<span class="status failed">Не пройден</span>';
@@ -113,6 +249,27 @@ require_once __DIR__ . '/../lib/csrf.php';
         return 'Не сдан';
     }
 
+    function accountStatus(row) {
+        const status = row.accountStatus || 'pending';
+
+        if (status === 'approved') {
+            return `
+                <span class="status passed">Подтверждена</span><br>
+                <span class="small">Доступ до:</span><br>
+                <span class="small">${row.tempPasswordExpiresAt ? escapeHtml(row.tempPasswordExpiresAt) : '—'}</span>
+            `;
+        }
+
+        if (status === 'rejected') {
+            return `
+                <span class="status failed">Отклонена</span><br>
+                <span class="small">${row.rejectionReason ? escapeHtml(row.rejectionReason) : 'Без причины'}</span>
+            `;
+        }
+
+        return '<span class="status waiting">Ожидает подтверждения</span>';
+    }
+
     function practicalStatus(row) {
         if (!row.practicalSubmittedAt) {
             return '<span class="status waiting">Не отправлена</span>';
@@ -122,7 +279,7 @@ require_once __DIR__ . '/../lib/csrf.php';
             return '<span class="status waiting">Ожидает проверки</span>';
         }
 
-        return '<span class="status passed">Проверена: ' + row.practicalScoreTotal + ' / 30</span>';
+        return '<span class="status passed">Проверена: ' + escapeHtml(row.practicalScoreTotal) + ' / 30</span>';
     }
 
     function overallGrade(percent, practicalScore) {
@@ -160,73 +317,208 @@ require_once __DIR__ . '/../lib/csrf.php';
         `;
     }
 
+    function actionButtons(row) {
+        const status = row.accountStatus || 'pending';
+        const participantId = escapeHtml(row.id || '');
+        const sessionId = escapeHtml(row.sessionId || '');
+
+        if (status === 'pending') {
+            return `
+                <button class="admin-action-btn" onclick="approveStudent('${participantId}')" type="button">
+                    Подтвердить заявку
+                </button>
+
+                <br><br>
+
+                <button class="admin-action-btn danger" onclick="rejectStudent('${participantId}')" type="button">
+                    Отклонить заявку
+                </button>
+            `;
+        }
+
+        if (status === 'rejected') {
+            return '<span class="small">Заявка отклонена</span>';
+        }
+
+        return `
+            <button class="admin-action-btn" onclick="openPractical('${sessionId}')" type="button">
+                Проверить практику
+            </button>
+        `;
+    }
+
     async function loadParticipants() {
-        const response = await fetch('../api/admin/results.php');
-        const json = await response.json();
+        try {
+            const response = await fetch('../api/admin/results.php');
+            const json = await response.json();
 
-        if (!json.success) {
-            participantsBody.innerHTML = '<tr><td colspan="7">Ошибка загрузки</td></tr>';
+           if (!json.success) {
+    participantsBody.innerHTML = `
+        <div class="admin-empty">
+            Ошибка загрузки: ${escapeHtml(json.message || '')}
+        </div>
+    `;
+    return;
+}
+
+if (json.participants.length === 0) {
+    participantsBody.innerHTML = `
+        <div class="admin-empty">
+            Участников пока нет
+        </div>
+    `;
+    return;
+}
+
+participantsBody.innerHTML = '';
+
+json.participants.forEach(row => {
+    const card = document.createElement('div');
+    card.className = 'admin-participant-card';
+
+    card.innerHTML = `
+        <div class="admin-participant-col">
+            <div class="admin-participant-label">Участник</div>
+            <div class="admin-participant-value">
+                <b>${escapeHtml(row.fullName)}</b><br>
+                <span class="small">${escapeHtml(row.email)}</span><br>
+                <span class="small">${escapeHtml(row.phone)}</span>
+            </div>
+        </div>
+
+        <div class="admin-participant-col">
+            <div class="admin-participant-label">Организация</div>
+            <div class="admin-participant-value">
+                ${escapeHtml(row.organization)}
+            </div>
+        </div>
+
+        <div class="admin-participant-col">
+            <div class="admin-participant-label">Статус заявки</div>
+            <div class="admin-participant-value">
+                ${accountStatus(row)}
+            </div>
+        </div>
+
+        <div class="admin-participant-col">
+            <div class="admin-participant-label">Тест</div>
+            <div class="admin-participant-value">
+                Вариант: <b>${escapeHtml(row.variantId)}</b><br>
+                Баллы: ${row.score ?? '-'} / ${row.total ?? '-'}<br>
+                Процент: ${row.percent ?? '-'}%<br>
+                ${testStatus(row.status)}
+            </div>
+        </div>
+
+        <div class="admin-participant-col">
+            <div class="admin-participant-label">Практика</div>
+            <div class="admin-participant-value">
+                ${practicalStatus(row)}
+            </div>
+        </div>
+
+        <div class="admin-participant-col">
+            <div class="admin-participant-label">Итог</div>
+            <div class="admin-participant-value">
+                ${overallGrade(row.percent, row.practicalScoreTotal)}
+            </div>
+        </div>
+
+        <div class="admin-participant-col">
+            <div class="admin-participant-label">Действие</div>
+            <div class="admin-participant-actions">
+                ${actionButtons(row)}
+            </div>
+
+            <div class="admin-participant-label" style="margin-top: 14px;">Дата</div>
+            <div class="admin-participant-value">
+                Регистрация:<br>
+                <span class="small">${escapeHtml(row.createdAt)}</span><br>
+                Обновлено:<br>
+                <span class="small">${escapeHtml(row.updatedAt)}</span>
+            </div>
+        </div>
+    `;
+
+    participantsBody.appendChild(card);
+});
+        } catch (e) {
+            console.error(e);
+            participantsBody.innerHTML = '<tr><td colspan="8">Ошибка соединения с сервером</td></tr>';
+        }
+    }
+
+    async function approveStudent(participantId) {
+        if (!participantId) {
+            alert('ID участника не найден');
             return;
         }
 
-        if (json.participants.length === 0) {
-            participantsBody.innerHTML = '<tr><td colspan="7">Участников пока нет</td></tr>';
+        if (!confirm('Подтвердить заявку и отправить временный пароль на почту?')) {
             return;
         }
 
-        participantsBody.innerHTML = '';
+        const formData = new FormData();
+        formData.append('participant_id', participantId);
 
-        json.participants.forEach(row => {
-            const tr = document.createElement('tr');
+        try {
+            const response = await fetch('../api/admin_approve_password_reset.php', {
+                method: 'POST',
+                body: formData
+            });
 
-          tr.innerHTML = `
-    <td>
-        <b>${escapeHtml(row.fullName)}</b><br>
-        <span class="small email-cell" title="${escapeHtml(row.email)}">
-            ${escapeHtml(row.email)}
-        </span><br>
-        <span class="small">${escapeHtml(row.phone)}</span>
-    </td>
+            const json = await response.json();
 
-    <td>
-        <span class="organization-cell" title="${escapeHtml(row.organization)}">
-            ${escapeHtml(row.organization)}
-        </span>
-    </td>
+            if (!json.success) {
+                alert(json.message || 'Ошибка подтверждения заявки');
+                return;
+            }
 
-    <td>
-        Вариант: <b>${escapeHtml(row.variantId)}</b><br>
-        Баллы: ${row.score ?? '-'} / ${row.total ?? '-'}<br>
-        Процент: ${row.percent ?? '-'}%<br>
-        ${testStatus(row.status)}
-    </td>
+            alert(json.message || 'Заявка подтверждена. Временный пароль отправлен на почту.');
+            await loadParticipants();
 
-    <td>${practicalStatus(row)}</td>
+        } catch (e) {
+            console.error(e);
+            alert('Ошибка соединения с сервером');
+        }
+    }
 
-    <td>${overallGrade(row.percent, row.practicalScoreTotal)}</td>
+    async function rejectStudent(participantId) {
+        if (!participantId) {
+            alert('ID участника не найден');
+            return;
+        }
 
-    <td>
-        Регистрация:<br>
-        <span class="small">${escapeHtml(row.createdAt)}</span><br>
-        Обновлено:<br>
-        <span class="small">${escapeHtml(row.updatedAt)}</span>
-    </td>
+        const reason = prompt('Введите причину отклонения заявки:', 'Заявка отклонена администратором');
 
-    <td>
-       <button class="admin-action-btn" onclick="openPractical('${escapeHtml(row.sessionId)}')" type="button">
-    Проверить практику
-</button>
+        if (reason === null) {
+            return;
+        }
 
-${Number(row.passwordResetRequested) === 1 ? `
-    <br><br>
-    <button class="admin-action-btn" onclick="allowPasswordReset('${escapeHtml(row.sessionId)}')" type="button">
-        Сбросить пароль
-    </button>
-` : ''}
-    </td>
-`;
-            participantsBody.appendChild(tr);
-        });
+        const formData = new FormData();
+        formData.append('participant_id', participantId);
+        formData.append('reason', reason);
+
+        try {
+            const response = await fetch('../api/admin_reject_student.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            const json = await response.json();
+
+            if (!json.success) {
+                alert(json.message || 'Ошибка отклонения заявки');
+                return;
+            }
+
+            alert(json.message || 'Заявка отклонена. Уведомление отправлено на почту.');
+            await loadParticipants();
+
+        } catch (e) {
+            console.error(e);
+            alert('Ошибка соединения с сервером');
+        }
     }
 
     async function openPractical(sessionId) {
@@ -238,6 +530,7 @@ ${Number(row.passwordResetRequested) === 1 ? `
                 viewer.destroy();
             } catch (e) {}
         });
+
         currentViewers = [];
 
         const response = await fetch('../api/admin/practical.php?sessionId=' + encodeURIComponent(sessionId));
@@ -320,6 +613,7 @@ ${Number(row.passwordResetRequested) === 1 ? `
             <div class="admin-info-box">
                 <p><b>Участник:</b><br>${escapeHtml(p.fullName)}</p>
                 <p><b>Организация:</b><br>${escapeHtml(p.organization)}</p>
+                <p><b>Курс:</b><br>Практическое применение методики реинжиниринга бизнес-процессов государственных органов</p>
                 <p><b>Тест:</b><br>${p.testScore} / ${p.testTotal}, ${p.testPercent}% (${testStatusText(p.testStatus)})</p>
             </div>
 
@@ -348,7 +642,9 @@ ${Number(row.passwordResetRequested) === 1 ? `
                     <input id="metricsScore" type="number" min="0" max="5" value="${practical.scores.metricsScore ?? 0}">
                 </div>
 
-                <button class="admin-action-btn" onclick="saveScores('${p.sessionId}')" type="button">Сохранить оценку</button>
+                <button class="admin-action-btn" onclick="saveScores('${p.sessionId}')" type="button">
+                    Сохранить оценку
+                </button>
 
                 <div id="scoreMessage"></div>
             </section>
@@ -390,8 +686,7 @@ ${Number(row.passwordResetRequested) === 1 ? `
                 const viewerBox = document.getElementById('viewer_' + task.id);
 
                 if (viewerBox) {
-                    viewerBox.innerHTML =
-                        '<p style="padding:16px;">Ответ не найден</p>';
+                    viewerBox.innerHTML = '<p style="padding:16px;">Ответ не найден</p>';
                 }
             }
 
@@ -467,41 +762,14 @@ ${Number(row.passwordResetRequested) === 1 ? `
         block.style.display = block.style.display === 'block' ? 'none' : 'block';
     }
 
-async function allowPasswordReset(sessionId) {
-    if (!confirm('Разрешить пользователю установить новый пароль?')) {
-        return;
-    }
-
-    const response = await fetch('../api/admin/allow_password_reset.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            csrf_token: csrfToken,
-            sessionId: sessionId
-        })
-    });
-
-    const json = await response.json();
-
-    if (!json.success) {
-        alert(json.message || 'Ошибка сброса пароля');
-        return;
-    }
-
-    alert('Сброс пароля разрешен');
-    await loadParticipants();
-}
-
     async function saveScores(sessionId) {
-      const data = {
-    csrf_token: csrfToken,
-    sessionId: sessionId,
-    previousTaskScore: Number(document.getElementById('previousTaskScore').value),
-    newTaskScore: Number(document.getElementById('newTaskScore').value),
-    metricsScore: Number(document.getElementById('metricsScore').value)
-};
+        const data = {
+            csrf_token: csrfToken,
+            sessionId: sessionId,
+            previousTaskScore: Number(document.getElementById('previousTaskScore').value),
+            newTaskScore: Number(document.getElementById('newTaskScore').value),
+            metricsScore: Number(document.getElementById('metricsScore').value)
+        };
 
         const response = await fetch('../api/admin/practical.php', {
             method: 'POST',
@@ -515,7 +783,7 @@ async function allowPasswordReset(sessionId) {
         const scoreMessage = document.getElementById('scoreMessage');
 
         if (!json.success) {
-            scoreMessage.innerHTML = '<p style="color:red;">' + (json.message || 'Ошибка сохранения') + '</p>';
+            scoreMessage.innerHTML = '<p style="color:red;">' + escapeHtml(json.message || 'Ошибка сохранения') + '</p>';
             return;
         }
 
@@ -594,15 +862,6 @@ async function allowPasswordReset(sessionId) {
         });
     }
 
-    function escapeHtml(text) {
-        return String(text)
-            .replaceAll('&', '&amp;')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;')
-            .replaceAll('"', '&quot;')
-            .replaceAll("'", '&#039;');
-    }
-
     document.getElementById('refreshBtn').addEventListener('click', loadParticipants);
 
     document.getElementById('closeModal').addEventListener('click', () => {
@@ -618,21 +877,22 @@ async function allowPasswordReset(sessionId) {
     });
 
     loadParticipants();
+
     let adminIdleTimer;
 
-function resetAdminIdleTimer() {
-    clearTimeout(adminIdleTimer);
+    function resetAdminIdleTimer() {
+        clearTimeout(adminIdleTimer);
 
-    adminIdleTimer = setTimeout(() => {
-        window.location.href = 'logout.php';
-    }, 20 * 60 * 1000); // 20 минут
-}
+        adminIdleTimer = setTimeout(() => {
+            window.location.href = 'logout.php';
+        }, 20 * 60 * 1000);
+    }
 
-['click', 'mousemove', 'keydown', 'scroll', 'touchstart'].forEach(eventName => {
-    document.addEventListener(eventName, resetAdminIdleTimer);
-});
+    ['click', 'mousemove', 'keydown', 'scroll', 'touchstart'].forEach(eventName => {
+        document.addEventListener(eventName, resetAdminIdleTimer);
+    });
 
-resetAdminIdleTimer();
+    resetAdminIdleTimer();
 </script>
 </body>
 </html>

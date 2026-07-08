@@ -3,14 +3,14 @@
 require_once __DIR__ . '/../lib/security.php';
 require_once __DIR__ . '/../lib/csrf.php';
 
+$courseTitle = 'Практическое применение методики реинжиниринга бизнес-процессов государственных органов';
+
 ?>
-
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Теоретический тест</title>
+    <title>Теоретический тест | Реинжиниринг бизнес-процессов</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -27,20 +27,24 @@ require_once __DIR__ . '/../lib/csrf.php';
         </a>
 
         <nav class="site-nav">
-    <a href="index.php">Главная</a>
-    <a href="register.php">Регистрация</a>
-    <a href="student_login.php">Войти</a>
-    <a href="admin_login.php">Админ</a>
-</nav>
+            <a href="index.php">Главная</a>
+            <a href="register.php">Регистрация</a>
+            <a href="student_login.php" class="active">Войти</a>
+            <a href="admin_login.php">Админ</a>
+        </nav>
     </div>
 </header>
 
 <div class="container">
     <div class="top-nav">
-        <a href="index.php">← На главную</a>
+        <a href="student_dashboard.php">← В личный кабинет</a>
     </div>
 
     <h1>Теоретический тест</h1>
+
+    <p class="hint">
+        Курс: «<?= htmlspecialchars($courseTitle) ?>»
+    </p>
 
     <div id="participantInfo"></div>
 
@@ -63,6 +67,7 @@ require_once __DIR__ . '/../lib/csrf.php';
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('sessionId');
     const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
+    const courseTitle = <?= json_encode($courseTitle, JSON_UNESCAPED_UNICODE) ?>;
 
     const participantInfo = document.getElementById('participantInfo');
     const testForm = document.getElementById('testForm');
@@ -77,6 +82,15 @@ require_once __DIR__ . '/../lib/csrf.php';
     let currentQuestionIndex = 0;
 
     const answersStorageKey = 'testAnswers_' + sessionId;
+
+    function escapeHtml(text) {
+        return String(text ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
 
     function showMessage(text, type = 'success') {
         message.innerHTML = text;
@@ -102,9 +116,12 @@ require_once __DIR__ . '/../lib/csrf.php';
             loadedTest = json;
 
             participantInfo.innerHTML = `
-                <p><b>Участник:</b> ${json.participant.fullName}</p>
-                <p><b>Организация:</b> ${json.participant.organization}</p>
-                <p><b>Вариант:</b> ${json.test.variantId}</p>
+                <div class="card">
+                    <p><b>Курс:</b><br>${escapeHtml(courseTitle)}</p>
+                    <p><b>Участник:</b> ${escapeHtml(json.participant.fullName)}</p>
+                    <p><b>Организация:</b> ${escapeHtml(json.participant.organization)}</p>
+                    <p><b>Вариант:</b> ${escapeHtml(json.test.variantId)}</p>
+                </div>
             `;
 
             progressBox.style.display = 'block';
@@ -129,9 +146,9 @@ require_once __DIR__ . '/../lib/csrf.php';
         question.options.forEach(option => {
             optionsHtml += `
                 <label>
-                    <input type="radio" name="${question.id}" value="${option.id}">
-                    ${option.text || ''}
-                    ${option.image ? `<img src="${option.image}" class="option-image">` : ''}
+                    <input type="radio" name="${escapeHtml(question.id)}" value="${escapeHtml(option.id)}">
+                    ${escapeHtml(option.text || '')}
+                    ${option.image ? `<img src="${escapeHtml(option.image)}" class="option-image">` : ''}
                 </label>
             `;
         });
@@ -139,8 +156,8 @@ require_once __DIR__ . '/../lib/csrf.php';
         testForm.innerHTML = `
             <div class="question">
                 <h3>Вопрос ${currentQuestionIndex + 1} из ${questions.length}</h3>
-                <p>${question.text}</p>
-                ${question.image ? `<img class="question-image" src="${question.image}" alt="Изображение к вопросу">` : ''}
+                <p>${escapeHtml(question.text)}</p>
+                ${question.image ? `<img class="question-image" src="${escapeHtml(question.image)}" alt="Изображение к вопросу">` : ''}
                 ${optionsHtml}
             </div>
 
@@ -302,10 +319,10 @@ require_once __DIR__ . '/../lib/csrf.php';
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-    csrf_token: csrfToken,
-    sessionId: sessionId,
-    answers: answers
-})
+                    csrf_token: csrfToken,
+                    sessionId: sessionId,
+                    answers: answers
+                })
             });
 
             const json = await response.json();

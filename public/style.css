@@ -1241,3 +1241,1130 @@ body {
     white-space: nowrap;
 }
 
+/* ---------- Ссылки под кнопкой входа ---------- */
+
+.admin-login-links{
+    text-align:center;
+    font-size:17px;
+    font-weight:600;
+    margin:18px 0;
+    line-height:1.6;
+}
+
+.forgot-password-link{
+    margin-top:22px;
+    margin-bottom:10px;
+}
+
+.forgot-password-link a{
+    color:#1b4d80;
+    text-decoration:none;
+}
+
+.forgot-password-link a:hover{
+    color:#0f3458;
+    text-decoration:underline;
+}
+
+.auth-links-divider{
+    width:72%;
+    height:1px;
+    margin:8px auto 14px;
+    background:#d8e2ec;
+}
+
+.register-link{
+    color:#506070;
+}
+
+.register-link a{
+    color:#0b8a77;
+    font-weight:700;
+    text-decoration:none;
+}
+
+.register-link a:hover{
+    color:#087262;
+    text-decoration:underline;
+}
+/* Финальная правка страницы входа */
+
+.admin-login-card form {
+    margin-bottom: 22px !important;
+}
+
+.admin-login-links {
+    margin: 8px 0 !important;
+    text-align: center !important;
+    font-size: 17px !important;
+    line-height: 1.4 !important;
+}
+
+.forgot-password-link {
+    margin-top: 12px !important;
+    margin-bottom: 8px !important;
+}
+
+.forgot-password-link a {
+    color: #153f63 !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+}
+
+.register-link {
+    margin-top: 8px !important;
+    color: #4b5563 !important;
+}
+
+.register-link a {
+    color: #0b8a77 !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+}
+
+.auth-links-divider {
+    width: 65%;
+    height: 1px;
+    background: #d8e3ea;
+    margin: 10px auto 10px !important;
+}
+
+.admin-login-card button,
+.admin-login-card a {
+    font-family: inherit !important;
+}
+/* ===== FINAL AUTH PAGE CLEANUP ===== */
+
+.admin-login-card .message:empty {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.admin-login-card form {
+    margin-bottom: 10px !important;
+}
+
+.admin-login-card #submitBtn,
+.admin-login-card button {
+    font-family: Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+}
+
+.admin-login-links {
+    text-align: center !important;
+    font-size: 17px !important;
+    line-height: 1.35 !important;
+    margin: 6px 0 !important;
+}
+
+.forgot-password-link {
+    margin-top: 14px !important;
+    margin-bottom: 8px !important;
+}
+
+.forgot-password-link a {
+    color: #183b59 !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
+}
+
+.forgot-password-link a:hover {
+    color: #0f304b !important;
+    text-decoration: underline !important;
+}
+
+.auth-links-divider {
+    width: 62% !important;
+    height: 1px !important;
+    background: #d8e4ea !important;
+    margin: 12px auto 12px !important;
+}
+
+.register-link {
+    color: #64748b !important;
+    font-weight: 600 !important;
+}
+
+.register-link a {
+    color: #183b59 !important;
+    font-weight: 900 !important;
+    text-decoration: none !important;
+}
+
+.register-link a:hover {
+    color: #ef4444 !important;
+    text-decoration: underline !important;
+}
+
+/* ===== STUDENT LOGIN FINAL STYLE ===== */
+
+.student-login-card .message:empty {
+    display: none !important;
+}
+
+.student-login-card form {
+    margin-bottom: 0 !important;
+}
+
+.student-auth-links {
+    margin-top: 18px !important;
+    text-align: center !important;
+    font-family: Arial, sans-serif !important;
+}
+
+.student-auth-links .forgot-link {
+    display: inline-block !important;
+    color: #183b59 !important;
+    font-size: 17px !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
+    margin-top: 4px !important;
+}
+
+.student-auth-links .forgot-link:hover {
+    color: #ef4444 !important;
+    text-decoration: underline !important;
+}
+
+.student-auth-divider {
+    width: 64% !important;
+    height: 1px !important;
+    background: #d8e4ea !important;
+    margin: 14px auto 14px !important;
+}
+
+.student-auth-links .register-question {
+    margin: 0 !important;
+    color: #64748b !important;
+    font-size: 17px !important;
+    font-weight: 600 !important;
+}
+
+.student-auth-links .register-question a {
+    color: #0f766e !important;
+    font-weight: 900 !important;
+    text-decoration: none !important;
+}
+
+.student-auth-links .register-question a:hover {
+    color: #ef4444 !important;
+    text-decoration: underline !important;
+}
+
+.student-login-card #submitBtn {
+    font-family: Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+}
+/* ===== FORGOT PASSWORD PAGE FINAL STYLE ===== */
+
+.forgot-password-card {
+    max-width: 620px !important;
+    margin: 70px auto !important;
+    padding: 48px !important;
+}
+
+.forgot-password-card h1 {
+    font-size: 44px !important;
+    margin-bottom: 24px !important;
+}
+
+.forgot-password-card p {
+    font-size: 17px !important;
+    line-height: 1.35 !important;
+    margin-bottom: 22px !important;
+}
+
+.forgot-password-card label {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+}
+
+.forgot-password-card input {
+    height: 54px !important;
+    font-size: 16px !important;
+    padding: 14px 16px !important;
+}
+
+.forgot-password-card .primary-btn {
+    margin-top: 28px !important;
+}
+
+.forgot-password-card .message:empty {
+    display: none !important;
+}
+
+.forgot-password-card .message {
+    margin-top: 18px !important;
+}
+
+#newPasswordBlock {
+    margin-top: 24px !important;
+    padding-top: 22px !important;
+    border-top: 1px solid #d8e4ea !important;
+}
+
+#newPasswordBlock button {
+    margin-top: 24px !important;
+}
+/* ===== PRIMARY BUTTON UNIFIED STYLE ===== */
+
+.primary-btn {
+    width: 100% !important;
+    height: 52px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    margin-top: 28px !important;
+    padding: 0 20px !important;
+
+    border: none !important;
+    border-radius: 10px !important;
+
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    color: #ffffff !important;
+
+    font-family: Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    text-align: center !important;
+
+    cursor: pointer !important;
+    transition: 0.2s ease !important;
+}
+
+.primary-btn:hover {
+    opacity: 0.96 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(24, 59, 89, 0.22) !important;
+}
+
+.primary-btn:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+.primary-btn {
+    width: 100% !important;
+    height: 52px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-top: 28px !important;
+    padding: 0 20px !important;
+    border: none !important;
+    border-radius: 10px !important;
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    color: #ffffff !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+    transition: 0.2s ease !important;
+}
+
+.primary-btn:hover {
+    opacity: 0.96 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(24, 59, 89, 0.22) !important;
+}
+/* ===== FORCE SAME BUTTON STYLE FOR LOGIN AND PASSWORD RESET ===== */
+
+.student-login-card .primary-btn,
+.forgot-password-card .primary-btn,
+.forgot-password-card button.primary-btn {
+    width: 100% !important;
+    height: 52px !important;
+    margin-top: 28px !important;
+
+    border: none !important;
+    border-radius: 10px !important;
+
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    color: #ffffff !important;
+
+    font-family: Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    cursor: pointer !important;
+}
+
+.student-login-card .primary-btn:hover,
+.forgot-password-card .primary-btn:hover,
+.forgot-password-card button.primary-btn:hover {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    opacity: 0.96 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(24, 59, 89, 0.22) !important;
+}
+/* ===== ADMIN LOGIN UNIFIED STYLE ===== */
+
+.admin-auth-card .message:empty {
+    display: none !important;
+}
+
+.admin-auth-card form {
+    margin-bottom: 0 !important;
+}
+
+.admin-auth-card .primary-btn {
+    width: 100% !important;
+    height: 52px !important;
+    margin-top: 28px !important;
+
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    color: #ffffff !important;
+
+    border: none !important;
+    border-radius: 10px !important;
+
+    font-family: Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    cursor: pointer !important;
+    transition: 0.2s ease !important;
+}
+
+.admin-auth-card .primary-btn:hover {
+    opacity: 0.96 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(24, 59, 89, 0.22) !important;
+}
+
+.admin-auth-links {
+    margin-top: 22px !important;
+    padding-top: 16px !important;
+    border-top: 1px solid #d8e4ea !important;
+
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+
+    font-size: 16px !important;
+    font-weight: 700 !important;
+}
+
+.admin-auth-links a {
+    color: #183b59 !important;
+    text-decoration: none !important;
+}
+
+.admin-auth-links a:hover {
+    color: #ef4444 !important;
+    text-decoration: underline !important;
+}
+
+.admin-auth-links span {
+    color: #94a3b8 !important;
+}
+/* ===== ADMIN PANEL UNIFIED STYLE ===== */
+
+.admin-btn,
+.admin-action-btn {
+    font-family: Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    border-radius: 10px !important;
+    transition: 0.2s ease !important;
+}
+
+/* Верхние кнопки админки */
+.admin-btn.primary {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+.admin-btn.secondary {
+    background: #ffffff !important;
+    color: #183b59 !important;
+    border: 1px solid #d8e4ea !important;
+}
+
+.admin-btn.secondary:hover {
+    background: #f8fafc !important;
+    color: #ef4444 !important;
+    border-color: #ef4444 !important;
+}
+
+/* Кнопки действий в таблице */
+.admin-action-btn {
+    width: 160px !important;
+    min-height: 46px !important;
+    padding: 10px 14px !important;
+
+    background: #183b59 !important;
+    color: #ffffff !important;
+    border: none !important;
+
+    line-height: 1.2 !important;
+    box-shadow: none !important;
+}
+
+/* Hover для всех кнопок */
+.admin-btn.primary:hover,
+.admin-action-btn:hover {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    opacity: 0.96 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(24, 59, 89, 0.22) !important;
+    text-decoration: none !important;
+}
+
+/* Чтобы кнопки "Проверить практику" и "Сбросить пароль" не были бирюзовыми */
+.admin-table .admin-action-btn {
+    background: #183b59 !important;
+    color: #ffffff !important;
+}
+
+/* Кнопка сброса пароля чуть отличается, но в той же палитре */
+.admin-table .admin-action-btn + .admin-action-btn,
+.admin-table button[onclick^="allowPasswordReset"] {
+    background: #8b3a4a !important;
+    color: #ffffff !important;
+}
+
+.admin-table button[onclick^="allowPasswordReset"]:hover {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+}
+
+.admin-action-btn {
+    width: 150px !important;
+    min-height: 44px !important;
+    padding: 10px 14px !important;
+
+    background: #183b59 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 10px !important;
+
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+
+    line-height: 1.25 !important;
+    text-align: center !important;
+
+    transition: .2s ease;
+}
+
+.admin-action-btn:hover{
+    transform: translateY(-2px);
+    background: linear-gradient(90deg,#183b59,#ef4444) !important;
+}
+
+/* ===== FINAL UI POLISH BEFORE DEFENSE ===== */
+
+/* Единый синий цвет для ссылок вход/регистрация */
+.student-auth-links .register-question a,
+.account-link a,
+.admin-auth-links a,
+.admin-login-links a {
+    color: #2563eb !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
+}
+
+.student-auth-links .register-question a:hover,
+.account-link a:hover,
+.admin-auth-links a:hover,
+.admin-login-links a:hover {
+    color: #ef4444 !important;
+    text-decoration: underline !important;
+}
+
+/* Красивые бейджи статусов в админ-панели */
+.status {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+
+    min-width: 105px !important;
+    min-height: 34px !important;
+    padding: 8px 14px !important;
+
+    border-radius: 999px !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    text-align: center !important;
+    white-space: normal !important;
+}
+
+/* Пройден / Проверена */
+.status.passed {
+    background: #dcfce7 !important;
+    color: #166534 !important;
+}
+
+.status.passed::before {
+    content: "✓";
+    font-weight: 900;
+}
+
+/* Не пройден */
+.status.failed {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+}
+
+.status.failed::before {
+    content: "✕";
+    font-weight: 900;
+}
+
+/* Не сдан / ожидает проверки / прослушал курс */
+.status.waiting {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+}
+
+.status.waiting::before {
+    content: "⌛";
+    font-size: 13px;
+}
+
+/* Чтобы итоговые бейджи не были огромными */
+.admin-table td:nth-child(5) .status {
+    min-width: 100px !important;
+    padding: 8px 12px !important;
+}
+
+/* Кнопки в таблице админки аккуратнее */
+.admin-action-btn {
+    width: 150px !important;
+    min-height: 42px !important;
+    padding: 9px 12px !important;
+
+    background: #183b59 !important;
+    color: #ffffff !important;
+
+    border: none !important;
+    border-radius: 10px !important;
+
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 750 !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+}
+
+/* Сброс пароля — отдельный бордовый цвет */
+.admin-table button[onclick^="allowPasswordReset"] {
+    background: #8b3a4a !important;
+    color: #ffffff !important;
+}
+
+.admin-action-btn:hover,
+.admin-table button[onclick^="allowPasswordReset"]:hover {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(24, 59, 89, 0.22) !important;
+}
+
+/* Верхние кнопки админки */
+.admin-btn,
+.admin-btn.primary,
+.admin-btn.secondary {
+    font-family: Arial, sans-serif !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    border-radius: 10px !important;
+}
+
+.admin-btn.primary {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+.admin-btn.secondary {
+    background: #ffffff !important;
+    color: #183b59 !important;
+    border: 1px solid #d8e4ea !important;
+}
+
+.admin-btn.secondary:hover {
+    color: #ef4444 !important;
+    border-color: #ef4444 !important;
+}
+
+/* Убрать нижнюю строку в админ-входе, если она есть */
+.admin-auth-links {
+    display: none !important;
+}
+
+/* ===== FINAL ADMIN TABLE CLEAN VERSION ===== */
+
+/* Таблица шире */
+.container {
+    width: min(1400px, calc(100% - 32px)) !important;
+}
+
+.admin-card {
+    width: 100% !important;
+    padding: 36px !important;
+}
+
+.admin-table {
+    min-width: 1280px !important;
+    table-layout: fixed !important;
+}
+
+/* Более нормальные ширины колонок */
+.admin-table th:nth-child(1),
+.admin-table td:nth-child(1) {
+    width: 22% !important;
+}
+
+.admin-table th:nth-child(2),
+.admin-table td:nth-child(2) {
+    width: 14% !important;
+}
+
+.admin-table th:nth-child(3),
+.admin-table td:nth-child(3) {
+    width: 14% !important;
+}
+
+.admin-table th:nth-child(4),
+.admin-table td:nth-child(4) {
+    width: 15% !important;
+}
+
+.admin-table th:nth-child(5),
+.admin-table td:nth-child(5) {
+    width: 13% !important;
+}
+
+.admin-table th:nth-child(6),
+.admin-table td:nth-child(6) {
+    width: 14% !important;
+}
+
+.admin-table th:nth-child(7),
+.admin-table td:nth-child(7) {
+    width: 14% !important;
+    min-width: 170px !important;
+}
+
+/* Красивые статусы без смайликов */
+.status {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    min-width: 120px !important;
+    min-height: 34px !important;
+    padding: 8px 14px !important;
+
+    border-radius: 999px !important;
+
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    text-align: center !important;
+
+    white-space: normal !important;
+}
+
+/* УБИРАЕМ ВСЕ ИКОНКИ/СМАЙЛИКИ */
+.status::before,
+.status.passed::before,
+.status.failed::before,
+.status.waiting::before {
+    content: none !important;
+}
+
+/* Цвета статусов */
+.status.passed {
+    background: #dcfce7 !important;
+    color: #166534 !important;
+}
+
+.status.failed {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+}
+
+.status.waiting {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+}
+
+/* Практика и итог — аккуратные бейджи */
+.admin-table td:nth-child(4) .status,
+.admin-table td:nth-child(5) .status {
+    min-width: 125px !important;
+    max-width: 145px !important;
+}
+
+/* Единый шрифт для всех кнопок и статусов */
+.admin-btn,
+.admin-action-btn,
+.status {
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+}
+
+/* Кнопки действий */
+.admin-action-btn {
+    width: 155px !important;
+    min-height: 44px !important;
+    padding: 10px 14px !important;
+
+    background: #183b59 !important;
+    color: #ffffff !important;
+
+    border: none !important;
+    border-radius: 10px !important;
+
+    line-height: 1.2 !important;
+    text-align: center !important;
+    white-space: normal !important;
+
+    box-shadow: none !important;
+}
+
+/* Кнопка сброса пароля */
+.admin-table button[onclick^="allowPasswordReset"] {
+    background: #8b3a4a !important;
+    color: #ffffff !important;
+}
+
+/* Наведение */
+.admin-action-btn:hover,
+.admin-table button[onclick^="allowPasswordReset"]:hover {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(24, 59, 89, 0.22) !important;
+}
+
+/* Верхние кнопки */
+.admin-btn {
+    min-height: 48px !important;
+    padding: 12px 22px !important;
+    border-radius: 10px !important;
+    font-size: 15px !important;
+}
+
+.admin-btn.primary {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+.admin-btn.secondary {
+    background: #ffffff !important;
+    color: #183b59 !important;
+    border: 1px solid #d8e4ea !important;
+}
+
+.admin-btn.secondary:hover {
+    color: #ef4444 !important;
+    border-color: #ef4444 !important;
+}
+
+/* Чтобы текст в таблице не ломался некрасиво */
+.admin-table td {
+    font-size: 15px !important;
+    line-height: 1.35 !important;
+}
+
+.admin-table th {
+    font-size: 15px !important;
+}
+/* ===== FIX WIDTH: ADMIN WIDE, OTHER PAGES NORMAL ===== */
+
+/* Обычные страницы снова нормальной ширины */
+.container {
+    width: min(1180px, calc(100% - 32px)) !important;
+}
+
+/* Только админ-панель шире */
+body:has(.admin-card) .container {
+    width: min(1400px, calc(100% - 32px)) !important;
+}
+
+/* Регистрация выглядит компактнее */
+body:has(#registerForm) .container {
+    width: min(1180px, calc(100% - 32px)) !important;
+}
+
+/* Форма регистрации не должна растягиваться слишком огромно */
+body:has(#registerForm) .card {
+    max-width: 1180px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* ===== FIX RESULT AND DASHBOARD HEADERS ===== */
+
+.rp-hero.passed,
+.rp-hero.failed,
+.rp-hero.waiting,
+.dashboard-hero,
+.dashboard-hero.passed,
+.student-dashboard-hero,
+.student-dashboard-hero.passed,
+.cabinet-hero,
+.cabinet-hero.passed {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    color: #ffffff !important;
+}
+
+.rp-hero.passed *,
+.rp-hero.failed *,
+.rp-hero.waiting *,
+.dashboard-hero *,
+.student-dashboard-hero *,
+.cabinet-hero * {
+    color: #ffffff !important;
+}
+/* Исправление больших пропусков в админской таблице */
+
+.admin-card {
+    min-height: auto !important;
+    height: auto !important;
+}
+
+.admin-table-wrap {
+    min-height: auto !important;
+    height: auto !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+}
+
+.admin-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: auto !important;
+}
+
+.admin-table thead,
+.admin-table tbody,
+.admin-table tr,
+.admin-table th,
+.admin-table td {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 18px 20px !important;
+    vertical-align: top !important;
+}
+
+.admin-table tbody tr {
+    height: auto !important;
+}
+
+.admin-table tbody td {
+    height: auto !important;
+    min-height: 0 !important;
+}
+
+.admin-table .status {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: auto !important;
+}
+/* ===== FINAL FIX ADMIN TABLE HEIGHT AND GAPS ===== */
+
+body:has(.admin-card) .container {
+    width: min(1400px, calc(100% - 32px)) !important;
+    padding-top: 70px !important;
+    padding-bottom: 40px !important;
+}
+
+.admin-card {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 36px !important;
+}
+
+.admin-table-wrap {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+
+    border: 1px solid var(--line) !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+}
+
+.admin-table {
+    width: 100% !important;
+    min-width: 1280px !important;
+
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+    background: #ffffff !important;
+}
+
+.admin-table thead {
+    display: table-header-group !important;
+    height: auto !important;
+    min-height: 0 !important;
+}
+
+.admin-table tbody {
+    display: table-row-group !important;
+    height: auto !important;
+    min-height: 0 !important;
+}
+
+.admin-table tr {
+    display: table-row !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
+
+.admin-table th,
+.admin-table td {
+    display: table-cell !important;
+
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+
+    padding: 18px 20px !important;
+    vertical-align: top !important;
+
+    line-height: 1.35 !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+}
+
+.admin-table th {
+    font-size: 15px !important;
+    font-weight: 900 !important;
+}
+
+.admin-table td {
+    font-size: 15px !important;
+}
+
+/* ширина колонок админки */
+.admin-table th:nth-child(1),
+.admin-table td:nth-child(1) {
+    width: 20% !important;
+}
+
+.admin-table th:nth-child(2),
+.admin-table td:nth-child(2) {
+    width: 12% !important;
+}
+
+.admin-table th:nth-child(3),
+.admin-table td:nth-child(3) {
+    width: 14% !important;
+}
+
+.admin-table th:nth-child(4),
+.admin-table td:nth-child(4) {
+    width: 14% !important;
+}
+
+.admin-table th:nth-child(5),
+.admin-table td:nth-child(5) {
+    width: 13% !important;
+}
+
+.admin-table th:nth-child(6),
+.admin-table td:nth-child(6) {
+    width: 12% !important;
+}
+
+.admin-table th:nth-child(7),
+.admin-table td:nth-child(7) {
+    width: 13% !important;
+    min-width: 160px !important;
+    text-align: center !important;
+}
+
+.admin-table th:nth-child(8),
+.admin-table td:nth-child(8) {
+    width: 14% !important;
+}
+
+/* чтобы email и организация не растягивали строки */
+.email-cell,
+.organization-cell {
+    display: inline-block !important;
+    max-width: 220px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+/* статусы компактно */
+.admin-table .status {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: auto !important;
+    min-width: 115px !important;
+    min-height: 34px !important;
+    max-height: none !important;
+
+    padding: 8px 12px !important;
+    line-height: 1.15 !important;
+    white-space: normal !important;
+}
+
+/* кнопки действий компактно */
+.admin-action-btn {
+    width: 155px !important;
+    min-height: 42px !important;
+    height: auto !important;
+
+    margin-top: 0 !important;
+    padding: 10px 12px !important;
+
+    line-height: 1.2 !important;
+    white-space: normal !important;
+}
+
+/* убираем лишнее пространство после таблицы */
+.admin-card::after,
+.admin-table-wrap::after,
+.admin-table::after,
+.admin-table tbody::after {
+    content: none !important;
+    display: none !important;
+}
