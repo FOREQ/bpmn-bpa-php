@@ -25,11 +25,11 @@ require_once __DIR__ . '/../lib/security.php';
         </a>
 
         <nav class="site-nav">
-    <a href="index.php">Главная</a>
-    <a href="register.php">Регистрация</a>
-    <a href="student_login.php">Войти</a>
-    <a href="admin_login.php">Админ</a>
-</nav>
+            <a href="index.php">Главная</a>
+            <a href="register.php" class="active">Регистрация</a>
+            <a href="student_login.php">Войти</a>
+            <a href="admin_login.php">Админ</a>
+        </nav>
     </div>
 </header>
 
@@ -40,36 +40,46 @@ require_once __DIR__ . '/../lib/security.php';
 
     <h1>Регистрация участника</h1>
 
-    <p>Заполните данные для подачи заявки на участие в тестировании по BPA и BPMN.</p>
-    <p class="hint">
-        После отправки заявки администратор проверит данные. Если заявка будет подтверждена,
-        временный пароль для входа будет отправлен на вашу почту. Временный пароль действует 3 дня.
+    <p>
+        Заполните данные для подачи заявки на участие в курсе
+        «Практическое применение методики реинжиниринга бизнес-процессов государственных органов».
     </p>
+
+    <p class="hint">
+        После отправки заявки администратор проверит данные.
+        Если заявка будет подтверждена, временный пароль для входа будет отправлен на вашу почту.
+        Временный пароль действует 3 дня.
+    </p>
+
     <div class="date-box" id="todayDate"></div>
 
-<form id="registerForm" class="card register-card">
-    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken()) ?>">
-    <label>ФИО</label>
-    <input name="fullName" required placeholder="Введите ФИО">
+    <form id="registerForm" class="card register-card">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken()) ?>">
 
-    <label>Email</label>
-    <input name="email" type="email" required placeholder="example@mail.com">
+        <label>ФИО</label>
+        <input name="fullName" required placeholder="Введите ФИО">
 
-    <label>Телефон</label>
-    <input name="phone" required placeholder="+77001234567">
+        <label>Email</label>
+        <input name="email" type="email" required placeholder="example@mail.com">
 
-    <label>Организация</label>
-    <input name="organization" required placeholder="Название организации">
+        <label>Телефон</label>
+        <input name="phone" required placeholder="+77001234567">
 
-    <button type="submit" id="submitBtn">Подать заявку</button>
-</form>
+        <label>Организация</label>
+        <input name="organization" required placeholder="Название организации">
 
-<p class="account-link">
-    Уже есть аккаунт?
-    <a href="student_login.php">Войти в личный кабинет</a>
-</p>
+        <button type="submit" id="submitBtn">
+            Отправить заявку
+        </button>
+    </form>
 
-<div id="message" class="message"></div>
+    <p class="account-link">
+        Уже получили временный пароль?
+        <a href="student_login.php">Войти в личный кабинет</a>
+    </p>
+
+    <div id="message" class="message"></div>
+</div>
 
 <script>
     const form = document.getElementById('registerForm');
@@ -92,13 +102,13 @@ require_once __DIR__ . '/../lib/security.php';
         submitBtn.disabled = true;
         submitBtn.textContent = 'Отправка заявки...';
 
-   const data = {
-    csrf_token: form.csrf_token.value,
-    fullName: form.fullName.value.trim(),
-    email: form.email.value.trim(),
-    phone: form.phone.value.trim(),
-    organization: form.organization.value.trim()
-};
+        const data = {
+            csrf_token: form.csrf_token.value,
+            fullName: form.fullName.value.trim(),
+            email: form.email.value.trim(),
+            phone: form.phone.value.trim(),
+            organization: form.organization.value.trim()
+        };
 
         try {
             const response = await fetch('../api/register.php', {
@@ -112,29 +122,36 @@ require_once __DIR__ . '/../lib/security.php';
             const json = await response.json();
 
             if (!json.success) {
-                message.textContent = json.message || 'Ошибка регистрации';
+                message.textContent = json.message || 'Ошибка отправки заявки';
                 message.classList.add('error');
                 message.style.display = 'block';
 
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Подать заявку';
+                submitBtn.textContent = 'Отправить заявку';
 
                 return;
             }
 
-            form.style.display = 'none';
+            form.reset();
 
-            message.textContent = json.message
-                || 'Заявка успешно отправлена. После подтверждения администратором временный пароль будет отправлен на вашу почту.';
+            message.innerHTML = `
+                <b>Заявка успешно отправлена!</b><br>
+                Дождитесь подтверждения администратора.
+                После подтверждения временный пароль будет отправлен на вашу почту.
+            `;
             message.classList.add('success');
             message.style.display = 'block';
+
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Отправить заявку';
+
         } catch (error) {
             message.textContent = 'Ошибка соединения с сервером';
             message.classList.add('error');
             message.style.display = 'block';
 
             submitBtn.disabled = false;
-            submitBtn.textContent = 'Подать заявку';
+            submitBtn.textContent = 'Отправить заявку';
         }
     });
 </script>

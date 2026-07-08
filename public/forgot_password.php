@@ -4,10 +4,52 @@
     <meta charset="UTF-8">
     <title>Сброс пароля</title>
     <link rel="stylesheet" href="style.css">
+
+    <style>
+    .forgot-password-card .primary-btn {
+        background: linear-gradient(90deg, #183b59, #ef4444) !important;
+        color: #ffffff !important;
+        width: 100% !important;
+        height: 52px !important;
+        border: none !important;
+        border-radius: 10px !important;
+        font-family: Arial, sans-serif !important;
+        font-size: 16px !important;
+        font-weight: 800 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .forgot-password-card .primary-btn:hover {
+        opacity: 0.96 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 10px 22px rgba(24, 59, 89, 0.22) !important;
+    }
+</style>
 </head>
 <body>
+    <header class="site-header">
+    <div class="site-header-inner">
+        <a href="index.php" class="site-brand">
+            <img src="../assets/logo.svg/logo.svg.png" alt="DGSC" class="site-logo">
 
-<div class="admin-login-card">
+            <span class="site-brand-text">
+                <span class="site-brand-title">Центр Поддержки</span>
+                <span class="site-brand-subtitle">Цифрового Правительства</span>
+            </span>
+        </a>
+
+        <nav class="site-nav">
+            <a href="index.php">Главная</a>
+            <a href="register.php">Регистрация</a>
+            <a href="student_login.php">Войти</a>
+            <a href="admin_login.php">Админ</a>
+        </nav>
+    </div>
+</header>
+
+<div class="admin-login-card forgot-password-card">
     <div class="top-nav">
         <a href="student_login.php">← Назад ко входу</a>
     </div>
@@ -23,7 +65,7 @@
         <label>Email</label>
         <input type="email" id="email" placeholder="example@mail.com" required>
 
-        <button type="submit">Отправить запрос</button>
+        <button type="submit" class="primary-btn">Отправить запрос</button>
     </form>
 
     <div id="message" class="message"></div>
@@ -35,9 +77,9 @@
         <label>Повторите пароль</label>
         <input id="newPassword2" type="password" placeholder="Повторите пароль">
 
-        <button id="savePasswordBtn" type="button">
-            Сохранить новый пароль
-        </button>
+      <button id="savePasswordBtn" type="button" class="primary-btn">
+    Сохранить новый пароль
+</button>
     </div>
 </div>
 

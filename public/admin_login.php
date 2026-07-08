@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </nav>
     </div>
 </header>
-<div class="admin-login-card">
+<div class="admin-login-card admin-auth-card">
     <div class="top-nav">
     <a href="index.php">← На главную</a>
 </div>
@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label>Пароль</label>
         <input type="password" name="password" required >
 
-        <button type="submit">Войти</button>
+        <button type="submit" class="primary-btn">Войти</button>
     </form>
 
     <?php if ($error): ?>
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
 
     <p class="admin-login-links">
-    <a href="register.php">Вернуться к регистрации</a>
+ 
 </p>
 </div>
 </body>

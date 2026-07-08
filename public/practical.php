@@ -3,20 +3,21 @@
 require_once __DIR__ . '/../lib/csrf.php';
 require_once __DIR__ . '/../lib/security.php';
 
+$courseTitle = 'Практическое применение методики реинжиниринга бизнес-процессов государственных органов';
 
 ?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Практическое задание</title>
+    <title>Практическое задание | Реинжиниринг бизнес-процессов</title>
 
     <link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.9.1/dist/assets/diagram-js.css">
     <link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.9.1/dist/assets/bpmn-font/css/bpmn.css">
     <link rel="stylesheet" href="style.css">
-
 </head>
 <body>
+
 <header class="site-header">
     <div class="site-header-inner">
         <a href="index.php" class="site-brand">
@@ -27,16 +28,26 @@ require_once __DIR__ . '/../lib/security.php';
                 <span class="site-brand-subtitle">Цифрового Правительства</span>
             </span>
         </a>
-<nav class="site-nav">
-    <a href="index.php">Главная</a>
-    <a href="register.php">Регистрация</a>
-    <a href="student_login.php">Войти</a>
-    <a href="admin_login.php">Админ</a>
-</nav>
+
+        <nav class="site-nav">
+            <a href="index.php">Главная</a>
+            <a href="register.php">Регистрация</a>
+            <a href="student_login.php" class="active">Войти</a>
+            <a href="admin_login.php">Админ</a>
+        </nav>
     </div>
 </header>
+
 <div class="container">
+    <div class="top-nav">
+        <a href="student_dashboard.php">← В личный кабинет</a>
+    </div>
+
     <h1>Практическое задание</h1>
+
+    <p class="hint">
+        Курс: «<?= htmlspecialchars($courseTitle) ?>»
+    </p>
 
     <div id="participantInfo"></div>
 
@@ -55,15 +66,19 @@ require_once __DIR__ . '/../lib/security.php';
 
         <div id="complexityStep" class="complexity-step practical-card step-hidden">
             <h2>Расчет сложности процесса</h2>
+            <p class="hint">
+                Заполните показатели сложности бизнес-процесса согласно предложенной диаграмме.
+            </p>
+
             <div id="complexityImage"></div>
             <div id="complexityContainer"></div>
         </div>
 
         <div class="step-buttons practical-buttons">
             <button type="button" id="prevStepBtn" class="secondary-btn back-btn">Назад</button>
-<button type="button" id="saveDraftBtn" class="secondary-btn draft-btn">Сохранить черновик</button>
-<button type="button" id="nextStepBtn" class="next-btn">Далее</button>
-<button type="submit" id="submitBtn" class="finish-btn">Завершить практический экзамен</button>
+            <button type="button" id="saveDraftBtn" class="secondary-btn draft-btn">Сохранить черновик</button>
+            <button type="button" id="nextStepBtn" class="next-btn">Далее</button>
+            <button type="submit" id="submitBtn" class="finish-btn">Завершить практическое задание</button>
         </div>
     </form>
 
@@ -73,10 +88,11 @@ require_once __DIR__ . '/../lib/security.php';
 <script src="https://unpkg.com/bpmn-js@17.9.1/dist/bpmn-modeler.development.js"></script>
 
 <script>
-
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('sessionId');
-const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
+    const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
+    const courseTitle = <?= json_encode($courseTitle, JSON_UNESCAPED_UNICODE) ?>;
+
     const participantInfo = document.getElementById('participantInfo');
     const practicalForm = document.getElementById('practicalForm');
     const tasksContainer = document.getElementById('tasksContainer');
@@ -97,25 +113,26 @@ const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
     let loadedPractical = null;
     let bpmnModelers = {};
     let currentStep = 0;
+
     const totalSteps = 3;
     const draftKey = 'practicalDraft_' + sessionId;
 
     function escapeHtml(text) {
-    return String(text ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
-}
+        return String(text ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
     function showMessage(text, type = 'success') {
         message.innerHTML = text;
         message.className = 'message ' + type;
         message.style.display = 'block';
     }
 
-    const initialDiagram = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    const initialDiagram = `<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                   xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
                   xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
                   xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
@@ -171,16 +188,19 @@ const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
             const json = await response.json();
 
             if (!json.success) {
-                showMessage(json.message || 'Ошибка загрузки практики', 'error');
+                showMessage(json.message || 'Ошибка загрузки практического задания', 'error');
                 return;
             }
 
             loadedPractical = json;
 
             participantInfo.innerHTML = `
-                <p><b>Участник:</b> ${json.participant.fullName}</p>
-                <p><b>Организация:</b> ${json.participant.organization}</p>
-                <p><b>Результат теста:</b> ${json.participant.score} из ${json.participant.total}, ${json.participant.percent}%</p>
+                <div class="card">
+                    <p><b>Курс:</b><br>${escapeHtml(courseTitle)}</p>
+                    <p><b>Участник:</b> ${escapeHtml(json.participant.fullName)}</p>
+                    <p><b>Организация:</b> ${escapeHtml(json.participant.organization)}</p>
+                    <p><b>Результат теоретического теста:</b> ${escapeHtml(json.participant.score)} из ${escapeHtml(json.participant.total)}, ${escapeHtml(json.participant.percent)}%</p>
+                </div>
             `;
 
             renderTasks(json.practical.tasks);
@@ -208,16 +228,16 @@ const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
 
             const modelerId = `bpmnModeler_${task.id}`;
 
-           block.innerHTML = `
-    <div class="practical-card-header">
-        <p class="practical-task-title">Практическая задача ${index + 1}</p>
-        <h2>Постройте BPMN-диаграмму процесса</h2>
-        <p class="practical-description">${escapeHtml(task.description)}</p>
-    </div>
+            block.innerHTML = `
+                <div class="practical-card-header">
+                    <p class="practical-task-title">Практическая задача ${index + 1}</p>
+                    <h2>Постройте BPMN-диаграмму бизнес-процесса</h2>
+                    <p class="practical-description">${escapeHtml(task.description)}</p>
+                </div>
 
-    <div class="bpmn-modeler-title">BPMN-моделлер:</div>
-    <div id="${modelerId}" class="bpmn-container"></div>
-`;
+                <div class="bpmn-modeler-title">BPMN-моделлер:</div>
+                <div id="${modelerId}" class="bpmn-container"></div>
+            `;
 
             tasksContainer.appendChild(block);
             initBpmnModeler(task.id, modelerId);
@@ -233,10 +253,12 @@ const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
 
         try {
             await modeler.importXML(initialDiagram);
+
             const canvas = modeler.get('canvas');
             canvas.zoom('fit-viewport');
 
             const eventBus = modeler.get('eventBus');
+
             eventBus.on('commandStack.changed', () => {
                 autoSaveDraft();
             });
@@ -256,7 +278,7 @@ const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
                 <div class="complexity-image-box">
                     <p><b>Диаграмма для расчета сложности:</b></p>
                     <img
-                        src="../assets/complexity/${complexityVariant.image}"
+                        src="../assets/complexity/${escapeHtml(complexityVariant.image)}"
                         alt="Диаграмма расчета сложности"
                     >
                 </div>
@@ -268,8 +290,8 @@ const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
             row.className = 'field-row';
 
             row.innerHTML = `
-                <label>${field.label} (${field.weight})</label>
-                <input name="complexity_${field.id}" required placeholder="Ответ">
+                <label>${escapeHtml(field.label)} (${escapeHtml(field.weight)})</label>
+                <input name="complexity_${escapeHtml(field.id)}" required placeholder="Введите ответ">
             `;
 
             complexityContainer.appendChild(row);
@@ -281,7 +303,9 @@ const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
     }
 
     function updateStepView() {
-        if (!loadedPractical) return;
+        if (!loadedPractical) {
+            return;
+        }
 
         loadedPractical.practical.tasks.forEach((task, index) => {
             const block = document.getElementById(`step_task_${index}`);
@@ -309,7 +333,9 @@ const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
     }
 
     function resizeCurrentModeler() {
-        if (!loadedPractical || currentStep >= 2) return;
+        if (!loadedPractical || currentStep >= 2) {
+            return;
+        }
 
         const task = loadedPractical.practical.tasks[currentStep];
         const modeler = bpmnModelers[task.id];
@@ -372,7 +398,9 @@ const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
     }
 
     async function saveDraft() {
-        if (!loadedPractical) return;
+        if (!loadedPractical) {
+            return;
+        }
 
         const answers = await collectAnswers();
 
@@ -387,12 +415,12 @@ const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
             headers: {
                 'Content-Type': 'application/json'
             },
-           body: JSON.stringify({
-    csrf_token: csrfToken,
-    sessionId: sessionId,
-    answers: answers,
-    complete: false
-})
+            body: JSON.stringify({
+                csrf_token: csrfToken,
+                sessionId: sessionId,
+                answers: answers,
+                complete: false
+            })
         });
     }
 
@@ -460,59 +488,60 @@ const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
         event.preventDefault();
 
         if (!loadedPractical) {
-            showMessage('Практика еще не загружена', 'error');
+            showMessage('Практическое задание еще не загружено', 'error');
             return;
         }
 
         try {
             const answers = await collectAnswers();
 
-      for (const task of loadedPractical.practical.tasks) {
-    const diagram = answers.diagrams[task.id];
-    const taskIndex = loadedPractical.practical.tasks.findIndex(item => item.id === task.id) + 1;
+            for (const task of loadedPractical.practical.tasks) {
+                const diagram = answers.diagrams[task.id];
+                const taskIndex = loadedPractical.practical.tasks.findIndex(item => item.id === task.id) + 1;
 
-    if (!diagram || !diagram.xml || diagram.xml.trim() === '') {
-        showMessage(
-            `Не удалось сохранить BPMN-схему для практической задачи ${taskIndex}. Попробуйте обновить страницу и повторить еще раз.`,
-            'error'
-        );
+                if (!diagram || !diagram.xml || diagram.xml.trim() === '') {
+                    showMessage(
+                        `Не удалось сохранить BPMN-схему для практической задачи ${taskIndex}. Попробуйте обновить страницу и повторить еще раз.`,
+                        'error'
+                    );
 
-        currentStep = taskIndex - 1;
-        updateStepView();
+                    currentStep = taskIndex - 1;
+                    updateStepView();
 
-        return;
-    }
+                    return;
+                }
 
-    if (!isDiagramChanged(diagram.xml)) {
-        showMessage(
-            `Внесите изменения в BPMN-схему для практической задачи ${taskIndex}. Нельзя отправить полностью стандартную схему.`,
-            'error'
-        );
+                if (!isDiagramChanged(diagram.xml)) {
+                    showMessage(
+                        `Внесите изменения в BPMN-схему для практической задачи ${taskIndex}. Нельзя отправить полностью стандартную схему.`,
+                        'error'
+                    );
 
-        currentStep = taskIndex - 1;
-        updateStepView();
+                    currentStep = taskIndex - 1;
+                    updateStepView();
 
-        return;
-    }
-    if (!hasBpmnProcessContent(diagram.xml)) {
-    showMessage(
-        `BPMN-схема для практической задачи ${taskIndex} заполнена недостаточно. В схеме должны быть минимум старт, задача и конец.`,
-        'error'
-    );
+                    return;
+                }
 
-    currentStep = taskIndex - 1;
-    updateStepView();
+                if (!hasBpmnProcessContent(diagram.xml)) {
+                    showMessage(
+                        `BPMN-схема для практической задачи ${taskIndex} заполнена недостаточно. В схеме должны быть минимум стартовое событие, задача и конечное событие.`,
+                        'error'
+                    );
 
-    return;
-}
-}
+                    currentStep = taskIndex - 1;
+                    updateStepView();
+
+                    return;
+                }
+            }
 
             for (const field of loadedPractical.practical.complexityVariant.fields) {
                 const value = answers.complexity[field.id];
 
                 if (!value || value.trim() === '') {
                     showMessage(
-                        `Заполните поле расчета сложности: ${field.label}`,
+                        `Заполните поле расчета сложности: ${escapeHtml(field.label)}`,
                         'error'
                     );
 
@@ -529,17 +558,17 @@ const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-    csrf_token: csrfToken,
-    sessionId: sessionId,
-    answers: answers,
-    complete: true
-})
+                    csrf_token: csrfToken,
+                    sessionId: sessionId,
+                    answers: answers,
+                    complete: true
+                })
             });
 
             const json = await response.json();
 
             if (!json.success) {
-                showMessage(json.message || 'Ошибка сохранения практики', 'error');
+                showMessage(json.message || 'Ошибка сохранения практического задания', 'error');
                 return;
             }
 
@@ -577,17 +606,17 @@ const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
     }
 
     function normalizeBpmnXml(xml) {
-    return String(xml || '')
-        .replace(/\s+/g, '')
-        .replace(/id="[^"]+"/g, 'id=""');
-}
+        return String(xml || '')
+            .replace(/\s+/g, '')
+            .replace(/id="[^"]+"/g, 'id=""');
+    }
 
-function isDiagramChanged(xml) {
-    const current = normalizeBpmnXml(xml);
-    const initial = normalizeBpmnXml(initialDiagram);
+    function isDiagramChanged(xml) {
+        const current = normalizeBpmnXml(xml);
+        const initial = normalizeBpmnXml(initialDiagram);
 
-    return current !== initial;
-}
+        return current !== initial;
+    }
 
     loadPractical();
 </script>
