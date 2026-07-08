@@ -40,8 +40,11 @@ require_once __DIR__ . '/../lib/security.php';
 
     <h1>Регистрация участника</h1>
 
-    <p>Заполните данные для прохождения тестирования по BPA и BPMN.</p>
-    <p class="hint">Дата прохождения фиксируется автоматически при создании сессии тестирования.</p>
+    <p>Заполните данные для подачи заявки на участие в тестировании по BPA и BPMN.</p>
+    <p class="hint">
+        После отправки заявки администратор проверит данные. Если заявка будет подтверждена,
+        временный пароль для входа будет отправлен на вашу почту. Временный пароль действует 3 дня.
+    </p>
     <div class="date-box" id="todayDate"></div>
 
 <form id="registerForm" class="card register-card">
@@ -58,13 +61,7 @@ require_once __DIR__ . '/../lib/security.php';
     <label>Организация</label>
     <input name="organization" required placeholder="Название организации">
 
-    <label>Пароль</label>
-    <input name="password" type="password" required placeholder="Минимум 8 символов, буквы, цифра и спецсимвол">
-
-    <label>Повторите пароль</label>
-    <input name="passwordConfirm" type="password" required placeholder="Повторите пароль">
-
-    <button type="submit" id="submitBtn">Начать тест</button>
+    <button type="submit" id="submitBtn">Подать заявку</button>
 </form>
 
 <p class="account-link">
@@ -93,16 +90,14 @@ require_once __DIR__ . '/../lib/security.php';
         message.className = 'message';
 
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Регистрация...';
+        submitBtn.textContent = 'Отправка заявки...';
 
    const data = {
     csrf_token: form.csrf_token.value,
     fullName: form.fullName.value.trim(),
     email: form.email.value.trim(),
     phone: form.phone.value.trim(),
-    organization: form.organization.value.trim(),
-    password: form.password.value.trim(),
-    passwordConfirm: form.passwordConfirm.value.trim()
+    organization: form.organization.value.trim()
 };
 
         try {
@@ -122,21 +117,24 @@ require_once __DIR__ . '/../lib/security.php';
                 message.style.display = 'block';
 
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Начать тест';
+                submitBtn.textContent = 'Подать заявку';
 
                 return;
             }
 
-            setTimeout(() => {
-                window.location.href = 'test.php?sessionId=' + encodeURIComponent(json.sessionId);
-            }, 1000);
+            form.style.display = 'none';
+
+            message.textContent = json.message
+                || 'Заявка успешно отправлена. После подтверждения администратором временный пароль будет отправлен на вашу почту.';
+            message.classList.add('success');
+            message.style.display = 'block';
         } catch (error) {
             message.textContent = 'Ошибка соединения с сервером';
             message.classList.add('error');
             message.style.display = 'block';
 
             submitBtn.disabled = false;
-            submitBtn.textContent = 'Начать тест';
+            submitBtn.textContent = 'Подать заявку';
         }
     });
 </script>
