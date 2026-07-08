@@ -1,0 +1,25 @@
+# Logs
+Logs/
+logs/
+*.log
+
+# Local database with real data
+database/database.sqlite
+
+# Environment/secrets
+.env
+.env.local
+
+# OS files
+desktop.ini
+Thumbs.db
+
+# IDE/editor files
+.vscode/
+.idea/
+
+# Composer dependencies
+vendor/
+
+# Generated certificates
+database/certificates/

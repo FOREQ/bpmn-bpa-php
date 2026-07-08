@@ -1,0 +1,2370 @@
+:root {
+    color-scheme: light;
+
+    --ink: #183b59;
+    --muted: #64748b;
+    --line: #d8e4ea;
+    --teal: #10d6cf;
+    --cyan: #2ab7f6;
+    --blue: #2563eb;
+    --red: #ef4444;
+    --soft: #f8fafc;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(59,130,246,0.08),
+            rgba(239,68,68,0.08) 340px,
+            rgba(255,255,255,0) 620px
+        ),
+        #f7fbfc;
+    color: var(--ink);
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    width: min(1180px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 40px 0;
+}
+
+.card {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 8px 24px rgba(24,59,89,0.08);
+    margin-top: 24px;
+}
+
+h1 {
+    margin-top: 0;
+    font-size: 48px;
+    font-weight: 900;
+    color: var(--ink);
+}
+
+h2,
+h3 {
+    color: var(--ink);
+}
+
+.top-nav {
+    margin-bottom: 20px;
+}
+
+.top-nav a,
+a {
+    color: var(--ink);
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.top-nav a:hover,
+a:hover {
+    text-decoration: underline;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-top: 16px;
+}
+
+input,
+textarea,
+select {
+    width: 100%;
+    padding: 12px;
+    margin-top: 6px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 15px;
+    transition: 0.2s;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: var(--red);
+    box-shadow: 0 0 0 4px rgba(239,68,68,0.15);
+}
+
+input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    border-radius: 50%;
+    transition: none;
+    accent-color: var(--ink);
+}
+
+button,
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px;
+    margin-top: 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--ink);
+    color: #ffffff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+    text-decoration: none;
+}
+
+button:hover,
+.button:hover {
+    background: #0f304b;
+    text-decoration: none;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.message {
+    margin-top: 20px;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-weight: bold;
+}
+
+.passed {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.failed {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.waiting {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.small,
+.admin-small {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+/* ===== Progress ===== */
+
+.progress-box {
+    margin: 20px 0;
+    padding: 16px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+}
+
+.progress-top {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.progress {
+    width: 100%;
+    height: 10px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+#progressBar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), var(--red));
+    transition: width 0.3s ease;
+}
+
+/* ===== Test page ===== */
+
+.question,
+.task {
+    margin-top: 20px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px;
+    background: #ffffff;
+}
+
+.question label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 56px;
+    padding: 14px 16px;
+    margin: 10px 0;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.question label:hover,
+.question label:has(input[type="radio"]:checked) {
+    border-color: var(--ink);
+    background: #f8fafc;
+}
+
+.question label img {
+    flex-shrink: 0;
+}
+
+.question-image,
+.option-image,
+.bpmn-image {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.buttons-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.buttons-row button {
+    margin-top: 0;
+    min-width: 120px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+#prevBtn {
+    background: #ffffff;
+    color: var(--ink);
+    border: 1px solid var(--line);
+}
+
+#prevBtn:hover {
+    background: #f8fafc;
+    border-color: var(--ink);
+}
+
+#nextBtn {
+    background: var(--ink);
+    color: #ffffff;
+    border: 1px solid var(--ink);
+}
+
+#nextBtn:hover {
+    background: #0f304b;
+}
+
+#submitBtn {
+    background: linear-gradient(90deg, var(--ink), var(--red));
+    color: #ffffff;
+    border: none;
+}
+
+#submitBtn:hover {
+    opacity: 0.95;
+}
+
+/* ===== Practical page ===== */
+
+.practical-form {
+    margin-top: 24px;
+}
+
+.practical-card {
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(24,59,89,0.08);
+    margin-top: 24px;
+    padding: 0;
+}
+
+.practical-card-header {
+    border-bottom: 1px solid var(--line);
+    padding: 24px 28px;
+}
+
+.practical-task-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--muted);
+}
+
+.practical-card-header h2 {
+    margin: 8px 0 0;
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--ink);
+}
+
+.practical-description {
+    margin-top: 16px;
+    max-width: 1000px;
+    line-height: 1.7;
+    color: #334155;
+}
+
+.bpmn-modeler-title {
+    padding: 22px 28px 0;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--ink);
+}
+
+.bpmn-container {
+    width: calc(100% - 56px);
+    height: 620px;
+    min-height: 480px;
+    margin: 12px 28px 28px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.complexity-step {
+    padding: 24px;
+}
+
+.complexity-image-box {
+    margin: 20px 0;
+    padding: 12px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(24,59,89,0.08);
+}
+
+.complexity-image-box img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 10px;
+}
+
+.field-row {
+    display: grid;
+    grid-template-columns: 1fr 180px;
+    gap: 16px;
+    align-items: center;
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+}
+
+.field-row label,
+.field-row input {
+    margin-top: 0;
+}
+
+.practical-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.practical-buttons button {
+    margin-top: 0;
+    min-width: 120px;
+}
+
+.practical-buttons .back-btn,
+.practical-buttons .draft-btn {
+    background: #ffffff;
+    color: var(--ink);
+    border: 1px solid var(--line);
+}
+
+.practical-buttons .back-btn:hover,
+.practical-buttons .draft-btn:hover {
+    background: #f8fafc;
+    border-color: var(--ink);
+}
+
+.practical-buttons .next-btn,
+.practical-buttons .finish-btn {
+    background: linear-gradient(90deg, var(--ink), var(--red));
+    color: #ffffff;
+    border: none;
+}
+
+.step-hidden {
+    display: none !important;
+}
+
+/* ===== Result page with rp-* classes ===== */
+
+.rp-card {
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(24,59,89,0.08);
+    margin-top: 28px;
+}
+
+.rp-hero {
+    padding: 28px 32px;
+    background: #f1f5f9;
+    color: var(--ink);
+}
+
+.rp-hero.passed {
+    background: linear-gradient(90deg, var(--ink), var(--red));
+    color: #ffffff;
+}
+
+.rp-label {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.85;
+}
+
+.rp-title {
+    margin: 8px 0 0;
+    font-size: 34px;
+    line-height: 1.15;
+    font-weight: 900;
+    color: inherit;
+}
+
+.rp-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    padding: 28px;
+}
+
+.rp-metric {
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.rp-metric-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 800;
+}
+
+.rp-metric-value {
+    margin-top: 8px;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+
+.rp-section {
+    overflow: hidden;
+    margin-top: 28px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(24,59,89,0.08);
+}
+
+.rp-section-header {
+    padding: 16px 24px;
+    background: linear-gradient(90deg, var(--ink), var(--red));
+    color: #ffffff;
+}
+
+.rp-section-header h2 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: 900;
+}
+
+.rp-tasks {
+    padding: 0 28px 28px;
+}
+
+.rp-tasks li {
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+.rp-home {
+    display: inline-flex;
+    margin-top: 28px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    background: var(--ink);
+    color: #ffffff;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.rp-home:hover {
+    background: #0f304b;
+    text-decoration: none;
+}
+
+/* ===== Admin login page ===== */
+
+.admin-login-card {
+    max-width: 620px;
+    margin: 40px auto;
+    padding: 40px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(24,59,89,0.10);
+}
+
+.admin-login-card h1 {
+    font-size: 40px;
+    margin-bottom: 24px;
+}
+
+.admin-login-card label {
+    margin-top: 18px;
+    font-size: 16px;
+}
+
+.admin-login-card input {
+    background: #ffffff;
+}
+
+.admin-login-card button {
+    width: 100%;
+    margin-top: 28px;
+    background: var(--ink);
+    color: #ffffff;
+}
+
+.admin-login-card button:hover {
+    background: #0f304b;
+}
+
+.admin-login-links {
+    margin-top: 22px;
+}
+
+.admin-login-links a {
+    color: #0f766e;
+    font-weight: 800;
+}
+
+/* ===== Admin panel ===== */
+
+.admin-card {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 32px;
+    box-shadow: 0 8px 24px rgba(24,59,89,0.08);
+    margin-top: 28px;
+}
+
+.admin-header {
+    display: grid;
+    grid-template-columns: minmax(320px, 1fr) auto;
+    gap: 24px;
+    align-items: end;
+    margin-bottom: 28px;
+}
+
+.admin-label {
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+}
+
+.admin-title {
+    margin: 8px 0 0;
+    font-size: 42px;
+    line-height: 1.1;
+    font-weight: 900;
+    color: var(--ink);
+}
+
+.admin-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.admin-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    margin-top: 0;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.admin-btn.primary {
+    background: var(--ink);
+    color: #ffffff;
+    border: 1px solid var(--ink);
+}
+
+.admin-btn.primary:hover {
+    background: #0f304b;
+    text-decoration: none;
+}
+
+.admin-btn.secondary {
+    background: #ffffff;
+    color: var(--ink);
+    border: 1px solid var(--line);
+}
+
+.admin-btn.secondary:hover {
+    background: #f8fafc;
+    border-color: var(--ink);
+    text-decoration: none;
+}
+
+.admin-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.admin-table {
+    width: 100%;
+    min-width: 1120px;
+    border-collapse: collapse;
+    font-size: 14px;
+    background: #ffffff;
+}
+
+.admin-table thead {
+    background: #eafafa;
+}
+
+.admin-table th {
+    padding: 14px 16px;
+    text-align: left;
+    font-weight: 900;
+    color: var(--ink);
+    border-bottom: 1px solid var(--line);
+}
+
+.admin-table td {
+    padding: 16px;
+    border-top: 1px solid var(--line);
+    vertical-align: top;
+}
+
+.admin-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.admin-table th:nth-child(7),
+.admin-table td:nth-child(7) {
+    width: 190px;
+    min-width: 190px;
+    text-align: center;
+}
+
+.admin-action-btn {
+    width: 160px;
+    max-width: 100%;
+    min-height: 44px;
+    white-space: normal;
+    line-height: 1.2;
+    margin-top: 0;
+    padding: 10px 14px;
+    background: var(--teal);
+    color: #083344;
+    border: none;
+    border-radius: 8px;
+    font-weight: 900;
+}
+
+.admin-action-btn:hover {
+    opacity: 0.9;
+    background: var(--teal);
+}
+
+/* ===== Admin modal ===== */
+
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    overflow-y: auto;
+    padding: 28px;
+    background: rgba(15, 23, 42, 0.55);
+}
+
+.modal-content {
+    width: min(1120px, calc(100vw - 56px));
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(15,23,42,0.25);
+    padding: 0;
+    overflow: hidden;
+}
+
+.admin-modal-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 24px 28px;
+    border-bottom: 1px solid var(--line);
+    background: #ffffff;
+}
+
+.admin-modal-title {
+    margin: 6px 0 0;
+    font-size: 30px;
+    line-height: 1.15;
+    font-weight: 900;
+    color: var(--ink);
+}
+
+.admin-modal-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    height: 44px;
+    margin-top: 0;
+    padding: 10px 16px;
+    background: var(--teal);
+    color: #083344;
+    border: none;
+    border-radius: 10px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+#practicalContent {
+    padding: 24px 28px 28px;
+}
+
+.admin-info-box {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.admin-info-box p {
+    margin: 0;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.admin-review-task {
+    padding: 22px 0;
+    border-top: 1px solid var(--line);
+}
+
+.admin-review-task h3 {
+    margin-top: 0;
+    font-size: 22px;
+}
+
+.bpmn-viewer-box {
+    height: 320px;
+    margin-top: 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.reference-title {
+    margin-top: 24px;
+}
+
+.xml-toggle {
+    margin-top: 14px;
+    background: #e0f2fe;
+    color: #075985;
+}
+
+pre {
+    display: none;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin-top: 14px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #f8fafc;
+    max-height: 260px;
+    overflow: auto;
+}
+
+.admin-complexity-image {
+    margin: 16px 0 24px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.admin-complexity-image img {
+    max-width: 100%;
+    border-radius: 10px;
+}
+
+.score-row {
+    display: grid;
+    grid-template-columns: 260px 130px;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0;
+}
+
+.score-row label,
+.score-row input {
+    margin-top: 0;
+}
+
+#scoreMessage p {
+    margin-bottom: 0;
+    font-weight: 800;
+}
+
+@media (max-width: 1000px) {
+    .rp-grid,
+    .admin-info-box {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-header {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-actions {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 1000px) {
+    .rp-grid,
+    .admin-info-box {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-header {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-actions {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 700px) {
+    h1 {
+        font-size: 38px;
+    }
+
+    .rp-grid,
+    .admin-info-box {
+        grid-template-columns: 1fr;
+    }
+
+    .modal {
+        padding: 12px;
+    }
+
+    .modal-content {
+        width: 100%;
+    }
+
+    .score-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ===== Site header ===== */
+
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: #183b59;
+    color: #ffffff;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+}
+
+.site-header-inner {
+    width: min(1180px, calc(100% - 32px));
+    height: 80px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.site-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.site-brand:hover {
+    text-decoration: none;
+}
+
+.site-logo {
+    display: block !important;
+    width: 48px !important;
+    height: 48px !important;
+    max-width: 48px !important;
+    max-height: 48px !important;
+    object-fit: contain !important;
+    flex-shrink: 0;
+}
+
+.site-brand-title {
+    display: block;
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1.1;
+    color: #ffffff;
+}
+
+.site-brand-subtitle {
+    display: block;
+    margin-top: 3px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.1;
+    color: #cbd5e1;
+}
+
+.site-nav {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-shrink: 0;
+}
+
+.site-nav a {
+    color: #ffffff;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.site-nav a:hover {
+    color: #ef4444;
+    text-decoration: none;
+}
+
+@media (max-width: 700px) {
+    .site-header-inner {
+        height: auto;
+        padding: 14px 0;
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .site-nav {
+        flex-wrap: wrap;
+    }
+}
+/* ===== FIX SITE HEADER FINAL ===== */
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.site-header {
+    width: 100%;
+    height: 96px;
+    background: #183b59;
+    color: #ffffff;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+}
+
+.site-header-inner {
+    width: min(1180px, calc(100% - 32px));
+    height: 96px;
+    margin: 0 auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+}
+
+.site-brand {
+    display: flex !important;
+    align-items: center;
+    gap: 18px;
+    color: #ffffff !important;
+    text-decoration: none !important;
+}
+
+.site-logo {
+    width: 96px !important;
+    height: auto !important;
+    max-width: 96px !important;
+    max-height: 48px !important;
+    object-fit: contain !important;
+    display: block !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+.site-brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.site-brand-title,
+.site-brand-subtitle {
+    color: #ffffff !important;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.site-brand-title {
+    font-size: 16px;
+}
+
+.site-brand-subtitle {
+    font-size: 16px;
+}
+
+.site-nav {
+    display: flex;
+    align-items: center;
+    gap: 42px;
+}
+
+.site-nav a {
+    color: #ffffff !important;
+    font-weight: 800;
+    text-decoration: none !important;
+    font-size: 16px;
+}
+
+.site-nav a:hover,
+.site-nav a.active {
+    color: #ef4444 !important;
+}
+
+.container {
+    width: min(1180px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 40px 0;
+}
+
+.landing-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+}
+
+.landing-header-inner {
+    width: min(1400px, calc(100% - 60px));
+    margin: 0 auto;
+    padding: 28px 0;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.account-link{
+    margin-top:25px;
+    text-align:center;
+    font-size:17px;
+}
+
+.account-link a{
+    color:#2563eb;
+    font-weight:700;
+    text-decoration:none;
+}
+
+.account-link a:hover{
+    text-decoration:underline;
+}
+.rp-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 28px;
+}
+.break-text {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.admin-table td {
+    vertical-align: top;
+}
+
+.admin-table td:first-child {
+    max-width: 260px;
+}
+
+.admin-table td:nth-child(2) {
+    max-width: 220px;
+}
+
+.admin-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.admin-table th,
+.admin-table td {
+    vertical-align: top;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.admin-table th:nth-child(1),
+.admin-table td:nth-child(1) {
+    width: 28%;
+}
+
+.admin-table th:nth-child(2),
+.admin-table td:nth-child(2) {
+    width: 24%;
+}
+
+.admin-table th:nth-child(3),
+.admin-table td:nth-child(3) {
+    width: 16%;
+}
+
+.admin-table th:nth-child(4),
+.admin-table td:nth-child(4) {
+    width: 14%;
+}
+
+.admin-table th:nth-child(5),
+.admin-table td:nth-child(5) {
+    width: 12%;
+}
+
+.admin-table th:nth-child(6),
+.admin-table td:nth-child(6) {
+    width: 16%;
+}
+
+.admin-table th:nth-child(7),
+.admin-table td:nth-child(7) {
+    width: 16%;
+}
+
+.email-cell,
+.organization-cell {
+    display: inline-block;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------- Ссылки под кнопкой входа ---------- */
+
+.admin-login-links{
+    text-align:center;
+    font-size:17px;
+    font-weight:600;
+    margin:18px 0;
+    line-height:1.6;
+}
+
+.forgot-password-link{
+    margin-top:22px;
+    margin-bottom:10px;
+}
+
+.forgot-password-link a{
+    color:#1b4d80;
+    text-decoration:none;
+}
+
+.forgot-password-link a:hover{
+    color:#0f3458;
+    text-decoration:underline;
+}
+
+.auth-links-divider{
+    width:72%;
+    height:1px;
+    margin:8px auto 14px;
+    background:#d8e2ec;
+}
+
+.register-link{
+    color:#506070;
+}
+
+.register-link a{
+    color:#0b8a77;
+    font-weight:700;
+    text-decoration:none;
+}
+
+.register-link a:hover{
+    color:#087262;
+    text-decoration:underline;
+}
+/* Финальная правка страницы входа */
+
+.admin-login-card form {
+    margin-bottom: 22px !important;
+}
+
+.admin-login-links {
+    margin: 8px 0 !important;
+    text-align: center !important;
+    font-size: 17px !important;
+    line-height: 1.4 !important;
+}
+
+.forgot-password-link {
+    margin-top: 12px !important;
+    margin-bottom: 8px !important;
+}
+
+.forgot-password-link a {
+    color: #153f63 !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+}
+
+.register-link {
+    margin-top: 8px !important;
+    color: #4b5563 !important;
+}
+
+.register-link a {
+    color: #0b8a77 !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+}
+
+.auth-links-divider {
+    width: 65%;
+    height: 1px;
+    background: #d8e3ea;
+    margin: 10px auto 10px !important;
+}
+
+.admin-login-card button,
+.admin-login-card a {
+    font-family: inherit !important;
+}
+/* ===== FINAL AUTH PAGE CLEANUP ===== */
+
+.admin-login-card .message:empty {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.admin-login-card form {
+    margin-bottom: 10px !important;
+}
+
+.admin-login-card #submitBtn,
+.admin-login-card button {
+    font-family: Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+}
+
+.admin-login-links {
+    text-align: center !important;
+    font-size: 17px !important;
+    line-height: 1.35 !important;
+    margin: 6px 0 !important;
+}
+
+.forgot-password-link {
+    margin-top: 14px !important;
+    margin-bottom: 8px !important;
+}
+
+.forgot-password-link a {
+    color: #183b59 !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
+}
+
+.forgot-password-link a:hover {
+    color: #0f304b !important;
+    text-decoration: underline !important;
+}
+
+.auth-links-divider {
+    width: 62% !important;
+    height: 1px !important;
+    background: #d8e4ea !important;
+    margin: 12px auto 12px !important;
+}
+
+.register-link {
+    color: #64748b !important;
+    font-weight: 600 !important;
+}
+
+.register-link a {
+    color: #183b59 !important;
+    font-weight: 900 !important;
+    text-decoration: none !important;
+}
+
+.register-link a:hover {
+    color: #ef4444 !important;
+    text-decoration: underline !important;
+}
+
+/* ===== STUDENT LOGIN FINAL STYLE ===== */
+
+.student-login-card .message:empty {
+    display: none !important;
+}
+
+.student-login-card form {
+    margin-bottom: 0 !important;
+}
+
+.student-auth-links {
+    margin-top: 18px !important;
+    text-align: center !important;
+    font-family: Arial, sans-serif !important;
+}
+
+.student-auth-links .forgot-link {
+    display: inline-block !important;
+    color: #183b59 !important;
+    font-size: 17px !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
+    margin-top: 4px !important;
+}
+
+.student-auth-links .forgot-link:hover {
+    color: #ef4444 !important;
+    text-decoration: underline !important;
+}
+
+.student-auth-divider {
+    width: 64% !important;
+    height: 1px !important;
+    background: #d8e4ea !important;
+    margin: 14px auto 14px !important;
+}
+
+.student-auth-links .register-question {
+    margin: 0 !important;
+    color: #64748b !important;
+    font-size: 17px !important;
+    font-weight: 600 !important;
+}
+
+.student-auth-links .register-question a {
+    color: #0f766e !important;
+    font-weight: 900 !important;
+    text-decoration: none !important;
+}
+
+.student-auth-links .register-question a:hover {
+    color: #ef4444 !important;
+    text-decoration: underline !important;
+}
+
+.student-login-card #submitBtn {
+    font-family: Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+}
+/* ===== FORGOT PASSWORD PAGE FINAL STYLE ===== */
+
+.forgot-password-card {
+    max-width: 620px !important;
+    margin: 70px auto !important;
+    padding: 48px !important;
+}
+
+.forgot-password-card h1 {
+    font-size: 44px !important;
+    margin-bottom: 24px !important;
+}
+
+.forgot-password-card p {
+    font-size: 17px !important;
+    line-height: 1.35 !important;
+    margin-bottom: 22px !important;
+}
+
+.forgot-password-card label {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+}
+
+.forgot-password-card input {
+    height: 54px !important;
+    font-size: 16px !important;
+    padding: 14px 16px !important;
+}
+
+.forgot-password-card .primary-btn {
+    margin-top: 28px !important;
+}
+
+.forgot-password-card .message:empty {
+    display: none !important;
+}
+
+.forgot-password-card .message {
+    margin-top: 18px !important;
+}
+
+#newPasswordBlock {
+    margin-top: 24px !important;
+    padding-top: 22px !important;
+    border-top: 1px solid #d8e4ea !important;
+}
+
+#newPasswordBlock button {
+    margin-top: 24px !important;
+}
+/* ===== PRIMARY BUTTON UNIFIED STYLE ===== */
+
+.primary-btn {
+    width: 100% !important;
+    height: 52px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    margin-top: 28px !important;
+    padding: 0 20px !important;
+
+    border: none !important;
+    border-radius: 10px !important;
+
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    color: #ffffff !important;
+
+    font-family: Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    text-align: center !important;
+
+    cursor: pointer !important;
+    transition: 0.2s ease !important;
+}
+
+.primary-btn:hover {
+    opacity: 0.96 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(24, 59, 89, 0.22) !important;
+}
+
+.primary-btn:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+.primary-btn {
+    width: 100% !important;
+    height: 52px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-top: 28px !important;
+    padding: 0 20px !important;
+    border: none !important;
+    border-radius: 10px !important;
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    color: #ffffff !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+    transition: 0.2s ease !important;
+}
+
+.primary-btn:hover {
+    opacity: 0.96 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(24, 59, 89, 0.22) !important;
+}
+/* ===== FORCE SAME BUTTON STYLE FOR LOGIN AND PASSWORD RESET ===== */
+
+.student-login-card .primary-btn,
+.forgot-password-card .primary-btn,
+.forgot-password-card button.primary-btn {
+    width: 100% !important;
+    height: 52px !important;
+    margin-top: 28px !important;
+
+    border: none !important;
+    border-radius: 10px !important;
+
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    color: #ffffff !important;
+
+    font-family: Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    cursor: pointer !important;
+}
+
+.student-login-card .primary-btn:hover,
+.forgot-password-card .primary-btn:hover,
+.forgot-password-card button.primary-btn:hover {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    opacity: 0.96 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(24, 59, 89, 0.22) !important;
+}
+/* ===== ADMIN LOGIN UNIFIED STYLE ===== */
+
+.admin-auth-card .message:empty {
+    display: none !important;
+}
+
+.admin-auth-card form {
+    margin-bottom: 0 !important;
+}
+
+.admin-auth-card .primary-btn {
+    width: 100% !important;
+    height: 52px !important;
+    margin-top: 28px !important;
+
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    color: #ffffff !important;
+
+    border: none !important;
+    border-radius: 10px !important;
+
+    font-family: Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    cursor: pointer !important;
+    transition: 0.2s ease !important;
+}
+
+.admin-auth-card .primary-btn:hover {
+    opacity: 0.96 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(24, 59, 89, 0.22) !important;
+}
+
+.admin-auth-links {
+    margin-top: 22px !important;
+    padding-top: 16px !important;
+    border-top: 1px solid #d8e4ea !important;
+
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+
+    font-size: 16px !important;
+    font-weight: 700 !important;
+}
+
+.admin-auth-links a {
+    color: #183b59 !important;
+    text-decoration: none !important;
+}
+
+.admin-auth-links a:hover {
+    color: #ef4444 !important;
+    text-decoration: underline !important;
+}
+
+.admin-auth-links span {
+    color: #94a3b8 !important;
+}
+/* ===== ADMIN PANEL UNIFIED STYLE ===== */
+
+.admin-btn,
+.admin-action-btn {
+    font-family: Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    border-radius: 10px !important;
+    transition: 0.2s ease !important;
+}
+
+/* Верхние кнопки админки */
+.admin-btn.primary {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+.admin-btn.secondary {
+    background: #ffffff !important;
+    color: #183b59 !important;
+    border: 1px solid #d8e4ea !important;
+}
+
+.admin-btn.secondary:hover {
+    background: #f8fafc !important;
+    color: #ef4444 !important;
+    border-color: #ef4444 !important;
+}
+
+/* Кнопки действий в таблице */
+.admin-action-btn {
+    width: 160px !important;
+    min-height: 46px !important;
+    padding: 10px 14px !important;
+
+    background: #183b59 !important;
+    color: #ffffff !important;
+    border: none !important;
+
+    line-height: 1.2 !important;
+    box-shadow: none !important;
+}
+
+/* Hover для всех кнопок */
+.admin-btn.primary:hover,
+.admin-action-btn:hover {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    opacity: 0.96 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(24, 59, 89, 0.22) !important;
+    text-decoration: none !important;
+}
+
+/* Чтобы кнопки "Проверить практику" и "Сбросить пароль" не были бирюзовыми */
+.admin-table .admin-action-btn {
+    background: #183b59 !important;
+    color: #ffffff !important;
+}
+
+/* Кнопка сброса пароля чуть отличается, но в той же палитре */
+.admin-table .admin-action-btn + .admin-action-btn,
+.admin-table button[onclick^="allowPasswordReset"] {
+    background: #8b3a4a !important;
+    color: #ffffff !important;
+}
+
+.admin-table button[onclick^="allowPasswordReset"]:hover {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+}
+
+.admin-action-btn {
+    width: 150px !important;
+    min-height: 44px !important;
+    padding: 10px 14px !important;
+
+    background: #183b59 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 10px !important;
+
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+
+    line-height: 1.25 !important;
+    text-align: center !important;
+
+    transition: .2s ease;
+}
+
+.admin-action-btn:hover{
+    transform: translateY(-2px);
+    background: linear-gradient(90deg,#183b59,#ef4444) !important;
+}
+
+/* ===== FINAL UI POLISH BEFORE DEFENSE ===== */
+
+/* Единый синий цвет для ссылок вход/регистрация */
+.student-auth-links .register-question a,
+.account-link a,
+.admin-auth-links a,
+.admin-login-links a {
+    color: #2563eb !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
+}
+
+.student-auth-links .register-question a:hover,
+.account-link a:hover,
+.admin-auth-links a:hover,
+.admin-login-links a:hover {
+    color: #ef4444 !important;
+    text-decoration: underline !important;
+}
+
+/* Красивые бейджи статусов в админ-панели */
+.status {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+
+    min-width: 105px !important;
+    min-height: 34px !important;
+    padding: 8px 14px !important;
+
+    border-radius: 999px !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    text-align: center !important;
+    white-space: normal !important;
+}
+
+/* Пройден / Проверена */
+.status.passed {
+    background: #dcfce7 !important;
+    color: #166534 !important;
+}
+
+.status.passed::before {
+    content: "✓";
+    font-weight: 900;
+}
+
+/* Не пройден */
+.status.failed {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+}
+
+.status.failed::before {
+    content: "✕";
+    font-weight: 900;
+}
+
+/* Не сдан / ожидает проверки / прослушал курс */
+.status.waiting {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+}
+
+.status.waiting::before {
+    content: "⌛";
+    font-size: 13px;
+}
+
+/* Чтобы итоговые бейджи не были огромными */
+.admin-table td:nth-child(5) .status {
+    min-width: 100px !important;
+    padding: 8px 12px !important;
+}
+
+/* Кнопки в таблице админки аккуратнее */
+.admin-action-btn {
+    width: 150px !important;
+    min-height: 42px !important;
+    padding: 9px 12px !important;
+
+    background: #183b59 !important;
+    color: #ffffff !important;
+
+    border: none !important;
+    border-radius: 10px !important;
+
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 750 !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+}
+
+/* Сброс пароля — отдельный бордовый цвет */
+.admin-table button[onclick^="allowPasswordReset"] {
+    background: #8b3a4a !important;
+    color: #ffffff !important;
+}
+
+.admin-action-btn:hover,
+.admin-table button[onclick^="allowPasswordReset"]:hover {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(24, 59, 89, 0.22) !important;
+}
+
+/* Верхние кнопки админки */
+.admin-btn,
+.admin-btn.primary,
+.admin-btn.secondary {
+    font-family: Arial, sans-serif !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    border-radius: 10px !important;
+}
+
+.admin-btn.primary {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+.admin-btn.secondary {
+    background: #ffffff !important;
+    color: #183b59 !important;
+    border: 1px solid #d8e4ea !important;
+}
+
+.admin-btn.secondary:hover {
+    color: #ef4444 !important;
+    border-color: #ef4444 !important;
+}
+
+/* Убрать нижнюю строку в админ-входе, если она есть */
+.admin-auth-links {
+    display: none !important;
+}
+
+/* ===== FINAL ADMIN TABLE CLEAN VERSION ===== */
+
+/* Таблица шире */
+.container {
+    width: min(1400px, calc(100% - 32px)) !important;
+}
+
+.admin-card {
+    width: 100% !important;
+    padding: 36px !important;
+}
+
+.admin-table {
+    min-width: 1280px !important;
+    table-layout: fixed !important;
+}
+
+/* Более нормальные ширины колонок */
+.admin-table th:nth-child(1),
+.admin-table td:nth-child(1) {
+    width: 22% !important;
+}
+
+.admin-table th:nth-child(2),
+.admin-table td:nth-child(2) {
+    width: 14% !important;
+}
+
+.admin-table th:nth-child(3),
+.admin-table td:nth-child(3) {
+    width: 14% !important;
+}
+
+.admin-table th:nth-child(4),
+.admin-table td:nth-child(4) {
+    width: 15% !important;
+}
+
+.admin-table th:nth-child(5),
+.admin-table td:nth-child(5) {
+    width: 13% !important;
+}
+
+.admin-table th:nth-child(6),
+.admin-table td:nth-child(6) {
+    width: 14% !important;
+}
+
+.admin-table th:nth-child(7),
+.admin-table td:nth-child(7) {
+    width: 14% !important;
+    min-width: 170px !important;
+}
+
+/* Красивые статусы без смайликов */
+.status {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    min-width: 120px !important;
+    min-height: 34px !important;
+    padding: 8px 14px !important;
+
+    border-radius: 999px !important;
+
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    text-align: center !important;
+
+    white-space: normal !important;
+}
+
+/* УБИРАЕМ ВСЕ ИКОНКИ/СМАЙЛИКИ */
+.status::before,
+.status.passed::before,
+.status.failed::before,
+.status.waiting::before {
+    content: none !important;
+}
+
+/* Цвета статусов */
+.status.passed {
+    background: #dcfce7 !important;
+    color: #166534 !important;
+}
+
+.status.failed {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+}
+
+.status.waiting {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+}
+
+/* Практика и итог — аккуратные бейджи */
+.admin-table td:nth-child(4) .status,
+.admin-table td:nth-child(5) .status {
+    min-width: 125px !important;
+    max-width: 145px !important;
+}
+
+/* Единый шрифт для всех кнопок и статусов */
+.admin-btn,
+.admin-action-btn,
+.status {
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+}
+
+/* Кнопки действий */
+.admin-action-btn {
+    width: 155px !important;
+    min-height: 44px !important;
+    padding: 10px 14px !important;
+
+    background: #183b59 !important;
+    color: #ffffff !important;
+
+    border: none !important;
+    border-radius: 10px !important;
+
+    line-height: 1.2 !important;
+    text-align: center !important;
+    white-space: normal !important;
+
+    box-shadow: none !important;
+}
+
+/* Кнопка сброса пароля */
+.admin-table button[onclick^="allowPasswordReset"] {
+    background: #8b3a4a !important;
+    color: #ffffff !important;
+}
+
+/* Наведение */
+.admin-action-btn:hover,
+.admin-table button[onclick^="allowPasswordReset"]:hover {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(24, 59, 89, 0.22) !important;
+}
+
+/* Верхние кнопки */
+.admin-btn {
+    min-height: 48px !important;
+    padding: 12px 22px !important;
+    border-radius: 10px !important;
+    font-size: 15px !important;
+}
+
+.admin-btn.primary {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+.admin-btn.secondary {
+    background: #ffffff !important;
+    color: #183b59 !important;
+    border: 1px solid #d8e4ea !important;
+}
+
+.admin-btn.secondary:hover {
+    color: #ef4444 !important;
+    border-color: #ef4444 !important;
+}
+
+/* Чтобы текст в таблице не ломался некрасиво */
+.admin-table td {
+    font-size: 15px !important;
+    line-height: 1.35 !important;
+}
+
+.admin-table th {
+    font-size: 15px !important;
+}
+/* ===== FIX WIDTH: ADMIN WIDE, OTHER PAGES NORMAL ===== */
+
+/* Обычные страницы снова нормальной ширины */
+.container {
+    width: min(1180px, calc(100% - 32px)) !important;
+}
+
+/* Только админ-панель шире */
+body:has(.admin-card) .container {
+    width: min(1400px, calc(100% - 32px)) !important;
+}
+
+/* Регистрация выглядит компактнее */
+body:has(#registerForm) .container {
+    width: min(1180px, calc(100% - 32px)) !important;
+}
+
+/* Форма регистрации не должна растягиваться слишком огромно */
+body:has(#registerForm) .card {
+    max-width: 1180px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* ===== FIX RESULT AND DASHBOARD HEADERS ===== */
+
+.rp-hero.passed,
+.rp-hero.failed,
+.rp-hero.waiting,
+.dashboard-hero,
+.dashboard-hero.passed,
+.student-dashboard-hero,
+.student-dashboard-hero.passed,
+.cabinet-hero,
+.cabinet-hero.passed {
+    background: linear-gradient(90deg, #183b59, #ef4444) !important;
+    color: #ffffff !important;
+}
+
+.rp-hero.passed *,
+.rp-hero.failed *,
+.rp-hero.waiting *,
+.dashboard-hero *,
+.student-dashboard-hero *,
+.cabinet-hero * {
+    color: #ffffff !important;
+}
+/* Исправление больших пропусков в админской таблице */
+
+.admin-card {
+    min-height: auto !important;
+    height: auto !important;
+}
+
+.admin-table-wrap {
+    min-height: auto !important;
+    height: auto !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+}
+
+.admin-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: auto !important;
+}
+
+.admin-table thead,
+.admin-table tbody,
+.admin-table tr,
+.admin-table th,
+.admin-table td {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 18px 20px !important;
+    vertical-align: top !important;
+}
+
+.admin-table tbody tr {
+    height: auto !important;
+}
+
+.admin-table tbody td {
+    height: auto !important;
+    min-height: 0 !important;
+}
+
+.admin-table .status {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: auto !important;
+}
+/* ===== FINAL FIX ADMIN TABLE HEIGHT AND GAPS ===== */
+
+body:has(.admin-card) .container {
+    width: min(1400px, calc(100% - 32px)) !important;
+    padding-top: 70px !important;
+    padding-bottom: 40px !important;
+}
+
+.admin-card {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 36px !important;
+}
+
+.admin-table-wrap {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+
+    border: 1px solid var(--line) !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+}
+
+.admin-table {
+    width: 100% !important;
+    min-width: 1280px !important;
+
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+    background: #ffffff !important;
+}
+
+.admin-table thead {
+    display: table-header-group !important;
+    height: auto !important;
+    min-height: 0 !important;
+}
+
+.admin-table tbody {
+    display: table-row-group !important;
+    height: auto !important;
+    min-height: 0 !important;
+}
+
+.admin-table tr {
+    display: table-row !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
+
+.admin-table th,
+.admin-table td {
+    display: table-cell !important;
+
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+
+    padding: 18px 20px !important;
+    vertical-align: top !important;
+
+    line-height: 1.35 !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+}
+
+.admin-table th {
+    font-size: 15px !important;
+    font-weight: 900 !important;
+}
+
+.admin-table td {
+    font-size: 15px !important;
+}
+
+/* ширина колонок админки */
+.admin-table th:nth-child(1),
+.admin-table td:nth-child(1) {
+    width: 20% !important;
+}
+
+.admin-table th:nth-child(2),
+.admin-table td:nth-child(2) {
+    width: 12% !important;
+}
+
+.admin-table th:nth-child(3),
+.admin-table td:nth-child(3) {
+    width: 14% !important;
+}
+
+.admin-table th:nth-child(4),
+.admin-table td:nth-child(4) {
+    width: 14% !important;
+}
+
+.admin-table th:nth-child(5),
+.admin-table td:nth-child(5) {
+    width: 13% !important;
+}
+
+.admin-table th:nth-child(6),
+.admin-table td:nth-child(6) {
+    width: 12% !important;
+}
+
+.admin-table th:nth-child(7),
+.admin-table td:nth-child(7) {
+    width: 13% !important;
+    min-width: 160px !important;
+    text-align: center !important;
+}
+
+.admin-table th:nth-child(8),
+.admin-table td:nth-child(8) {
+    width: 14% !important;
+}
+
+/* чтобы email и организация не растягивали строки */
+.email-cell,
+.organization-cell {
+    display: inline-block !important;
+    max-width: 220px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+/* статусы компактно */
+.admin-table .status {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: auto !important;
+    min-width: 115px !important;
+    min-height: 34px !important;
+    max-height: none !important;
+
+    padding: 8px 12px !important;
+    line-height: 1.15 !important;
+    white-space: normal !important;
+}
+
+/* кнопки действий компактно */
+.admin-action-btn {
+    width: 155px !important;
+    min-height: 42px !important;
+    height: auto !important;
+
+    margin-top: 0 !important;
+    padding: 10px 12px !important;
+
+    line-height: 1.2 !important;
+    white-space: normal !important;
+}
+
+/* убираем лишнее пространство после таблицы */
+.admin-card::after,
+.admin-table-wrap::after,
+.admin-table::after,
+.admin-table tbody::after {
+    content: none !important;
+    display: none !important;
+}
