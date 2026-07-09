@@ -2,7 +2,147 @@
 
 Веб-приложение на PHP для регистрации участников, прохождения теоретического теста, выполнения практического задания BPMN/BPA, администрирования заявок и генерации сертификатов.
 
-## Быстрый запуск на новом Windows-компьютере
+## Быстрый запуск через Docker
+
+Это самый простой вариант для передачи проекта другому человеку. На компьютере нужен только Docker Desktop.
+
+### 1. Установить Docker Desktop
+
+Скачайте и установите Docker Desktop:
+
+```text
+https://www.docker.com/products/docker-desktop/
+```
+
+После установки откройте Docker Desktop и дождитесь, пока он полностью запустится.
+
+Проверьте Docker в PowerShell:
+
+```powershell
+docker --version
+docker compose version
+```
+
+Если Docker Desktop показывает ошибку `WSL not installed`, откройте PowerShell от имени администратора и выполните:
+
+```powershell
+wsl --install
+```
+
+После установки WSL перезагрузите компьютер, откройте Docker Desktop и проверьте:
+
+```powershell
+wsl --status
+wsl --list --verbose
+```
+
+### 2. Скачать проект
+
+```powershell
+git clone <URL_РЕПОЗИТОРИЯ>
+cd bpmn-bpa-php
+```
+
+Если проект передан архивом, распакуйте его и откройте папку проекта в PowerShell.
+
+### 3. Запустить проект
+
+Из корня проекта выполните:
+
+```powershell
+docker compose up --build
+```
+
+При первом запуске Docker скачает PHP-образ, установит Composer-зависимости и создаст SQLite-базу `database/database.sqlite`, если ее еще нет.
+
+Откройте в браузере:
+
+```text
+http://localhost:8000
+```
+
+Админка:
+
+```text
+http://localhost:8000/public/admin_login.php
+```
+
+Данные входа администратора:
+
+```text
+Логин: admin
+Пароль: BpmnAdmin_2026!Secure
+```
+
+Остановить сервер можно через `Ctrl+C` в PowerShell. Следующий запуск:
+
+```powershell
+docker compose up
+```
+
+Если нужно полностью пересобрать контейнер:
+
+```powershell
+docker compose build --no-cache --progress=plain
+docker compose up
+```
+
+### Что делает Docker
+
+Docker-контейнер сам:
+
+- запускает PHP 8.2;
+- включает нужные расширения `pdo_sqlite` и `zip`;
+- устанавливает Composer-зависимости в `vendor/`;
+- создает `database/database.sqlite` из `database/init.sql`, если базы еще нет;
+- запускает сайт на порту `8000`.
+
+В Docker не собирается отдельное расширение `sqlite3`, потому что проект использует SQLite через `PDO`.
+
+### Проверка Docker-запуска
+
+Когда сервер запущен, в другом PowerShell можно проверить контейнер:
+
+```powershell
+docker ps
+```
+
+В списке должен быть контейнер проекта со статусом `Up` и портом:
+
+```text
+0.0.0.0:8000->8000
+```
+
+Проверить статус Compose:
+
+```powershell
+docker compose ps
+```
+
+### Частые проблемы Docker
+
+Если сборка падает на строке `failed to solve`, запустите подробную сборку:
+
+```powershell
+docker compose build --no-cache --progress=plain
+```
+
+Смотреть нужно не только последнюю строку, а 20-30 строк выше `failed to solve`.
+
+Если ошибка связана с портом `8000`, значит он уже занят. Остановите старый сервер или контейнер:
+
+```powershell
+docker compose down
+```
+
+Если нужно удалить контейнеры проекта и запустить заново:
+
+```powershell
+docker compose down
+docker compose up --build
+```
+
+## Запуск без Docker на Windows
 
 Эта инструкция рассчитана на обычный запуск через XAMPP и PowerShell.
 
@@ -104,7 +244,7 @@ sqlite3 database/database.sqlite ".read database/init.sql"
 Вариант 2, без установки SQLite CLI, через PHP:
 
 ```powershell
-php -r "$db=new PDO('sqlite:database/database.sqlite'); $sql=file_get_contents('database/init.sql'); $db->exec($sql); echo 'Database created'.PHP_EOL;"
+php --% -r "$db=new PDO('sqlite:database/database.sqlite'); $sql=file_get_contents('database/init.sql'); $db->exec($sql); echo 'Database created'.PHP_EOL;"
 ```
 
 Проверьте, что файл появился:
@@ -227,7 +367,7 @@ composer install
 Создайте файл базы:
 
 ```powershell
-php -r "$db=new PDO('sqlite:database/database.sqlite'); $sql=file_get_contents('database/init.sql'); $db->exec($sql); echo 'Database created'.PHP_EOL;"
+php --% -r "$db=new PDO('sqlite:database/database.sqlite'); $sql=file_get_contents('database/init.sql'); $db->exec($sql); echo 'Database created'.PHP_EOL;"
 ```
 
 ### Письма не отправляются

@@ -1,0 +1,10 @@
+.git
+.idea
+.vscode
+database/database.sqlite
+database/certificates
+logs
+*.log
+vendor
+desktop.ini
+Thumbs.db
