@@ -3,6 +3,15 @@
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/';
 $decodedPath = urldecode($path);
 
+// Публичная проверка сертификата по QR-коду: /certificate/<токен>
+if (preg_match('#^/certificate/([a-zA-Z0-9]+)$#', $decodedPath, $matches)) {
+    $_GET['token'] = $matches[1];
+    $_SERVER['SCRIPT_NAME'] = '/public/verify.php';
+    $_SERVER['SCRIPT_FILENAME'] = __DIR__ . '/public/verify.php';
+    require __DIR__ . '/public/verify.php';
+    return true;
+}
+
 $routes = [
     '/api/' => __DIR__ . '/api/',
     '/assets/' => __DIR__ . '/assets/',

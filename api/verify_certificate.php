@@ -3,13 +3,13 @@
 /**
  * Публичный эндпойнт проверки подлинности сертификата.
  *
- * Используется страницей проверки на govtec.kz (или другом сайте):
- * govtec.kz/certificate/<token> -> запрашивает
- * https://<домен>/api/verify_certificate.php?token=<token>
+ * GET /api/verify_certificate.php?token=<токен из QR-кода>
  *
  * Не требует авторизации. Отдаёт только неконфиденциальные данные
  * (ФИО, курс, дату, уровень, номер сертификата) — без email, телефона,
  * организации и прочих персональных данных участника.
+ * Ищет и среди новых сертификатов (участники системы), и среди
+ * импортированных исторических (LegacyCertificate).
  */
 
 require_once __DIR__ . '/../config/db.php';
@@ -46,41 +46,16 @@ if ($token === '' || !preg_match('/^[a-zA-Z0-9]{6,32}$/', $token)) {
 try {
     $pdo = getDb();
 
-    $stmt = $pdo->prepare("
-        SELECT fullName, certificateNumber, certificateGeneratedAt,
-               practicalGradedAt, percent, practicalScoreTotal
-        FROM Participant
-        WHERE certificateToken = :token
-        LIMIT 1
-    ");
-    $stmt->execute([':token' => $token]);
+    $certificate = findCertificateByToken($pdo, $token);
 
-    $participant = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$participant || empty($participant['certificateNumber'])) {
+    if (!$certificate) {
         respondJson([
             'valid' => false,
             'message' => 'Сертификат с таким номером не найден'
         ], 404);
     }
 
-    $score = certificateOverallScore($participant);
-    $level = certificateLevel($score['percent']);
-
-    $completionDate = $participant['practicalGradedAt']
-        ? date('d.m.Y', strtotime($participant['practicalGradedAt']))
-        : null;
-
-    respondJson([
-        'valid' => true,
-        'certificateNumber' => $participant['certificateNumber'],
-        'fullName' => $participant['fullName'],
-        'course' => CERTIFICATE_COURSE_NAME,
-        'completionDate' => $completionDate,
-        'level' => $level['text'],
-        'totalScore' => $score['total'],
-        'percent' => $score['percent'],
-    ]);
+    respondJson(array_merge(['valid' => true], $certificate));
 } catch (Throwable $e) {
     logError($e, 'api/verify_certificate.php');
 

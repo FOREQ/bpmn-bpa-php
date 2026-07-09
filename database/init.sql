@@ -69,3 +69,20 @@ CREATE TABLE IF NOT EXISTS Participant (
 CREATE INDEX IF NOT EXISTS idx_participant_email ON Participant(email);
 CREATE INDEX IF NOT EXISTS idx_participant_session ON Participant(sessionId);
 CREATE INDEX IF NOT EXISTS idx_participant_status ON Participant(accountStatus);
+
+-- Исторические сертификаты, выданные до запуска этой системы
+-- (импортируются из Excel/CSV скриптом database/import_legacy.php)
+CREATE TABLE IF NOT EXISTS LegacyCertificate (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    certificateNumber TEXT UNIQUE,
+    certificateToken TEXT UNIQUE,
+    fullName TEXT NOT NULL,
+    course TEXT,
+    completionDate TEXT,
+    level TEXT,
+    extra TEXT,            -- JSON: колонки исходного файла, не попавшие в основные поля
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_legacy_token ON LegacyCertificate(certificateToken);
+CREATE INDEX IF NOT EXISTS idx_legacy_number ON LegacyCertificate(certificateNumber);
