@@ -1,0 +1,9 @@
+# Правила для запуска через Apache/XAMPP (в Docker-проде их роль выполняет router.php)
+
+RewriteEngine On
+
+# Публичная проверка сертификата по QR-коду: /certificate/<токен>
+RewriteRule ^certificate/([a-zA-Z0-9]+)$ public/verify.php?token=$1 [L,QSA]
+
+# Запрет прямого доступа к служебным папкам
+RewriteRule ^(database|logs|config|lib|vendor|docker)($|/) - [F]

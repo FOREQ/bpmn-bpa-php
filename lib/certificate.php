@@ -3,7 +3,13 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 
 const CERTIFICATE_COURSE_NAME = 'Практическое применение методики реинжиниринга бизнес-процессов государственных органов';
-const CERTIFICATE_VERIFY_URL = 'https://govtec.kz/certificate/';
+
+function certificateVerifyBaseUrl(): string
+{
+    $config = require __DIR__ . '/../config/app.php';
+
+    return $config['verify_base_url'];
+}
 
 function certificatesDir(): string
 {
@@ -261,7 +267,7 @@ function generateCertificate(PDO $pdo, array $participant): array
         : date('d.m.Y');
 
     $filePath = certificateFilePath($certificateToken);
-    $verifyUrl = CERTIFICATE_VERIFY_URL . $certificateToken;
+    $verifyUrl = certificateVerifyBaseUrl() . $certificateToken;
 
     renderCertificatePdf(
         $filePath,
@@ -299,4 +305,87 @@ function generateCertificate(PDO $pdo, array $participant): array
         'levelLetter' => $level['letter'],
         'completionDate' => $completionDate,
     ];
+}
+
+function ensureLegacyCertificateTable(PDO $pdo): void
+{
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS LegacyCertificate (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            certificateNumber TEXT UNIQUE,
+            certificateToken TEXT UNIQUE,
+            fullName TEXT NOT NULL,
+            course TEXT,
+            completionDate TEXT,
+            level TEXT,
+            extra TEXT,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ");
+}
+
+/**
+ * Ищет сертификат по токену из QR-кода: сначала среди участников
+ * текущей системы, затем среди импортированных исторических
+ * сертификатов. Возвращает единый набор публичных полей
+ * (без email/телефона/организации) либо null.
+ */
+function findCertificateByToken(PDO $pdo, string $token): ?array
+{
+    ensureCertificateColumns($pdo);
+    ensureLegacyCertificateTable($pdo);
+
+    $stmt = $pdo->prepare("
+        SELECT fullName, certificateNumber, practicalGradedAt,
+               percent, practicalScoreTotal
+        FROM Participant
+        WHERE certificateToken = :token
+        LIMIT 1
+    ");
+    $stmt->execute([':token' => $token]);
+
+    $participant = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($participant && !empty($participant['certificateNumber'])) {
+        $score = certificateOverallScore($participant);
+        $level = certificateLevel($score['percent']);
+
+        return [
+            'source' => 'current',
+            'certificateNumber' => $participant['certificateNumber'],
+            'fullName' => $participant['fullName'],
+            'course' => CERTIFICATE_COURSE_NAME,
+            'completionDate' => $participant['practicalGradedAt']
+                ? date('d.m.Y', strtotime($participant['practicalGradedAt']))
+                : null,
+            'level' => $level['text'],
+            'totalScore' => $score['total'],
+            'percent' => $score['percent'],
+        ];
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT fullName, certificateNumber, course, completionDate, level
+        FROM LegacyCertificate
+        WHERE certificateToken = :token
+        LIMIT 1
+    ");
+    $stmt->execute([':token' => $token]);
+
+    $legacy = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($legacy) {
+        return [
+            'source' => 'legacy',
+            'certificateNumber' => $legacy['certificateNumber'],
+            'fullName' => $legacy['fullName'],
+            'course' => $legacy['course'] ?: CERTIFICATE_COURSE_NAME,
+            'completionDate' => $legacy['completionDate'],
+            'level' => $legacy['level'],
+            'totalScore' => null,
+            'percent' => null,
+        ];
+    }
+
+    return null;
 }
