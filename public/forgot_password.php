@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/../lib/i18n.php'; ?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -32,7 +33,7 @@
     <header class="site-header">
     <div class="site-header-inner">
         <a href="index.php" class="site-brand">
-            <img src="../assets/logo.svg/logo.svg.png" alt="DGSC" class="site-logo">
+            <img src="../assets/logo.svg/logo-transparent.png" alt="DGSC" class="site-logo">
 
             <span class="site-brand-text">
                 <span class="site-brand-title">Центр Поддержки</span>

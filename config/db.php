@@ -1,5 +1,6 @@
 <?php
 
+require_once __DIR__ . '/../lib/i18n.php';
 require_once __DIR__ . '/../lib/db_compat.php';
 
 function getDb(): PDO

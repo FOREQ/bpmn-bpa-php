@@ -22,9 +22,16 @@ require_once __DIR__ . '/../lib/security.php';
 
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
+            font-family: "Segoe UI", "Noto Sans", Arial, sans-serif;
             color: white;
             background: #0f172a;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
         }
 
         .hero {
@@ -61,6 +68,8 @@ require_once __DIR__ . '/../lib/security.php';
             display: flex;
             align-items: center;
             gap: 14px;
+            margin-right: 32px;
+            flex-shrink: 0;
             color: white;
             text-decoration: none;
         }
@@ -69,6 +78,7 @@ require_once __DIR__ . '/../lib/security.php';
             width: 110px;
             height: auto;
             display: block;
+            mix-blend-mode: normal;
         }
 
         .site-brand-text {
@@ -80,7 +90,7 @@ require_once __DIR__ . '/../lib/security.php';
         .site-brand-title,
         .site-brand-subtitle {
             color: white;
-            font-weight: 900;
+            font-weight: 800;
             font-size: 16px;
         }
 
@@ -93,7 +103,7 @@ require_once __DIR__ . '/../lib/security.php';
         .site-nav a {
             color: white;
             text-decoration: none;
-            font-weight: 900;
+            font-weight: 800;
         }
 
         .site-nav a:hover,
@@ -108,18 +118,24 @@ require_once __DIR__ . '/../lib/security.php';
             position: relative;
             z-index: 2;
             display: grid;
-            grid-template-columns: 1.08fr 0.92fr;
-            gap: 48px;
+            grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+            gap: clamp(24px, 4vw, 48px);
             align-items: center;
             padding: 40px 0 70px;
         }
 
+        .content,
+        .panel {
+            min-width: 0;
+        }
+
         .content h1 {
             margin: 0;
-            font-size: 52px;
-            line-height: 1.1;
-            font-weight: 900;
-            max-width: 820px;
+            font-size: clamp(38px, 4.2vw, 52px);
+            line-height: 1.08;
+            font-weight: 800;
+            max-width: 100%;
+            overflow-wrap: anywhere;
         }
 
         .content p {
@@ -143,7 +159,7 @@ require_once __DIR__ . '/../lib/security.php';
             justify-content: center;
             padding: 16px 26px;
             border-radius: 10px;
-            font-weight: 900;
+            font-weight: 800;
             text-decoration: none;
             transition: 0.2s;
         }
@@ -200,7 +216,7 @@ require_once __DIR__ . '/../lib/security.php';
 
         .step {
             display: grid;
-            grid-template-columns: 54px 1fr;
+            grid-template-columns: 54px minmax(0, 1fr);
             gap: 16px;
             border: 1px solid rgba(255,255,255,0.1);
             background: rgba(255,255,255,0.05);
@@ -217,7 +233,7 @@ require_once __DIR__ . '/../lib/security.php';
             border-radius: 12px;
             background: linear-gradient(135deg, var(--blue), var(--red));
             font-size: 24px;
-            font-weight: 900;
+            font-weight: 800;
         }
 
         .step small {
@@ -231,6 +247,7 @@ require_once __DIR__ . '/../lib/security.php';
             display: block;
             margin-top: 6px;
             font-size: 18px;
+            overflow-wrap: anywhere;
         }
 
         .step span {
@@ -238,6 +255,34 @@ require_once __DIR__ . '/../lib/security.php';
             margin-top: 6px;
             color: #cbd5e1;
             line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        @media (max-width: 1100px) and (min-width: 901px) {
+            .content h1 {
+                font-size: clamp(36px, 4.15vw, 44px);
+            }
+
+            .content p {
+                font-size: 18px;
+                line-height: 1.6;
+            }
+
+            .step {
+                grid-template-columns: 44px minmax(0, 1fr);
+                gap: 12px;
+                padding: 14px;
+            }
+
+            .step-icon {
+                width: 44px;
+                height: 44px;
+                font-size: 21px;
+            }
+
+            .step b {
+                font-size: 16px;
+            }
         }
 
         @media (max-width: 900px) {
@@ -246,7 +291,7 @@ require_once __DIR__ . '/../lib/security.php';
             }
 
             .content h1 {
-                font-size: 36px;
+                font-size: clamp(32px, 8vw, 40px);
             }
 
             .content p {
@@ -259,9 +304,17 @@ require_once __DIR__ . '/../lib/security.php';
                 align-items: flex-start;
             }
 
+            .site-brand {
+                margin-right: 0;
+            }
+
             .site-nav {
                 flex-wrap: wrap;
                 gap: 16px;
+            }
+
+            .landing-header .i18n-switcher {
+                margin-left: 0 !important;
             }
         }
     </style>
@@ -273,7 +326,7 @@ require_once __DIR__ . '/../lib/security.php';
 
     <header class="landing-header">
         <a href="index.php" class="site-brand">
-            <img src="../assets/logo.svg/logo.svg.png" alt="DGSC" class="site-logo">
+            <img src="../assets/logo.svg/logo-transparent.png" alt="DGSC" class="site-logo">
 
             <span class="site-brand-text">
                 <span class="site-brand-title">Центр Поддержки</span>

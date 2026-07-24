@@ -1,5 +1,6 @@
 :root {
     color-scheme: light;
+    --font-ui: "Segoe UI", "Noto Sans", Arial, sans-serif;
 
     --ink: #183b59;
     --muted: #64748b;
@@ -31,7 +32,14 @@ body {
         ),
         #f7fbfc;
     color: var(--ink);
-    font-family: Arial, sans-serif;
+    font-family: var(--font-ui);
+}
+
+button,
+input,
+textarea,
+select {
+    font-family: var(--font-ui);
 }
 
 .container {
@@ -52,8 +60,10 @@ body {
 h1 {
     margin-top: 0;
     font-size: 48px;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--ink);
+    max-width: 100%;
+    overflow-wrap: anywhere;
 }
 
 h2,
@@ -1083,6 +1093,7 @@ body {
     display: block !important;
     border: none !important;
     background: transparent !important;
+    mix-blend-mode: normal;
 }
 
 .site-brand-text {
@@ -2367,4 +2378,34 @@ body:has(.admin-card) .container {
 .admin-table tbody::after {
     content: none !important;
     display: none !important;
+}
+
+@media (max-width: 900px) {
+    .site-header {
+        height: auto;
+    }
+
+    .site-header-inner {
+        height: auto;
+        min-height: 96px;
+        padding: 14px 0;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .site-nav {
+        gap: 18px;
+        flex-wrap: wrap;
+    }
+
+    .site-header-inner .i18n-switcher {
+        margin-left: 0 !important;
+    }
+}
+
+@media (max-width: 650px) {
+    .site-header-inner {
+        align-items: flex-start;
+        flex-direction: column;
+    }
 }

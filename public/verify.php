@@ -128,7 +128,7 @@ if ($token !== '' && preg_match('/^[a-zA-Z0-9]{6,32}$/', $token)) {
 <header class="site-header">
     <div class="site-header-inner">
         <a href="<?= htmlspecialchars($publicBase) ?>index.php" class="site-brand">
-            <img src="<?= htmlspecialchars($assetsBase) ?>logo.svg/logo.svg.png" alt="DGSC" class="site-logo">
+            <img src="<?= htmlspecialchars($assetsBase) ?>logo.svg/logo-transparent.png" alt="DGSC" class="site-logo">
 
             <span class="site-brand-text">
                 <span class="site-brand-title">Центр Поддержки</span>
