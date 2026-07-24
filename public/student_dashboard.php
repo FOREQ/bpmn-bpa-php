@@ -57,6 +57,7 @@ if ($tempPasswordExpiresAt === false || time() > $tempPasswordExpiresAt) {
 }
 
 $courseTitle = 'Практическое применение методики реинжиниринга бизнес-процессов государственных органов';
+$activeNav = 'login';
 
 $sessionId = $participant['sessionId'];
 
@@ -116,219 +117,202 @@ function certificateLabel(int $overallTotal, bool $practicalGraded): string
 <head>
     <meta charset="UTF-8">
     <title>Личный кабинет участника</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@700;800&display=swap">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header class="site-header">
-    <div class="site-header-inner">
-        <a href="index.php" class="site-brand">
-            <img src="../assets/logo.svg/logo.svg.png" alt="DGSC" class="site-logo">
+<?php require __DIR__ . '/_header.php'; ?>
 
-            <span class="site-brand-text">
-                <span class="site-brand-title">Центр Поддержки</span>
-                <span class="site-brand-subtitle">Цифрового Правительства</span>
-            </span>
-        </a>
-
-        <nav class="site-nav">
-            <a href="index.php">Главная</a>
-            <a href="register.php">Регистрация</a>
-            <a href="student_login.php" class="active">Войти</a>
-            <a href="admin_login.php">Админ</a>
-        </nav>
+<section style="position: relative; overflow: hidden;">
+    <div class="decor-hex" style="top: 130px; right: calc(50% - 590px); width: 56px; height: 49px;">
+        <div class="decor-hex-outer"></div>
+        <div class="decor-hex-inner"></div>
     </div>
-</header>
+    <div class="decor-dots" style="bottom: 40px; left: calc(50% - 590px); width: 48px; height: 48px;"></div>
 
-<div class="container">
-    <div class="top-nav">
-        <a href="index.php">← На главную</a>
-    </div>
-
-    <h1>Личный кабинет участника</h1>
-
-    <p class="hint">
-        Курс: «<?= htmlspecialchars($courseTitle) ?>»
-    </p>
-
-    <div class="rp-card">
-        <div class="rp-hero <?= $testStatus === 'passed' ? 'passed' : '' ?>">
-            <p class="rp-label">Кабинет участника</p>
-
-            <h2 class="rp-title">
-                <?= htmlspecialchars($participant['fullName'] ?? '') ?>
-            </h2>
-
-            <p class="hint" style="color: #ffffff; margin-top: 12px;">
-                Доступ активен до:
-                <b><?= htmlspecialchars($participant['tempPasswordExpiresAt'] ?? '—') ?></b>
-            </p>
+    <div class="container container-1040">
+        <div class="top-nav">
+            <a href="index.php">← На главную</a>
         </div>
 
-        <div class="rp-grid">
-            <div class="rp-metric">
-                <div class="rp-metric-label">Название курса</div>
-                <div class="rp-metric-value">
-                    <?= htmlspecialchars($courseTitle) ?>
-                </div>
-            </div>
+        <h1>Личный кабинет участника</h1>
 
-            <div class="rp-metric">
-                <div class="rp-metric-label">ФИО</div>
-                <div class="rp-metric-value">
+        <p class="hint">
+            Курс: «<?= htmlspecialchars($courseTitle) ?>»
+        </p>
+
+        <div class="rp-card">
+            <div class="rp-hero <?= $testStatus === 'passed' ? 'passed' : '' ?>">
+                <p class="rp-label">Кабинет участника</p>
+
+                <h2 class="rp-title">
                     <?= htmlspecialchars($participant['fullName'] ?? '') ?>
+                </h2>
+
+                <p class="rp-hero-note">
+                    Доступ активен до:
+                    <b><?= htmlspecialchars($participant['tempPasswordExpiresAt'] ?? '—') ?></b>
+                </p>
+            </div>
+
+            <div class="rp-grid">
+                <div class="rp-metric">
+                    <div class="rp-metric-label">Название курса</div>
+                    <div class="rp-metric-value">
+                        <?= htmlspecialchars($courseTitle) ?>
+                    </div>
+                </div>
+
+                <div class="rp-metric">
+                    <div class="rp-metric-label">ФИО</div>
+                    <div class="rp-metric-value">
+                        <?= htmlspecialchars($participant['fullName'] ?? '') ?>
+                    </div>
+                </div>
+
+                <div class="rp-metric">
+                    <div class="rp-metric-label">Email</div>
+                    <div class="rp-metric-value">
+                        <?= htmlspecialchars($participant['email'] ?? '') ?>
+                    </div>
+                </div>
+
+                <div class="rp-metric">
+                    <div class="rp-metric-label">Организация</div>
+                    <div class="rp-metric-value">
+                        <?= htmlspecialchars($participant['organization'] ?? '') ?>
+                    </div>
+                </div>
+
+                <div class="rp-metric">
+                    <div class="rp-metric-label">Вариант теста</div>
+                    <div class="rp-metric-value">
+                        <?= htmlspecialchars($participant['variantId'] ?? '') ?>
+                    </div>
+                </div>
+
+                <div class="rp-metric">
+                    <div class="rp-metric-label">Статус доступа</div>
+                    <div class="rp-metric-value">
+                        <?= statusBadge('Подтвержден', 'passed') ?>
+                    </div>
+                </div>
+
+                <div class="rp-metric">
+                    <div class="rp-metric-label">Пароль действует до</div>
+                    <div class="rp-metric-value">
+                        <?= htmlspecialchars($participant['tempPasswordExpiresAt'] ?? '—') ?>
+                    </div>
+                </div>
+
+                <div class="rp-metric">
+                    <div class="rp-metric-label">Статус теста</div>
+                    <div class="rp-metric-value">
+                        <?php
+                        if (!$testSubmitted) {
+                            echo statusBadge('Не сдан', 'waiting');
+                        } elseif ($testStatus === 'passed') {
+                            echo statusBadge('Сдан', 'passed');
+                        } else {
+                            echo statusBadge('Не пройден', 'failed');
+                        }
+                        ?>
+                    </div>
+                </div>
+
+                <div class="rp-metric">
+                    <div class="rp-metric-label">Баллы теста</div>
+                    <div class="rp-metric-value">
+                        <?= $testSubmitted
+                            ? htmlspecialchars($testScore . ' из ' . $testTotal)
+                            : 'Еще не сдан'
+                        ?>
+                    </div>
+                </div>
+
+                <div class="rp-metric">
+                    <div class="rp-metric-label">Процент теста</div>
+                    <div class="rp-metric-value">
+                        <?= $testSubmitted ? htmlspecialchars($testPercent . '%') : '—' ?>
+                    </div>
+                </div>
+
+                <div class="rp-metric">
+                    <div class="rp-metric-label">Практическое задание</div>
+                    <div class="rp-metric-value">
+                        <?php
+                        if (!$practicalSubmitted) {
+                            echo statusBadge('Не отправлено', 'waiting');
+                        } elseif (!$practicalGraded) {
+                            echo statusBadge('Ожидает проверки', 'waiting');
+                        } else {
+                            echo statusBadge('Проверено', 'passed');
+                        }
+                        ?>
+                    </div>
+                </div>
+
+                <div class="rp-metric">
+                    <div class="rp-metric-label">Баллы практики</div>
+                    <div class="rp-metric-value">
+                        <?= $practicalGraded
+                            ? htmlspecialchars($practicalTotal . ' из 30')
+                            : 'Еще не оценено'
+                        ?>
+                    </div>
+                </div>
+
+                <div class="rp-metric">
+                    <div class="rp-metric-label">Общий результат</div>
+                    <div class="rp-metric-value">
+                        <?= $practicalGraded
+                            ? htmlspecialchars($overallTotal . ' из 50')
+                            : 'После проверки практики'
+                        ?>
+                    </div>
+                </div>
+
+                <div class="rp-metric">
+                    <div class="rp-metric-label">Итог</div>
+                    <div class="rp-metric-value">
+                        <?= htmlspecialchars(certificateLabel((int)$overallTotal, $practicalGraded)) ?>
+                    </div>
+                </div>
+
+                <div class="rp-metric">
+                    <div class="rp-metric-label">Последний вход</div>
+                    <div class="rp-metric-value">
+                        <?= htmlspecialchars($participant['lastLoginAt'] ?? '—') ?>
+                    </div>
+                </div>
+
+                <div class="rp-metric">
+                    <div class="rp-metric-label">Дата регистрации</div>
+                    <div class="rp-metric-value">
+                        <?= htmlspecialchars($participant['createdAt'] ?? '—') ?>
+                    </div>
                 </div>
             </div>
 
-            <div class="rp-metric">
-                <div class="rp-metric-label">Email</div>
-                <div class="rp-metric-value">
-                    <?= htmlspecialchars($participant['email'] ?? '') ?>
-                </div>
-            </div>
-
-            <div class="rp-metric">
-                <div class="rp-metric-label">Организация</div>
-                <div class="rp-metric-value">
-                    <?= htmlspecialchars($participant['organization'] ?? '') ?>
-                </div>
-            </div>
-
-            <div class="rp-metric">
-                <div class="rp-metric-label">Вариант теста</div>
-                <div class="rp-metric-value">
-                    <?= htmlspecialchars($participant['variantId'] ?? '') ?>
-                </div>
-            </div>
-
-            <div class="rp-metric">
-                <div class="rp-metric-label">Статус доступа</div>
-                <div class="rp-metric-value">
-                    <?= statusBadge('Подтвержден', 'passed') ?>
-                </div>
-            </div>
-
-            <div class="rp-metric">
-                <div class="rp-metric-label">Временный пароль действует до</div>
-                <div class="rp-metric-value">
-                    <?= htmlspecialchars($participant['tempPasswordExpiresAt'] ?? '—') ?>
-                </div>
-            </div>
-
-            <div class="rp-metric">
-                <div class="rp-metric-label">Статус теста</div>
-                <div class="rp-metric-value">
-                    <?php
-                    if (!$testSubmitted) {
-                        echo statusBadge('Не сдан', 'waiting');
-                    } elseif ($testStatus === 'passed') {
-                        echo statusBadge('Сдан', 'passed');
-                    } else {
-                        echo statusBadge('Не пройден', 'failed');
-                    }
-                    ?>
-                </div>
-            </div>
-
-            <div class="rp-metric">
-                <div class="rp-metric-label">Баллы теста</div>
-                <div class="rp-metric-value">
-                    <?= $testSubmitted
-                        ? htmlspecialchars($testScore . ' из ' . $testTotal)
-                        : 'Еще не сдан'
-                    ?>
-                </div>
-            </div>
-
-            <div class="rp-metric">
-                <div class="rp-metric-label">Процент теста</div>
-                <div class="rp-metric-value">
-                    <?= $testSubmitted ? htmlspecialchars($testPercent . '%') : '—' ?>
-                </div>
-            </div>
-
-            <div class="rp-metric">
-                <div class="rp-metric-label">Практическое задание</div>
-                <div class="rp-metric-value">
-                    <?php
-                    if (!$practicalSubmitted) {
-                        echo statusBadge('Не отправлено', 'waiting');
-                    } elseif (!$practicalGraded) {
-                        echo statusBadge('Ожидает проверки', 'waiting');
-                    } else {
-                        echo statusBadge('Проверено', 'passed');
-                    }
-                    ?>
-                </div>
-            </div>
-
-            <div class="rp-metric">
-                <div class="rp-metric-label">Баллы практики</div>
-                <div class="rp-metric-value">
-                    <?= $practicalGraded
-                        ? htmlspecialchars($practicalTotal . ' из 30')
-                        : 'Еще не оценено'
-                    ?>
-                </div>
-            </div>
-
-            <div class="rp-metric">
-                <div class="rp-metric-label">Общий результат</div>
-                <div class="rp-metric-value">
-                    <?= $practicalGraded
-                        ? htmlspecialchars($overallTotal . ' из 50')
-                        : 'После проверки практики'
-                    ?>
-                </div>
-            </div>
-
-            <div class="rp-metric">
-                <div class="rp-metric-label">Итог</div>
-                <div class="rp-metric-value">
-                    <?= htmlspecialchars(certificateLabel((int)$overallTotal, $practicalGraded)) ?>
-                </div>
-            </div>
-
-            <div class="rp-metric">
-                <div class="rp-metric-label">Последний вход</div>
-                <div class="rp-metric-value">
-                    <?= htmlspecialchars($participant['lastLoginAt'] ?? '—') ?>
-                </div>
-            </div>
-
-            <div class="rp-metric">
-                <div class="rp-metric-label">Дата регистрации</div>
-                <div class="rp-metric-value">
-                    <?= htmlspecialchars($participant['createdAt'] ?? '—') ?>
-                </div>
-            </div>
-        </div>
-
-        <div style="padding: 0 28px 28px;">
-            <a class="button" href="<?= htmlspecialchars($mainActionLink) ?>">
-                <?= htmlspecialchars($mainActionText) ?>
-            </a>
-
-            <?php if ($practicalGraded): ?>
-                <a
-                    class="button"
-                    href="../api/certificate.php?sessionId=<?= urlencode($sessionId) ?>"
-                    style="margin-left: 12px;"
-                >
-                    Скачать сертификат
+            <div style="display:flex;flex-wrap:wrap;gap:12px;padding:24px 32px 32px;">
+                <a class="btn btn-primary" href="<?= htmlspecialchars($mainActionLink) ?>">
+                    <?= htmlspecialchars($mainActionText) ?>
                 </a>
-            <?php endif; ?>
 
-            <a
-                class="button"
-                href="student_logout.php"
-                style="margin-left: 12px; background: #ffffff; color: var(--ink); border: 1px solid var(--line);"
-            >
-                Выйти
-            </a>
+                <?php if ($practicalGraded): ?>
+                    <a class="btn btn-secondary" href="../api/certificate.php?sessionId=<?= urlencode($sessionId) ?>">
+                        Скачать сертификат
+                    </a>
+                <?php endif; ?>
+
+                <a class="btn btn-secondary" href="student_logout.php">
+                    Выйти
+                </a>
+            </div>
         </div>
     </div>
-</div>
+</section>
 
 </body>
 </html>

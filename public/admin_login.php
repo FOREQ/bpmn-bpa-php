@@ -25,6 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = getAdminLoginError();
     }
 }
+
+$activeNav = 'admin';
 ?>
 
 <!DOCTYPE html>
@@ -32,53 +34,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Вход администратора</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@700;800&display=swap">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="site-header">
-    <div class="site-header-inner">
-        <a href="index.php" class="site-brand">
-            <img src="../assets/logo.svg/logo.svg.png" alt="DGSC" class="site-logo">
 
-            <span class="site-brand-text">
-                <span class="site-brand-title">Центр Поддержки</span>
-                <span class="site-brand-subtitle">Цифрового Правительства</span>
-            </span>
-        </a>
+<?php require __DIR__ . '/_header.php'; ?>
 
-        <nav class="site-nav">
-    <a href="index.php">Главная</a>
-    <a href="register.php">Регистрация</a>
-    <a href="student_login.php">Войти</a>
-    <a href="admin_login.php">Админ</a>
-</nav>
+<section style="position: relative; overflow: hidden;">
+    <div class="decor-hex" style="top: 130px; right: calc(50% - 400px); width: 56px; height: 49px;">
+        <div class="decor-hex-outer"></div>
+        <div class="decor-hex-inner"></div>
     </div>
-</header>
-<div class="admin-login-card admin-auth-card">
-    <div class="top-nav">
-    <a href="index.php">← На главную</a>
-</div>
-    <h1>Вход администратора</h1>
+    <div class="decor-dots" style="bottom: 70px; left: calc(50% - 400px); width: 48px; height: 48px;"></div>
 
-    <form method="POST">
-    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken()) ?>">
+    <div class="auth-shell narrow">
+        <a href="index.php" style="display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-weight:700;font-size:14px;">← На главную</a>
 
-    <label>Логин</label>
-        <input type="text" name="login" required >
+        <div class="auth-card">
+            <span class="eyebrow">Администрирование</span>
+            <h1>Вход администратора</h1>
 
-        <label>Пароль</label>
-        <input type="password" name="password" required >
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken()) ?>">
 
-        <button type="submit" class="primary-btn">Войти</button>
-    </form>
+                <label>Логин</label>
+                <input type="text" name="login" required>
 
-    <?php if ($error): ?>
-        <div class="error"><?= htmlspecialchars($error) ?></div>
-    <?php endif; ?>
+                <label>Пароль</label>
+                <input type="password" name="password" required>
 
-    <p class="admin-login-links">
- 
-</p>
-</div>
+                <button type="submit" class="btn btn-primary btn-block">Войти</button>
+            </form>
+
+            <?php if ($error): ?>
+                <div class="message error"><?= htmlspecialchars($error) ?></div>
+            <?php endif; ?>
+        </div>
+    </div>
+</section>
+
 </body>
 </html>

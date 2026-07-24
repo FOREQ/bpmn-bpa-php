@@ -1,87 +1,62 @@
+<?php
+
+$activeNav = 'login';
+
+?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>Сброс пароля</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@700;800&display=swap">
     <link rel="stylesheet" href="style.css">
-
-    <style>
-    .forgot-password-card .primary-btn {
-        background: linear-gradient(90deg, #183b59, #ef4444) !important;
-        color: #ffffff !important;
-        width: 100% !important;
-        height: 52px !important;
-        border: none !important;
-        border-radius: 10px !important;
-        font-family: Arial, sans-serif !important;
-        font-size: 16px !important;
-        font-weight: 800 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-
-    .forgot-password-card .primary-btn:hover {
-        opacity: 0.96 !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 10px 22px rgba(24, 59, 89, 0.22) !important;
-    }
-</style>
 </head>
 <body>
-    <header class="site-header">
-    <div class="site-header-inner">
-        <a href="index.php" class="site-brand">
-            <img src="../assets/logo.svg/logo.svg.png" alt="DGSC" class="site-logo">
 
-            <span class="site-brand-text">
-                <span class="site-brand-title">Центр Поддержки</span>
-                <span class="site-brand-subtitle">Цифрового Правительства</span>
-            </span>
-        </a>
+<?php require __DIR__ . '/_header.php'; ?>
 
-        <nav class="site-nav">
-            <a href="index.php">Главная</a>
-            <a href="register.php">Регистрация</a>
-            <a href="student_login.php">Войти</a>
-            <a href="admin_login.php">Админ</a>
-        </nav>
+<section style="position: relative; overflow: hidden;">
+    <div class="decor-hex" style="top: 130px; right: calc(50% - 400px); width: 56px; height: 49px;">
+        <div class="decor-hex-outer"></div>
+        <div class="decor-hex-inner"></div>
     </div>
-</header>
+    <div class="decor-dots" style="bottom: 70px; left: calc(50% - 400px); width: 48px; height: 48px;"></div>
 
-<div class="admin-login-card forgot-password-card">
-    <div class="top-nav">
-        <a href="student_login.php">← Назад ко входу</a>
+    <div class="auth-shell narrow">
+        <a href="student_login.php" style="display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-weight:700;font-size:14px;">← Назад ко входу</a>
+
+        <div class="auth-card">
+            <span class="eyebrow">Личный кабинет</span>
+            <h1>Сброс пароля</h1>
+
+            <p>
+                Введите email, указанный при регистрации.
+                После подтверждения администратором вы сможете установить новый пароль.
+            </p>
+
+            <form id="resetForm">
+                <label>Email</label>
+                <input type="email" id="email" placeholder="example@mail.com" required>
+
+                <button type="submit" class="btn btn-primary btn-block">Отправить запрос</button>
+            </form>
+
+            <div id="message" class="message"></div>
+
+            <div id="newPasswordBlock" style="display:none; margin-top:20px;">
+                <label>Новый пароль</label>
+                <input id="newPassword" type="password" placeholder="Новый пароль">
+
+                <label>Повторите пароль</label>
+                <input id="newPassword2" type="password" placeholder="Повторите пароль">
+
+                <button id="savePasswordBtn" type="button" class="btn btn-primary btn-block">
+                    Сохранить новый пароль
+                </button>
+            </div>
+        </div>
     </div>
-
-    <h1>Сброс пароля</h1>
-
-    <p>
-        Введите email, указанный при регистрации.
-        После подтверждения администратором вы сможете установить новый пароль.
-    </p>
-
-    <form id="resetForm">
-        <label>Email</label>
-        <input type="email" id="email" placeholder="example@mail.com" required>
-
-        <button type="submit" class="primary-btn">Отправить запрос</button>
-    </form>
-
-    <div id="message" class="message"></div>
-
-    <div id="newPasswordBlock" style="display:none; margin-top:20px;">
-        <label>Новый пароль</label>
-        <input id="newPassword" type="password" placeholder="Новый пароль">
-
-        <label>Повторите пароль</label>
-        <input id="newPassword2" type="password" placeholder="Повторите пароль">
-
-      <button id="savePasswordBtn" type="button" class="primary-btn">
-    Сохранить новый пароль
-</button>
-    </div>
-</div>
+</section>
 
 <script>
 const resetForm = document.getElementById('resetForm');
