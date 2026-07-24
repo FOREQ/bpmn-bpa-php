@@ -315,6 +315,33 @@ http://localhost:8000
 
 ## Частые проблемы
 
+### `session_start(): open(C:\xampp\tmp\...) failed: Permission denied`
+
+Это не ошибка базы данных. Устанавливать PostgreSQL для её исправления не нужно.
+Предупреждение означает, что PHP пытается сохранить файл сессии в
+`C:\xampp\tmp`, но запущенный процесс не имеет права записи в эту папку.
+Из-за этого регистрация и вход могут показывать ошибку связи с сервером.
+
+Для локального запуска используйте команду из корня проекта:
+
+```powershell
+php -S localhost:8000 router.php
+```
+
+`router.php` автоматически создаёт доступную папку `database/sessions/` и
+перенаправляет туда локальные PHP-сессии. Папка не добавляется в Git.
+
+Если предупреждение осталось, остановите сервер через `Ctrl+C`, создайте папку
+вручную и запустите сервер снова:
+
+```powershell
+New-Item -ItemType Directory -Force database\sessions
+php -S localhost:8000 router.php
+```
+
+Не запускайте проект командой `php -S localhost:8000 -t public`: в этом режиме
+не используется `router.php`, а запросы к API будут недоступны.
+
 ### Composer пишет: `The zip extension and unzip/7z commands are both missing`
 
 Включите `zip` в `C:\xampp\php\php.ini`:

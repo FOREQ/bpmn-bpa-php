@@ -5,6 +5,7 @@ logs/
 
 # Local database with real data
 database/database.sqlite
+database/sessions/
 
 # Environment/secrets
 .env

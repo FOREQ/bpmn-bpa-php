@@ -1,5 +1,19 @@
 <?php
 
+// The XAMPP CLI configuration may point sessions to C:\xampp\tmp, which is
+// not always writable when the built-in development server is used.
+if (PHP_SAPI === 'cli-server' && session_status() === PHP_SESSION_NONE) {
+    $localSessionPath = __DIR__ . '/database/sessions';
+
+    if (!is_dir($localSessionPath)) {
+        mkdir($localSessionPath, 0775, true);
+    }
+
+    if (is_writable($localSessionPath)) {
+        session_save_path($localSessionPath);
+    }
+}
+
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/';
 $decodedPath = urldecode($path);
 
