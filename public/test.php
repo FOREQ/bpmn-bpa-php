@@ -4,6 +4,7 @@ require_once __DIR__ . '/../lib/security.php';
 require_once __DIR__ . '/../lib/csrf.php';
 
 $courseTitle = 'Практическое применение методики реинжиниринга бизнес-процессов государственных органов';
+$activeNav = 'login';
 
 ?>
 <!DOCTYPE html>
@@ -11,57 +12,48 @@ $courseTitle = 'Практическое применение методики �
 <head>
     <meta charset="UTF-8">
     <title>Теоретический тест | Реинжиниринг бизнес-процессов</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@700;800&display=swap">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header class="site-header">
-    <div class="site-header-inner">
-        <a href="index.php" class="site-brand">
-            <img src="../assets/logo.svg/logo.svg.png" alt="DGSC" class="site-logo">
+<?php require __DIR__ . '/_header.php'; ?>
 
-            <span class="site-brand-text">
-                <span class="site-brand-title">Центр Поддержки</span>
-                <span class="site-brand-subtitle">Цифрового Правительства</span>
-            </span>
-        </a>
-
-        <nav class="site-nav">
-            <a href="index.php">Главная</a>
-            <a href="register.php">Регистрация</a>
-            <a href="student_login.php" class="active">Войти</a>
-            <a href="admin_login.php">Админ</a>
-        </nav>
+<section style="position: relative; overflow: hidden;">
+    <div class="decor-hex" style="top: 140px; right: calc(50% - 590px); width: 56px; height: 49px;">
+        <div class="decor-hex-outer"></div>
+        <div class="decor-hex-inner"></div>
     </div>
-</header>
+    <div class="decor-dots" style="bottom: 40px; left: calc(50% - 590px); width: 48px; height: 48px;"></div>
 
-<div class="container">
-    <div class="top-nav">
-        <a href="student_dashboard.php">← В личный кабинет</a>
-    </div>
-
-    <h1>Теоретический тест</h1>
-
-    <p class="hint">
-        Курс: «<?= htmlspecialchars($courseTitle) ?>»
-    </p>
-
-    <div id="participantInfo"></div>
-
-    <div id="progressBox" class="progress-box" style="display:none;">
-        <div class="progress-top">
-            <span id="progressText">Заполнено: 0/0</span>
-            <span id="progressPercent">0%</span>
+    <div class="container container-860">
+        <div class="top-nav">
+            <a href="student_dashboard.php">← В личный кабинет</a>
         </div>
-        <div class="progress">
-            <div id="progressBar"></div>
+
+        <h1>Теоретический тест</h1>
+
+        <p class="hint">
+            Курс: «<?= htmlspecialchars($courseTitle) ?>»
+        </p>
+
+        <div id="participantInfo"></div>
+
+        <div id="progressBox" class="progress-box" style="display:none;">
+            <div class="progress-top">
+                <span id="progressText">Заполнено: 0/0</span>
+                <span id="progressPercent">0%</span>
+            </div>
+            <div class="progress">
+                <div id="progressBar"></div>
+            </div>
         </div>
+
+        <form id="testForm"></form>
+
+        <div id="message" class="message"></div>
     </div>
-
-    <form id="testForm"></form>
-
-    <div id="message" class="message"></div>
-</div>
+</section>
 
 <script>
     const params = new URLSearchParams(window.location.search);
@@ -116,11 +108,19 @@ $courseTitle = 'Практическое применение методики �
             loadedTest = json;
 
             participantInfo.innerHTML = `
-                <div class="card">
-                    <p><b>Курс:</b><br>${escapeHtml(courseTitle)}</p>
-                    <p><b>Участник:</b> ${escapeHtml(json.participant.fullName)}</p>
-                    <p><b>Организация:</b> ${escapeHtml(json.participant.organization)}</p>
-                    <p><b>Вариант:</b> ${escapeHtml(json.test.variantId)}</p>
+                <div class="info-strip">
+                    <div class="info-strip-cell">
+                        <div class="info-strip-label">Участник</div>
+                        <div class="info-strip-value">${escapeHtml(json.participant.fullName)}</div>
+                    </div>
+                    <div class="info-strip-cell">
+                        <div class="info-strip-label">Организация</div>
+                        <div class="info-strip-value">${escapeHtml(json.participant.organization)}</div>
+                    </div>
+                    <div class="info-strip-cell" style="border-right:none;">
+                        <div class="info-strip-label">Вариант теста</div>
+                        <div class="info-strip-value">${escapeHtml(json.test.variantId)}</div>
+                    </div>
                 </div>
             `;
 
@@ -155,16 +155,18 @@ $courseTitle = 'Практическое применение методики �
 
         testForm.innerHTML = `
             <div class="question">
-                <h3>Вопрос ${currentQuestionIndex + 1} из ${questions.length}</h3>
+                <div class="question-eyebrow">Вопрос ${currentQuestionIndex + 1} из ${questions.length}</div>
                 <p>${escapeHtml(question.text)}</p>
                 ${question.image ? `<img class="question-image" src="${escapeHtml(question.image)}" alt="Изображение к вопросу">` : ''}
-                ${optionsHtml}
+                <div class="question-options">
+                    ${optionsHtml}
+                </div>
             </div>
 
             <div class="buttons-row">
-                <button type="button" id="prevBtn">Назад</button>
-                <button type="button" id="nextBtn">Далее</button>
-                <button type="submit" id="submitBtn">Отправить ответы</button>
+                <button type="button" id="prevBtn" class="btn btn-secondary">Назад</button>
+                <button type="button" id="nextBtn" class="btn btn-primary">Далее</button>
+                <button type="submit" id="submitBtn" class="btn btn-primary">Отправить ответы</button>
             </div>
         `;
 
