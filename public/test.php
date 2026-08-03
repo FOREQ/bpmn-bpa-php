@@ -74,6 +74,28 @@ $activeNav = 'login';
     let currentQuestionIndex = 0;
 
     const answersStorageKey = 'testAnswers_' + sessionId;
+    const positionStorageKey = 'testPosition_' + sessionId;
+
+    function restoreCurrentQuestionIndex() {
+        if (!loadedTest) {
+            return;
+        }
+
+        const savedPosition = Number.parseInt(localStorage.getItem(positionStorageKey), 10);
+        const questionsCount = loadedTest.test.questions.length;
+
+        if (Number.isInteger(savedPosition) && savedPosition >= 0 && savedPosition < questionsCount) {
+            currentQuestionIndex = savedPosition;
+        }
+    }
+
+    function saveCurrentQuestionIndex() {
+        if (!loadedTest) {
+            return;
+        }
+
+        localStorage.setItem(positionStorageKey, String(currentQuestionIndex));
+    }
 
     function escapeHtml(text) {
         return String(text ?? '')
@@ -106,6 +128,7 @@ $activeNav = 'login';
             }
 
             loadedTest = json;
+            restoreCurrentQuestionIndex();
 
             participantInfo.innerHTML = `
                 <div class="info-strip">
@@ -196,6 +219,7 @@ $activeNav = 'login';
         prevBtn.addEventListener('click', () => {
             if (currentQuestionIndex > 0) {
                 currentQuestionIndex--;
+                saveCurrentQuestionIndex();
                 renderCurrentQuestion();
                 updateProgress();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -205,6 +229,7 @@ $activeNav = 'login';
         nextBtn.addEventListener('click', () => {
             if (currentQuestionIndex < questions.length - 1) {
                 currentQuestionIndex++;
+                saveCurrentQuestionIndex();
                 renderCurrentQuestion();
                 updateProgress();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -307,6 +332,7 @@ $activeNav = 'login';
 
             if (firstMissingIndex !== -1) {
                 currentQuestionIndex = firstMissingIndex;
+                saveCurrentQuestionIndex();
                 renderCurrentQuestion();
                 updateProgress();
             }
@@ -335,6 +361,7 @@ $activeNav = 'login';
             }
 
             localStorage.removeItem(answersStorageKey);
+            localStorage.removeItem(positionStorageKey);
 
             const resultStatusText = json.result.status === 'passed'
                 ? 'Тест сдан'
@@ -355,6 +382,8 @@ $activeNav = 'login';
             showMessage('Ошибка соединения с сервером', 'error');
         }
     });
+
+    window.addEventListener('beforeunload', saveCurrentQuestionIndex);
 
     loadTest();
 </script>
