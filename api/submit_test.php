@@ -15,6 +15,16 @@ function respondJson(array $data, int $statusCode = 200): void
     exit;
 }
 
+function storedTestResult(array $participant): array
+{
+    return [
+        'score' => is_numeric($participant['score'] ?? null) ? (int)$participant['score'] : 0,
+        'total' => is_numeric($participant['total'] ?? null) ? (int)$participant['total'] : 0,
+        'percent' => is_numeric($participant['percent'] ?? null) ? (float)$participant['percent'] : 0,
+        'status' => (string)($participant['status'] ?? ''),
+    ];
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     respondJson([
         'success' => false,
@@ -72,6 +82,14 @@ try {
         ], 404);
     }
 
+    if (in_array($participant['status'] ?? null, ['passed', 'failed'], true)) {
+        respondJson([
+            'success' => false,
+            'message' => 'Тест уже был отправлен',
+            'result' => storedTestResult($participant),
+        ], 409);
+    }
+
     $variantId = $participant['variantId'];
     $variant = $TEST_DATA[$variantId] ?? null;
 
@@ -104,6 +122,7 @@ try {
             submittedAt = CURRENT_TIMESTAMP,
             updatedAt = CURRENT_TIMESTAMP
         WHERE sessionId = :sessionId
+          AND (status IS NULL OR status NOT IN ('passed', 'failed'))
     ");
 
     $stmt->execute([
@@ -114,6 +133,23 @@ try {
         ':status' => $grade['status'],
         ':sessionId' => $sessionId
     ]);
+
+    if ($stmt->rowCount() !== 1) {
+        $stmt = $pdo->prepare("
+            SELECT score, total, percent, status
+            FROM Participant
+            WHERE sessionId = :sessionId
+            LIMIT 1
+        ");
+        $stmt->execute([':sessionId' => $sessionId]);
+        $storedParticipant = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        respondJson([
+            'success' => false,
+            'message' => 'Тест уже был отправлен',
+            'result' => storedTestResult($storedParticipant),
+        ], 409);
+    }
 
     respondJson([
         'success' => true,
