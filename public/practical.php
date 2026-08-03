@@ -5,6 +5,11 @@ require_once __DIR__ . '/../lib/security.php';
 
 $courseTitle = 'Практическое применение методики реинжиниринга бизнес-процессов государственных органов';
 $activeNav = 'login';
+$isKazakh = i18nLocale() === 'kk';
+$practicalUi = [
+    'testResult' => $isKazakh ? 'Тест нәтижесі' : 'Результат теста',
+    'scoreSeparator' => $isKazakh ? '/' : 'из',
+];
 
 ?>
 <!DOCTYPE html>
@@ -84,6 +89,7 @@ $activeNav = 'login';
     const sessionId = params.get('sessionId');
     const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
     const courseTitle = <?= json_encode($courseTitle, JSON_UNESCAPED_UNICODE) ?>;
+    const practicalUi = <?= json_encode($practicalUi, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
     const participantInfo = document.getElementById('participantInfo');
     const practicalForm = document.getElementById('practicalForm');
@@ -197,8 +203,8 @@ $activeNav = 'login';
                         <div class="info-strip-value">${escapeHtml(json.participant.organization)}</div>
                     </div>
                     <div class="info-strip-cell" style="border-right:none;">
-                        <div class="info-strip-label">Результат теста</div>
-                        <div class="info-strip-value">${escapeHtml(json.participant.score)} из ${escapeHtml(json.participant.total)}, ${escapeHtml(json.participant.percent)}%</div>
+                        <div class="info-strip-label">${escapeHtml(practicalUi.testResult)}</div>
+                        <div class="info-strip-value">${escapeHtml(json.participant.score)} ${escapeHtml(practicalUi.scoreSeparator)} ${escapeHtml(json.participant.total)}, ${escapeHtml(json.participant.percent)}%</div>
                     </div>
                 </div>
             `;
