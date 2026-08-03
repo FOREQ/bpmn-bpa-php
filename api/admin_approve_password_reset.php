@@ -32,6 +32,8 @@ if (!$participantId) {
     ], 400);
 }
 
+$pdo = null;
+
 try {
     $pdo = getDb();
 
@@ -66,6 +68,8 @@ try {
     $tempPasswordHash = password_hash($tempPassword, PASSWORD_DEFAULT);
     $expiresAt = date('Y-m-d H:i:s', strtotime('+3 days'));
 
+    $pdo->beginTransaction();
+
     $stmt = $pdo->prepare("
         UPDATE Participant
         SET accountStatus = 'approved',
@@ -94,11 +98,15 @@ try {
     );
 
     if (!$emailSent) {
+        $pdo->rollBack();
+
         respondJson([
             'success' => false,
-            'message' => 'Заявка подтверждена, временный пароль создан, но письмо не отправилось. Проверьте настройки почты.'
-        ], 500);
+            'message' => 'Письмо не отправилось, поэтому заявка не была подтверждена. Проверьте подключение к почтовому серверу и попробуйте снова.'
+        ], 502);
     }
+
+    $pdo->commit();
 
     respondJson([
         'success' => true,
@@ -107,6 +115,10 @@ try {
     ]);
 
 } catch (Throwable $e) {
+    if ($pdo instanceof PDO && $pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+
     error_log('Approve student error: ' . $e->getMessage());
 
     respondJson([
