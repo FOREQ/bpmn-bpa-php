@@ -9,6 +9,14 @@ require_once __DIR__ . '/../lib/csrf.php';
 
 $courseTitle = 'Практическое применение методики реинжиниринга бизнес-процессов государственных органов';
 $activeNav = 'admin';
+$isKazakh = i18nLocale() === 'kk';
+$adminUi = [
+    'testPassed' => $isKazakh ? 'Өтті' : 'Пройден',
+    'testFailed' => $isKazakh ? 'Өтпеді' : 'Не пройден',
+    'testNotSubmitted' => $isKazakh ? 'Тапсырылмады' : 'Не сдан',
+    'testVariant' => $isKazakh ? 'Нұсқа' : 'Вариант',
+    'testNotStarted' => $isKazakh ? 'Әлі басталмаған' : 'Ещё не начат',
+];
 
 ?>
 <!DOCTYPE html>
@@ -82,6 +90,7 @@ $activeNav = 'admin';
     const modal = document.getElementById('modal');
     const practicalContent = document.getElementById('practicalContent');
     const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
+    const adminUi = <?= json_encode($adminUi, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
     let currentViewers = [];
 
@@ -95,15 +104,15 @@ $activeNav = 'admin';
     }
 
     function testStatus(status) {
-        if (status === 'passed') return '<span class="status passed">Пройден</span>';
-        if (status === 'failed') return '<span class="status failed">Не пройден</span>';
-        return '<span class="status waiting">Не сдан</span>';
+        if (status === 'passed') return '<span class="status passed">' + escapeHtml(adminUi.testPassed) + '</span>';
+        if (status === 'failed') return '<span class="status failed">' + escapeHtml(adminUi.testFailed) + '</span>';
+        return '<span class="status waiting">' + escapeHtml(adminUi.testNotSubmitted) + '</span>';
     }
 
     function testStatusText(status) {
-        if (status === 'passed') return 'Пройден';
-        if (status === 'failed') return 'Не пройден';
-        return 'Не сдан';
+        if (status === 'passed') return adminUi.testPassed;
+        if (status === 'failed') return adminUi.testFailed;
+        return adminUi.testNotSubmitted;
     }
 
     function accountStatus(row) {
@@ -130,11 +139,11 @@ $activeNav = 'admin';
         const hasResult = row.status === 'passed' || row.status === 'failed';
 
         if (!hasResult) {
-            return `Вариант: <b>${row.variantId ? escapeHtml(row.variantId) : '—'}</b><br>Ещё не начат`;
+            return `${escapeHtml(adminUi.testVariant)}: <b>${row.variantId ? escapeHtml(row.variantId) : '—'}</b><br>${escapeHtml(adminUi.testNotStarted)}`;
         }
 
         return `
-            Вариант: <b>${escapeHtml(row.variantId)}</b><br>
+            ${escapeHtml(adminUi.testVariant)}: <b>${escapeHtml(row.variantId)}</b><br>
             ${row.score ?? '—'} / ${row.total ?? '—'}, ${row.percent ?? '—'}%
             <div style="margin-top:6px;">${testStatus(row.status)}</div>
         `;
