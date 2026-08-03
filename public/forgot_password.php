@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../lib/i18n.php';
+
 $activeNav = 'login';
 
 ?>
@@ -8,7 +10,7 @@ $activeNav = 'login';
 <head>
     <meta charset="UTF-8">
     <title>Сброс пароля</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>

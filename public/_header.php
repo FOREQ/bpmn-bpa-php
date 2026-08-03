@@ -29,9 +29,21 @@ $logoSrc = $logoSrc ?? '../assets/logo.svg/logo-black.png';
                 <a href="<?= htmlspecialchars($navBase) ?>admin_login.php" class="<?= $activeNav === 'admin' ? 'active' : '' ?>">Админ</a>
             </nav>
 
-            <div class="lang-toggle" role="group" aria-label="Язык">
-                <button type="button" onclick="document.querySelectorAll('.lang-toggle button').forEach(b=>b.classList.toggle('active', b===this))">ҚАЗ</button>
-                <button type="button" class="active" onclick="document.querySelectorAll('.lang-toggle button').forEach(b=>b.classList.toggle('active', b===this))">РУС</button>
+            <div class="lang-toggle" role="group" aria-label="Тілді таңдау / Выбор языка" data-i18n-switcher>
+                <a
+                    href="<?= htmlspecialchars(i18nLanguageUrl('kk'), ENT_QUOTES, 'UTF-8') ?>"
+                    lang="kk"
+                    hreflang="kk"
+                    class="<?= i18nLocale() === 'kk' ? 'active' : '' ?>"
+                    <?= i18nLocale() === 'kk' ? 'aria-current="true"' : '' ?>
+                >ҚАЗ</a>
+                <a
+                    href="<?= htmlspecialchars(i18nLanguageUrl('ru'), ENT_QUOTES, 'UTF-8') ?>"
+                    lang="ru"
+                    hreflang="ru"
+                    class="<?= i18nLocale() === 'ru' ? 'active' : '' ?>"
+                    <?= i18nLocale() === 'ru' ? 'aria-current="true"' : '' ?>
+                >РУС</a>
             </div>
         </div>
     </div>

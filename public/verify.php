@@ -50,7 +50,7 @@ if ($token !== '' && preg_match('/^[a-zA-Z0-9]{6,32}$/', $token)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Проверка сертификата | Реинжиниринг бизнес-процессов</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="<?= htmlspecialchars($publicBase) ?>style.css">
 </head>
 <body>

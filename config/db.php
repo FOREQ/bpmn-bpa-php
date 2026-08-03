@@ -1,5 +1,6 @@
 <?php
 
+require_once __DIR__ . '/../lib/i18n.php';
 require_once __DIR__ . '/../lib/db_compat.php';
 
 function getDb(): PDO
@@ -12,6 +13,12 @@ function getDb(): PDO
 
     $config = require __DIR__ . '/database.php';
     $driver = $config['driver'];
+
+    if (!in_array($driver, ['sqlite', 'pgsql'], true)) {
+        throw new InvalidArgumentException(
+            sprintf('Unsupported DB_DRIVER "%s". Use "sqlite" or "pgsql".', $driver)
+        );
+    }
 
     if ($driver === 'pgsql') {
         $c = $config['pgsql'];

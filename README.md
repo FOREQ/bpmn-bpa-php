@@ -253,6 +253,55 @@ php --% -r "$db=new PDO('sqlite:database/database.sqlite'); $sql=file_get_conten
 Get-Item database/database.sqlite
 ```
 
+### Использование PostgreSQL на Windows
+
+Установите PostgreSQL с официальной страницы: <https://www.postgresql.org/download/windows/>.
+Затем откройте `C:\xampp\php\php.ini` и включите драйвер PDO:
+
+```ini
+extension=pdo_pgsql
+extension=pgsql
+```
+
+Проверьте, что XAMPP PHP видит драйвер:
+
+```powershell
+C:\xampp\php\php.exe -m | Select-String "pdo_pgsql|pgsql"
+```
+
+Создайте пустую базу и пользователя PostgreSQL, затем задайте параметры в том
+же окне PowerShell, из которого запускается сайт:
+
+```powershell
+$env:DB_DRIVER="pgsql"
+$env:DB_HOST="127.0.0.1"
+$env:DB_PORT="5432"
+$env:DB_NAME="bpmn"
+$env:DB_USER="bpmn_app"
+$env:DB_PASSWORD="ВАШ_ПАРОЛЬ"
+```
+
+Для новой пустой базы примените схему `database/init_pgsql.sql`. Если до этого
+использовался SQLite и данные нужно сохранить, выполните миграцию:
+
+```powershell
+$env:DB_SQLITE_PATH=(Resolve-Path "database/database.sqlite").Path
+C:\xampp\php\php.exe database/migrate_sqlite_to_pgsql.php
+```
+
+Скрипт создаёт отсутствующие таблицы, переносит участников и старые
+сертификаты, а при повторном запуске безопасно обновляет уже перенесённые
+записи. После этого запускайте сайт из того же окна PowerShell — приложение
+будет работать через PostgreSQL.
+
+Если PostgreSQL установлен в `C:\PostgreSQL\18`, а локальные параметры
+сохранены в игнорируемом Git файле `.env.local`, сервер базы и сайт можно
+запустить одной командой:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/start_local_pgsql.ps1
+```
+
 ### 6. Настроить почту
 
 Настройки SMTP находятся в файле:
@@ -350,7 +399,7 @@ composer install
 
 ### Ошибка `could not find driver`
 
-PHP не видит SQLite-драйвер.
+PHP не видит драйвер выбранной базы данных.
 
 Включите в `C:\xampp\php\php.ini`:
 
@@ -359,10 +408,17 @@ extension=pdo_sqlite
 extension=sqlite3
 ```
 
+Для PostgreSQL включите:
+
+```ini
+extension=pdo_pgsql
+extension=pgsql
+```
+
 Потом откройте новый PowerShell и проверьте:
 
 ```powershell
-php -m | Select-String "pdo_sqlite|sqlite3"
+php -m | Select-String "pdo_sqlite|sqlite3|pdo_pgsql|pgsql"
 ```
 
 ### Ошибка `vendor/autoload.php not found`
