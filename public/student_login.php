@@ -11,7 +11,7 @@ $activeNav = 'login';
 <head>
     <meta charset="UTF-8">
     <title>Вход участника</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -31,10 +31,7 @@ $activeNav = 'login';
         <div class="auth-card">
             <span class="eyebrow">Личный кабинет</span>
             <h1>Вход участника</h1>
-            <p>
-                Введите email и временный пароль, который был отправлен на вашу почту после подтверждения заявки
-                на курс «Практическое применение методики реинжиниринга бизнес-процессов государственных органов».
-            </p>
+            <p>Введите email и временный пароль, который был отправлен на вашу почту после подтверждения заявки на курс «Практическое применение методики реинжиниринга бизнес-процессов государственных органов».</p>
 
             <form id="loginForm">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken()) ?>">

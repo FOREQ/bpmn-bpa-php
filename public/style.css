@@ -5,6 +5,8 @@
 :root {
     color-scheme: light;
 
+    --font-ui: "Segoe UI", "Noto Sans", Arial, sans-serif;
+
     --ink: #142841;
     --muted: #5b7186;
     --faint: #8ba0b3;
@@ -48,7 +50,7 @@ body {
     min-height: 100vh;
     background: #ffffff;
     color: var(--ink);
-    font-family: Arial, sans-serif;
+    font-family: var(--font-ui);
 }
 
 h1, h2, h3 {
@@ -210,7 +212,10 @@ a:hover {
     border: 1px solid var(--line);
 }
 
-.lang-toggle button {
+.lang-toggle a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     margin: 0;
     padding: 6px 12px;
     border: none;
@@ -219,11 +224,12 @@ a:hover {
     color: var(--muted);
     font-size: 12px;
     font-weight: 800;
-    font-family: 'Noto Sans', Arial, sans-serif;
+    font-family: var(--font-ui);
     cursor: pointer;
+    text-decoration: none;
 }
 
-.lang-toggle button.active {
+.lang-toggle a.active {
     background: var(--accent);
     color: #ffffff;
 }
@@ -289,7 +295,7 @@ button,
     margin-top: 0;
     border: none;
     border-radius: var(--radius-md);
-    font-family: Arial, sans-serif;
+    font-family: var(--font-ui);
     font-size: 15px;
     font-weight: 800;
     cursor: pointer;
@@ -401,7 +407,7 @@ select {
     background: #ffffff;
     color: var(--ink);
     font-size: 15px;
-    font-family: Arial, sans-serif;
+    font-family: var(--font-ui);
     transition: 0.2s;
 }
 

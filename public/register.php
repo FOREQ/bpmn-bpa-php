@@ -11,7 +11,7 @@ $activeNav = 'register';
 <head>
     <meta charset="UTF-8">
     <title>Регистрация участника</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -31,11 +31,7 @@ $activeNav = 'register';
         <div class="auth-card">
             <span class="eyebrow">Регистрация участника</span>
             <h1>Подать заявку на участие</h1>
-            <p>
-                Заполните данные для участия в курсе «Практическое применение методики реинжиниринга
-                бизнес-процессов государственных органов». После проверки администратором временный
-                пароль придёт на почту и будет действовать 3 дня.
-            </p>
+            <p>Заполните данные для участия в курсе «Практическое применение методики реинжиниринга бизнес-процессов государственных органов». После проверки администратором временный пароль придёт на почту и будет действовать 3 дня.</p>
 
             <div class="date-box" id="todayDate"></div>
 

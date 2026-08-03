@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/../lib/i18n.php'; ?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
