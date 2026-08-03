@@ -56,12 +56,25 @@ function pgIdentifier(string $identifier): string
     return '"' . $identifier . '"';
 }
 
-function migrateTable(PDO $sqlite, PDO $pgsql, string $table): int
+function hasNonBlankFields(array $row, array $requiredColumns): bool
+{
+    foreach ($requiredColumns as $column) {
+        $value = $row[$column] ?? null;
+
+        if (!is_scalar($value) || trim((string) $value) === '') {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function migrateTable(PDO $sqlite, PDO $pgsql, string $table, array $requiredColumns = []): array
 {
     $sourceColumns = $sqlite->query('PRAGMA table_info(' . $table . ')')->fetchAll();
 
     if ($sourceColumns === []) {
-        return 0;
+        return ['copied' => 0, 'skipped' => 0];
     }
 
     $columns = array_column($sourceColumns, 'name');
@@ -109,8 +122,14 @@ function migrateTable(PDO $sqlite, PDO $pgsql, string $table): int
     $insert = $pgsql->prepare($sql);
     $rows = $sqlite->query('SELECT * FROM ' . $table);
     $count = 0;
+    $skipped = 0;
 
     while ($row = $rows->fetch()) {
+        if (!hasNonBlankFields($row, $requiredColumns)) {
+            $skipped++;
+            continue;
+        }
+
         $params = [];
 
         foreach ($columns as $index => $column) {
@@ -143,14 +162,19 @@ function migrateTable(PDO $sqlite, PDO $pgsql, string $table): int
         $count++;
     }
 
-    return $count;
+    return ['copied' => $count, 'skipped' => $skipped];
 }
 
 $pgsql->beginTransaction();
 
 try {
-    $participantCount = migrateTable($sqlite, $pgsql, 'Participant');
-    $legacyCount = migrateTable($sqlite, $pgsql, 'LegacyCertificate');
+    $participantResult = migrateTable(
+        $sqlite,
+        $pgsql,
+        'Participant',
+        ['id', 'sessionId', 'fullName', 'email', 'phone', 'organization', 'variantId']
+    );
+    $legacyResult = migrateTable($sqlite, $pgsql, 'LegacyCertificate', ['id', 'fullName']);
 
     $pgsql->exec(
         "SELECT setval(pg_get_serial_sequence('legacycertificate', 'id'), "
@@ -165,5 +189,7 @@ try {
 }
 
 echo "Migration completed.\n";
-echo "Participant rows copied: {$participantCount}\n";
-echo "LegacyCertificate rows copied: {$legacyCount}\n";
+echo "Participant rows copied: {$participantResult['copied']}\n";
+echo "Participant rows skipped as invalid: {$participantResult['skipped']}\n";
+echo "LegacyCertificate rows copied: {$legacyResult['copied']}\n";
+echo "LegacyCertificate rows skipped as invalid: {$legacyResult['skipped']}\n";
