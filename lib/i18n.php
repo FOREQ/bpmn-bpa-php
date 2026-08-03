@@ -161,7 +161,7 @@ function i18nTransformOutput(string $output): string
 
     if ($isHtml && !str_contains($output, 'data-site-favicon')) {
         $faviconMarkup = '<link rel="icon" type="image/png" sizes="128x128" '
-            . 'href="../assets/favicon.png" data-site-favicon>';
+            . 'href="../assets/favicon.png?v=2" data-site-favicon>';
         $output = preg_replace('/<head([^>]*)>/i', '<head$1>' . $faviconMarkup, $output, 1) ?? $output;
     }
 
