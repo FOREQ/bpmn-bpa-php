@@ -27,6 +27,22 @@ function certificateFilePath(string $token): string
     return certificatesDir() . '/certificate-' . $token . '.pdf';
 }
 
+function certificateFileNeedsRegeneration(?string $filePath): bool
+{
+    if (!$filePath || !is_file($filePath)) {
+        return true;
+    }
+
+    $certificateModifiedAt = filemtime($filePath);
+    $templatePath = __DIR__ . '/../assets/certificate/template.png';
+    $sourceModifiedAt = max(
+        filemtime(__FILE__) ?: 0,
+        is_file($templatePath) ? (filemtime($templatePath) ?: 0) : 0
+    );
+
+    return $certificateModifiedAt === false || $certificateModifiedAt < $sourceModifiedAt;
+}
+
 function dbExistingColumns(PDO $pdo, string $table): array
 {
     if (dbDriver() === 'pgsql') {
@@ -151,6 +167,8 @@ function renderCertificatePdf(
     string $fullName,
     string $completionDate,
     string $levelText,
+    int $testPoints,
+    int $practicalPoints,
     string $certificateNumber,
     string $verifyUrl
 ): void {
@@ -215,6 +233,14 @@ function renderCertificatePdf(
     $pdf->SetTextColorArray($gray);
     $pdf->SetXY(0, 370);
     $pdf->Cell($pageWidth, 16, 'Уровень: ' . $levelText, 0, 0, 'C');
+
+    // Баллы отдельно за теоретическую и практическую части
+    $pdf->SetFont($medium, '', 11);
+    $pdf->SetTextColorArray($gray);
+    $pdf->SetXY(0, 397);
+    $pdf->Cell($pageWidth, 15, 'Теоретический тест: ' . $testPoints . ' из 20', 0, 0, 'C');
+    $pdf->SetXY(0, 414);
+    $pdf->Cell($pageWidth, 15, 'Практическое задание: ' . $practicalPoints . ' из 30', 0, 0, 'C');
 
     // Дата завершения
     $pdf->SetFont($regular, '', 11);
@@ -292,6 +318,8 @@ function generateCertificate(PDO $pdo, array $participant): array
         $participant['fullName'] ?? '',
         $completionDate,
         $level['text'],
+        $score['testPoints'],
+        $score['practicalPoints'],
         $certificateNumber,
         $verifyUrl
     );

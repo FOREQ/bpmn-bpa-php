@@ -51,7 +51,7 @@ try {
     $token = $participant['certificateToken'] ?? null;
     $filePath = $token ? certificateFilePath($token) : null;
 
-    if (!$token || !is_file($filePath)) {
+    if (!$token || certificateFileNeedsRegeneration($filePath)) {
         $certificate = generateCertificate($pdo, $participant);
         $filePath = $certificate['filePath'];
         $number = $certificate['number'];
