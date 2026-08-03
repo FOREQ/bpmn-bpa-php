@@ -315,6 +315,19 @@ http://localhost:8000
 
 ## Частые проблемы
 
+### `session_start(): open(C:\xampp\tmp\...) failed: Permission denied`
+
+Это не ошибка базы данных. Приложение автоматически сохраняет PHP-сессии в
+доступной папке `database/sessions/`, поэтому менять права на `C:\xampp\tmp`
+не требуется.
+
+Если для сервера нужен другой путь, задайте его перед запуском:
+
+```powershell
+$env:SESSION_SAVE_PATH="C:\temp\bpmn-sessions"
+php -S localhost:8000 router.php
+```
+
 ### Composer пишет: `The zip extension and unzip/7z commands are both missing`
 
 Включите `zip` в `C:\xampp\php\php.ini`:

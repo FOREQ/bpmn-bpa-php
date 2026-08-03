@@ -1,15 +1,8 @@
 <?php
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_set_cookie_params([
-        'lifetime' => 0,
-        'path' => '/',
-        'httponly' => true,
-        'samesite' => 'Strict'
-    ]);
+require_once __DIR__ . '/session.php';
 
-    session_start();
-}
+startAppSession();
 
 const ADMIN_MAX_LOGIN_ATTEMPTS = 5;
 const ADMIN_LOCK_SECONDS = 600; // 10 минут
