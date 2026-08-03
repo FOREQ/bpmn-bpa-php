@@ -9,6 +9,12 @@ $isKazakh = i18nLocale() === 'kk';
 $practicalUi = [
     'testResult' => $isKazakh ? 'Тест нәтижесі' : 'Результат теста',
     'scoreSeparator' => $isKazakh ? '/' : 'из',
+    'submittedTitle' => $isKazakh ? 'Практикалық жұмыс жіберілді' : 'Практическая работа отправлена',
+    'submittedText' => $isKazakh
+        ? 'Жауаптарыңыз сақталды және әкімшінің тексеруін күтуде.'
+        : 'Ваши ответы сохранены и ожидают проверки администратором.',
+    'submittedAt' => $isKazakh ? 'Жіберілген уақыты' : 'Дата отправки',
+    'goToResult' => $isKazakh ? 'Нәтижеге өту' : 'Перейти к результату',
 ];
 
 ?>
@@ -47,7 +53,7 @@ $practicalUi = [
 
     <div id="participantInfo"></div>
 
-    <div class="progress-box">
+    <div id="practicalProgress" class="progress-box">
         <div class="progress-top">
             <span id="stepText">Шаг 1 из 3</span>
             <span id="progressPercent">33%</span>
@@ -93,6 +99,7 @@ $practicalUi = [
 
     const participantInfo = document.getElementById('participantInfo');
     const practicalForm = document.getElementById('practicalForm');
+    const practicalProgress = document.getElementById('practicalProgress');
     const tasksContainer = document.getElementById('tasksContainer');
     const complexityImage = document.getElementById('complexityImage');
     const complexityContainer = document.getElementById('complexityContainer');
@@ -128,6 +135,25 @@ $practicalUi = [
         message.innerHTML = text;
         message.className = 'message ' + type;
         message.style.display = 'block';
+    }
+
+    function showSubmittedState(submittedAt = '') {
+        localStorage.removeItem(draftKey);
+        clearTimeout(autoSaveTimer);
+        practicalProgress.style.display = 'none';
+        practicalForm.style.display = 'none';
+
+        const dateLine = submittedAt
+            ? `<br>${escapeHtml(practicalUi.submittedAt)}: ${escapeHtml(submittedAt)}`
+            : '';
+
+        showMessage(`
+            <strong>${escapeHtml(practicalUi.submittedTitle)}</strong><br>
+            ${escapeHtml(practicalUi.submittedText)}${dateLine}<br><br>
+            <a href="result.php?sessionId=${encodeURIComponent(sessionId)}">
+                ${escapeHtml(practicalUi.goToResult)}
+            </a>
+        `, 'success');
     }
 
     const initialDiagram = `<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -208,6 +234,11 @@ $practicalUi = [
                     </div>
                 </div>
             `;
+
+            if (json.practical.submittedAt) {
+                showSubmittedState(json.practical.submittedAt);
+                return;
+            }
 
             renderTasks(json.practical.tasks);
             renderComplexity(json.practical.complexityVariant);
@@ -574,20 +605,16 @@ $practicalUi = [
             const json = await response.json();
 
             if (!json.success) {
+                if (json.alreadySubmitted) {
+                    showSubmittedState(json.practical?.submittedAt || '');
+                    return;
+                }
+
                 showMessage(json.message || 'Ошибка сохранения практического задания', 'error');
                 return;
             }
 
-            localStorage.removeItem(draftKey);
-
-            showMessage(`
-                Практическое задание сохранено успешно.<br><br>
-                <a href="result.php?sessionId=${encodeURIComponent(sessionId)}">
-                    Перейти к результату
-                </a>
-            `, 'success');
-
-            practicalForm.querySelectorAll('input, button').forEach(el => el.disabled = true);
+            showSubmittedState(json.practical?.submittedAt || '');
 
         } catch (error) {
             console.error(error);

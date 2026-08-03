@@ -139,6 +139,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ], 404);
         }
 
+        if (!empty($participant['practicalSubmittedAt'])) {
+            respondJson([
+                'success' => false,
+                'alreadySubmitted' => true,
+                'message' => 'Практическое задание уже отправлено',
+                'practical' => [
+                    'submittedAt' => $participant['practicalSubmittedAt']
+                ]
+            ], 409);
+        }
+
         if ($complete) {
             $stmt = $pdo->prepare("
                 UPDATE Participant
@@ -147,6 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     practicalSubmittedAt = CURRENT_TIMESTAMP,
                     updatedAt = CURRENT_TIMESTAMP
                 WHERE sessionId = :sessionId
+                  AND practicalSubmittedAt IS NULL
             ");
         } else {
             $stmt = $pdo->prepare("
@@ -155,6 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     practicalAnswers = :practicalAnswers,
                     updatedAt = CURRENT_TIMESTAMP
                 WHERE sessionId = :sessionId
+                  AND practicalSubmittedAt IS NULL
             ");
         }
 
@@ -163,12 +176,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':sessionId' => $sessionId
         ]);
 
+        if ($stmt->rowCount() !== 1) {
+            $stmt = $pdo->prepare("
+                SELECT practicalSubmittedAt
+                FROM Participant
+                WHERE sessionId = :sessionId
+                LIMIT 1
+            ");
+            $stmt->execute([':sessionId' => $sessionId]);
+            $current = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($current && !empty($current['practicalSubmittedAt'])) {
+                respondJson([
+                    'success' => false,
+                    'alreadySubmitted' => true,
+                    'message' => 'Практическое задание уже отправлено',
+                    'practical' => [
+                        'submittedAt' => $current['practicalSubmittedAt']
+                    ]
+                ], 409);
+            }
+
+            respondJson([
+                'success' => false,
+                'message' => 'Не удалось сохранить практическое задание'
+            ], 409);
+        }
+
+        $submittedAt = null;
+
+        if ($complete) {
+            $stmt = $pdo->prepare("
+                SELECT practicalSubmittedAt
+                FROM Participant
+                WHERE sessionId = :sessionId
+                LIMIT 1
+            ");
+            $stmt->execute([':sessionId' => $sessionId]);
+            $saved = $stmt->fetch(PDO::FETCH_ASSOC);
+            $submittedAt = $saved['practicalSubmittedAt'] ?? null;
+        }
+
         respondJson([
             'success' => true,
             'message' => $complete
                 ? 'Практическое задание отправлено'
                 : 'Черновик практического задания сохранен',
-            'complete' => $complete
+            'complete' => $complete,
+            'practical' => [
+                'submittedAt' => $submittedAt
+            ]
         ]);
     } catch (Throwable $e) {
     logError($e, 'api/practical.php POST');
