@@ -1317,8 +1317,21 @@ input[type="radio"] {
     text-decoration: none;
 }
 
+.admin-action-btn:disabled {
+    background: #e8eef8;
+    color: var(--muted);
+    cursor: not-allowed;
+    opacity: 1;
+}
+
 .admin-action-btn.danger {
     background: var(--status-failed-text);
+}
+
+.admin-action-btn.secondary {
+    background: #ffffff;
+    color: var(--accent);
+    border: 1px solid var(--accent);
 }
 
 /* =====================================================================

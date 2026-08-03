@@ -64,6 +64,8 @@ try {
         ], 400);
     }
 
+    $isPasswordResend = ($participant['accountStatus'] ?? '') === 'approved';
+
     $tempPassword = generateTemporaryPassword(10);
     $tempPasswordHash = password_hash($tempPassword, PASSWORD_DEFAULT);
     $expiresAt = date('Y-m-d H:i:s', strtotime('+3 days'));
@@ -75,7 +77,10 @@ try {
         SET accountStatus = 'approved',
             tempPasswordHash = :tempPasswordHash,
             tempPasswordExpiresAt = :tempPasswordExpiresAt,
-            approvedAt = CURRENT_TIMESTAMP,
+            approvedAt = CASE
+                WHEN accountStatus = 'approved' THEN approvedAt
+                ELSE CURRENT_TIMESTAMP
+            END,
             rejectedAt = NULL,
             rejectionReason = NULL,
             failedLoginAttempts = 0,
@@ -102,7 +107,9 @@ try {
 
         respondJson([
             'success' => false,
-            'message' => 'Письмо не отправилось, поэтому заявка не была подтверждена. Проверьте подключение к почтовому серверу и попробуйте снова.'
+            'message' => $isPasswordResend
+                ? 'Письмо не отправилось. Новый пароль не был сохранён, прежний пароль продолжает действовать.'
+                : 'Письмо не отправилось, поэтому заявка не была подтверждена. Проверьте подключение к почтовому серверу и попробуйте снова.'
         ], 502);
     }
 
@@ -110,7 +117,9 @@ try {
 
     respondJson([
         'success' => true,
-        'message' => 'Заявка подтверждена. Временный пароль отправлен на почту участника.',
+        'message' => $isPasswordResend
+            ? 'Новый временный пароль отправлен на почту участника.'
+            : 'Заявка подтверждена. Временный пароль отправлен на почту участника.',
         'expiresAt' => $expiresAt
     ]);
 
