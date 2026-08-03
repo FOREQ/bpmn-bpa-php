@@ -1,10 +1,9 @@
 <?php
 
 require_once __DIR__ . '/../lib/security.php';
+require_once __DIR__ . '/../lib/session.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+startAppSession();
 
 require_once __DIR__ . '/../config/db.php';
 

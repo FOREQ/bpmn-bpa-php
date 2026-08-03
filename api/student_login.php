@@ -1,15 +1,8 @@
 <?php
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_set_cookie_params([
-        'lifetime' => 0,
-        'path' => '/',
-        'httponly' => true,
-        'samesite' => 'Strict'
-    ]);
+require_once __DIR__ . '/../lib/session.php';
 
-    session_start();
-}
+startAppSession();
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../lib/csrf.php';
