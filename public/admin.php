@@ -208,10 +208,20 @@ $activeNav = 'admin';
             return '<span class="small">Заявка отклонена</span>';
         }
 
+        const practicalButton = row.practicalSubmittedAt
+            ? `<button class="admin-action-btn" onclick="openPractical('${sessionId}')" type="button">
+                   Проверить практику
+               </button>`
+            : `<button class="admin-action-btn" type="button" disabled>
+                   Практика не отправлена
+               </button>`;
+
         return `
-            <button class="admin-action-btn" onclick="openPractical('${sessionId}')" type="button">
-                Проверить практику
+            <button class="admin-action-btn secondary" onclick="approveStudent('${participantId}', true)" type="button">
+                Отправить новый пароль
             </button>
+
+            ${practicalButton}
         `;
     }
 
@@ -311,13 +321,17 @@ json.participants.forEach(row => {
         }
     }
 
-    async function approveStudent(participantId) {
+    async function approveStudent(participantId, resendPassword = false) {
         if (!participantId) {
             alert('ID участника не найден');
             return;
         }
 
-        if (!confirm('Подтвердить заявку и отправить временный пароль на почту?')) {
+        const confirmationText = resendPassword
+            ? 'Создать новый временный пароль и отправить его на почту участника? Старый пароль перестанет действовать.'
+            : 'Подтвердить заявку и отправить временный пароль на почту?';
+
+        if (!confirm(confirmationText)) {
             return;
         }
 
@@ -333,11 +347,13 @@ json.participants.forEach(row => {
             const json = await response.json();
 
             if (!json.success) {
-                alert(json.message || 'Ошибка подтверждения заявки');
+                alert(json.message || (resendPassword ? 'Не удалось отправить новый пароль' : 'Ошибка подтверждения заявки'));
                 return;
             }
 
-            alert(json.message || 'Заявка подтверждена. Временный пароль отправлен на почту.');
+            alert(json.message || (resendPassword
+                ? 'Новый временный пароль отправлен на почту.'
+                : 'Заявка подтверждена. Временный пароль отправлен на почту.'));
             await loadParticipants();
 
         } catch (e) {
