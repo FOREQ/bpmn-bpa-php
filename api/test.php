@@ -73,6 +73,7 @@ try {
             'score' => $participant['score'],
             'total' => $participant['total'],
             'percent' => $participant['percent'],
+            'submittedAt' => $participant['submittedAt'],
         ],
         'test' => [
     'variantId' => $variantId,

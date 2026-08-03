@@ -5,6 +5,18 @@ require_once __DIR__ . '/../lib/csrf.php';
 
 $courseTitle = 'Практическое применение методики реинжиниринга бизнес-процессов государственных органов';
 $activeNav = 'login';
+$isKazakh = i18nLocale() === 'kk';
+$testUi = [
+    'submittedSuccessfully' => $isKazakh ? 'Тест сәтті жіберілді.' : 'Тест отправлен успешно.',
+    'alreadySubmitted' => $isKazakh ? 'Тест бұрын жіберілген.' : 'Тест уже был отправлен.',
+    'score' => $isKazakh ? 'Ұпай' : 'Баллы',
+    'outOf' => $isKazakh ? '/' : 'из',
+    'percent' => $isKazakh ? 'Пайыз' : 'Процент',
+    'status' => $isKazakh ? 'Мәртебе' : 'Статус',
+    'passed' => $isKazakh ? 'Тест тапсырылды' : 'Тест сдан',
+    'failed' => $isKazakh ? 'Тест тапсырылмады' : 'Тест не сдан',
+    'goToPractical' => $isKazakh ? 'Практикалық тапсырмаға өту' : 'Перейти к практическому заданию',
+];
 
 ?>
 <!DOCTYPE html>
@@ -60,6 +72,7 @@ $activeNav = 'login';
     const sessionId = params.get('sessionId');
     const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
     const courseTitle = <?= json_encode($courseTitle, JSON_UNESCAPED_UNICODE) ?>;
+    const testUi = <?= json_encode($testUi, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
     const participantInfo = document.getElementById('participantInfo');
     const testForm = document.getElementById('testForm');
@@ -112,6 +125,29 @@ $activeNav = 'login';
         message.style.display = 'block';
     }
 
+    function isCompletedStatus(status) {
+        return status === 'passed' || status === 'failed';
+    }
+
+    function showTestResult(result, alreadySubmitted = false) {
+        const statusText = result.status === 'passed' ? testUi.passed : testUi.failed;
+        const heading = alreadySubmitted ? testUi.alreadySubmitted : testUi.submittedSuccessfully;
+
+        progressBox.style.display = 'none';
+        testForm.innerHTML = '';
+
+        showMessage(`
+            <b>${escapeHtml(heading)}</b><br>
+            ${escapeHtml(testUi.score)}: <b>${escapeHtml(result.score)}</b>
+            ${escapeHtml(testUi.outOf)} <b>${escapeHtml(result.total)}</b><br>
+            ${escapeHtml(testUi.percent)}: <b>${escapeHtml(result.percent)}%</b><br>
+            ${escapeHtml(testUi.status)}: <b>${escapeHtml(statusText)}</b><br><br>
+            <a href="practical.php?sessionId=${encodeURIComponent(sessionId)}">
+                ${escapeHtml(testUi.goToPractical)}
+            </a>
+        `, 'success');
+    }
+
     async function loadTest() {
         if (!sessionId) {
             showMessage('sessionId не передан в ссылке', 'error');
@@ -146,6 +182,13 @@ $activeNav = 'login';
                     </div>
                 </div>
             `;
+
+            if (isCompletedStatus(json.participant.status)) {
+                localStorage.removeItem(answersStorageKey);
+                localStorage.removeItem(positionStorageKey);
+                showTestResult(json.participant, true);
+                return;
+            }
 
             progressBox.style.display = 'block';
 
@@ -356,6 +399,13 @@ $activeNav = 'login';
             const json = await response.json();
 
             if (!json.success) {
+                if (json.result && isCompletedStatus(json.result.status)) {
+                    localStorage.removeItem(answersStorageKey);
+                    localStorage.removeItem(positionStorageKey);
+                    showTestResult(json.result, true);
+                    return;
+                }
+
                 showMessage(json.message || 'Ошибка отправки теста', 'error');
                 return;
             }
@@ -363,21 +413,7 @@ $activeNav = 'login';
             localStorage.removeItem(answersStorageKey);
             localStorage.removeItem(positionStorageKey);
 
-            const resultStatusText = json.result.status === 'passed'
-                ? 'Тест сдан'
-                : 'Тест не сдан';
-
-            showMessage(`
-                <b>Тест отправлен успешно.</b><br>
-                Баллы: <b>${json.result.score}</b> из <b>${json.result.total}</b><br>
-                Процент: <b>${json.result.percent}%</b><br>
-                Статус: <b>${resultStatusText}</b><br><br>
-                <a href="practical.php?sessionId=${encodeURIComponent(sessionId)}">
-                    Перейти к практическому заданию
-                </a>
-            `, 'success');
-
-            testForm.querySelectorAll('input, button').forEach(el => el.disabled = true);
+            showTestResult(json.result);
         } catch (error) {
             showMessage('Ошибка соединения с сервером', 'error');
         }
