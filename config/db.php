@@ -1,5 +1,11 @@
 <?php
 
+$appTimezone = getenv('APP_TIMEZONE') ?: 'Asia/Qyzylorda';
+
+if (!date_default_timezone_set($appTimezone)) {
+    throw new RuntimeException('Invalid APP_TIMEZONE: ' . $appTimezone);
+}
+
 require_once __DIR__ . '/../lib/i18n.php';
 require_once __DIR__ . '/../lib/db_compat.php';
 
