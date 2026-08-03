@@ -73,6 +73,49 @@ CREATE INDEX IF NOT EXISTS idx_participant_email ON Participant(email);
 CREATE INDEX IF NOT EXISTS idx_participant_session ON Participant(sessionId);
 CREATE INDEX IF NOT EXISTS idx_participant_status ON Participant(accountStatus);
 
+-- Старые базы могли содержать поврежденную заявку с пустыми обязательными
+-- полями. NOT VALID позволяет подключить защиту без падения запуска на такой
+-- исторической строке, но все новые INSERT/UPDATE проверяются сразу.
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'participant_required_fields_not_blank'
+          AND conrelid = 'participant'::regclass
+    ) THEN
+        ALTER TABLE Participant
+            ADD CONSTRAINT participant_required_fields_not_blank
+            CHECK (
+                btrim(COALESCE(id, '')) <> ''
+                AND btrim(COALESCE(sessionId, '')) <> ''
+                AND btrim(COALESCE(fullName, '')) <> ''
+                AND btrim(COALESCE(email, '')) <> ''
+                AND btrim(COALESCE(phone, '')) <> ''
+                AND btrim(COALESCE(organization, '')) <> ''
+                AND btrim(COALESCE(variantId, '')) <> ''
+            ) NOT VALID;
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM Participant
+        WHERE btrim(COALESCE(id, '')) = ''
+           OR btrim(COALESCE(sessionId, '')) = ''
+           OR btrim(COALESCE(fullName, '')) = ''
+           OR btrim(COALESCE(email, '')) = ''
+           OR btrim(COALESCE(phone, '')) = ''
+           OR btrim(COALESCE(organization, '')) = ''
+           OR btrim(COALESCE(variantId, '')) = ''
+    ) THEN
+        ALTER TABLE Participant
+            VALIDATE CONSTRAINT participant_required_fields_not_blank;
+    END IF;
+END $$;
+
 -- Исторические сертификаты, выданные до запуска этой системы
 -- (импортируются из Excel/CSV скриптом database/import_legacy.php)
 CREATE TABLE IF NOT EXISTS LegacyCertificate (

@@ -86,3 +86,30 @@ CREATE TABLE IF NOT EXISTS LegacyCertificate (
 
 CREATE INDEX IF NOT EXISTS idx_legacy_token ON LegacyCertificate(certificateToken);
 CREATE INDEX IF NOT EXISTS idx_legacy_number ON LegacyCertificate(certificateNumber);
+
+-- Дополнительная защита SQLite на случай прямой записи в базу в обход API.
+CREATE TRIGGER IF NOT EXISTS participant_required_fields_before_insert
+BEFORE INSERT ON Participant
+WHEN trim(COALESCE(NEW.id, '')) = ''
+  OR trim(COALESCE(NEW.sessionId, '')) = ''
+  OR trim(COALESCE(NEW.fullName, '')) = ''
+  OR trim(COALESCE(NEW.email, '')) = ''
+  OR trim(COALESCE(NEW.phone, '')) = ''
+  OR trim(COALESCE(NEW.organization, '')) = ''
+  OR trim(COALESCE(NEW.variantId, '')) = ''
+BEGIN
+    SELECT RAISE(ABORT, 'Participant required fields must not be blank');
+END;
+
+CREATE TRIGGER IF NOT EXISTS participant_required_fields_before_update
+BEFORE UPDATE OF id, sessionId, fullName, email, phone, organization, variantId ON Participant
+WHEN trim(COALESCE(NEW.id, '')) = ''
+  OR trim(COALESCE(NEW.sessionId, '')) = ''
+  OR trim(COALESCE(NEW.fullName, '')) = ''
+  OR trim(COALESCE(NEW.email, '')) = ''
+  OR trim(COALESCE(NEW.phone, '')) = ''
+  OR trim(COALESCE(NEW.organization, '')) = ''
+  OR trim(COALESCE(NEW.variantId, '')) = ''
+BEGIN
+    SELECT RAISE(ABORT, 'Participant required fields must not be blank');
+END;

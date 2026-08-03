@@ -33,17 +33,30 @@ if (!is_array($input)) {
     ], 400);
 }
 
-if (!csrfVerify($input['csrf_token'] ?? '')) {
+$csrfToken = $input['csrf_token'] ?? null;
+
+if (!is_string($csrfToken) || !csrfVerify($csrfToken)) {
     respondJson([
         'success' => false,
         'message' => 'Ошибка безопасности. Обновите страницу и попробуйте снова.'
     ], 403);
 }
 
-$fullName = trim($input['fullName'] ?? '');
-$email = trim($input['email'] ?? '');
-$phone = trim($input['phone'] ?? '');
-$organization = trim($input['organization'] ?? '');
+$requiredFields = ['fullName', 'email', 'phone', 'organization'];
+
+foreach ($requiredFields as $field) {
+    if (!isset($input[$field]) || !is_string($input[$field])) {
+        respondJson([
+            'success' => false,
+            'message' => 'Заполните все обязательные поля'
+        ], 400);
+    }
+}
+
+$fullName = trim($input['fullName']);
+$email = trim($input['email']);
+$phone = trim($input['phone']);
+$organization = trim($input['organization']);
 
 if ($fullName === '' || $email === '' || $phone === '' || $organization === '') {
     respondJson([
@@ -52,7 +65,10 @@ if ($fullName === '' || $email === '' || $phone === '' || $organization === '') 
     ], 400);
 }
 
-if (!preg_match('/^[A-Za-zА-Яа-яЁёІіҢңҒғҚқҮүҰұӨөҺһӘә\s-]+$/u', $fullName)) {
+if (
+    !preg_match('/^[\p{L}\s-]+$/u', $fullName)
+    || !preg_match('/\p{L}/u', $fullName)
+) {
     respondJson([
         'success' => false,
         'message' => 'ФИО должно содержать только буквы'
@@ -73,7 +89,10 @@ if (!preg_match('/^\+?[0-9]{10,15}$/', $phone)) {
     ], 400);
 }
 
-if (!preg_match('/^[A-Za-zА-Яа-яЁёІіҢңҒғҚқҮүҰұӨөҺһӘә0-9\s.,()-]+$/u', $organization)) {
+if (
+    !preg_match('/^[\p{L}\p{N}\s.,()-]+$/u', $organization)
+    || !preg_match('/[\p{L}\p{N}]/u', $organization)
+) {
     respondJson([
         'success' => false,
         'message' => 'Некорректное название организации'
