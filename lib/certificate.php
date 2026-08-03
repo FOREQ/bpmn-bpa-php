@@ -27,23 +27,41 @@ function certificateFilePath(string $token): string
     return certificatesDir() . '/certificate-' . $token . '.pdf';
 }
 
-function ensureCertificateColumns(PDO $pdo): void
+function dbExistingColumns(PDO $pdo, string $table): array
 {
+    if (dbDriver() === 'pgsql') {
+        $stmt = $pdo->prepare("
+            SELECT column_name FROM information_schema.columns
+            WHERE table_name = :table
+        ");
+        $stmt->execute([':table' => strtolower($table)]);
+
+        return array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'column_name');
+    }
+
     $existing = [];
 
-    foreach ($pdo->query("PRAGMA table_info(Participant)") as $column) {
+    foreach ($pdo->query("PRAGMA table_info({$table})") as $column) {
         $existing[] = $column['name'];
     }
+
+    return $existing;
+}
+
+function ensureCertificateColumns(PDO $pdo): void
+{
+    $existing = array_map('strtolower', dbExistingColumns($pdo, 'Participant'));
+    $timestampType = dbDriver() === 'pgsql' ? 'TIMESTAMP' : 'DATETIME';
 
     $needed = [
         'certificateNumber' => 'TEXT',
         'certificateToken' => 'TEXT',
-        'certificateGeneratedAt' => 'DATETIME',
-        'certificateEmailedAt' => 'DATETIME',
+        'certificateGeneratedAt' => $timestampType,
+        'certificateEmailedAt' => $timestampType,
     ];
 
     foreach ($needed as $name => $type) {
-        if (!in_array($name, $existing, true)) {
+        if (!in_array(strtolower($name), $existing, true)) {
             $pdo->exec("ALTER TABLE Participant ADD COLUMN {$name} {$type}");
         }
     }
@@ -309,9 +327,13 @@ function generateCertificate(PDO $pdo, array $participant): array
 
 function ensureLegacyCertificateTable(PDO $pdo): void
 {
+    $isPgsql = dbDriver() === 'pgsql';
+    $idColumn = $isPgsql ? 'id SERIAL PRIMARY KEY' : 'id INTEGER PRIMARY KEY AUTOINCREMENT';
+    $timestampType = $isPgsql ? 'TIMESTAMP' : 'DATETIME';
+
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS LegacyCertificate (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            {$idColumn},
             certificateNumber TEXT UNIQUE,
             certificateToken TEXT UNIQUE,
             fullName TEXT NOT NULL,
@@ -319,7 +341,7 @@ function ensureLegacyCertificateTable(PDO $pdo): void
             completionDate TEXT,
             level TEXT,
             extra TEXT,
-            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+            createdAt {$timestampType} DEFAULT CURRENT_TIMESTAMP
         )
     ");
 }

@@ -9,6 +9,16 @@ services:
       - vendor:/app/vendor
     environment:
       COMPOSER_CACHE_DIR: /tmp/composer-cache
+      # По умолчанию используется SQLite (файл database/database.sqlite),
+      # ничего дополнительно настраивать не нужно.
+      #
+      # Чтобы подключиться к PostgreSQL — раскомментируйте и заполните:
+      # DB_DRIVER: pgsql
+      # DB_HOST: db
+      # DB_PORT: "5432"
+      # DB_NAME: bpmn
+      # DB_USER: postgres
+      # DB_PASSWORD: postgres
 
 volumes:
   composer-cache:
