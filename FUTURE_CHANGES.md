@@ -13,9 +13,9 @@ What looks good
 
 Critical issues to fix before real deployment
 
-1. SMTP credentials are hardcoded
-    - config/mail.php contains a Gmail username/app password.
-    - Rotate that password immediately and move secrets to .env or server environment variables.
+1. SMTP credentials were hardcoded (code fixed, rotation still required)
+    - config/mail.php now reads MAIL_* environment variables or MAIL_CREDENTIALS_FILE.
+    - The old Gmail app password is still in git history: revoke it in the Google account and issue a new one.
 
 2. Student APIs trust sessionId from URL/request
     - api/test.php, api/submit_test.php, api/practical.php, api/result.php load/update participants by supplied sessionId.
@@ -57,7 +57,7 @@ Priority recommendation
 
 Before sharing publicly or deploying:
 
-1. Rotate/remove SMTP password.
+1. Revoke the old Gmail app password (it remains in git history).
 2. Lock all student APIs to the authenticated session.
 3. Fix password reset/login logic.
 4. Add CSRF to remaining admin endpoints.

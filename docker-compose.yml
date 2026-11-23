@@ -19,6 +19,17 @@ services:
       # DB_NAME: bpmn
       # DB_USER: postgres
       # DB_PASSWORD: postgres
+      #
+      # Почта: значения берутся из файла .env рядом с docker-compose.yml
+      # (скопируйте .env.example в .env и заполните). Пароли в git не храним.
+      MAIL_TRANSPORT: ${MAIL_TRANSPORT:-smtp}
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM_EMAIL: ${MAIL_FROM_EMAIL:-}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-BPMN Testing System}
+      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION:-starttls}
 
 volumes:
   composer-cache:
