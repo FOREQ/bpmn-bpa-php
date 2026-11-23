@@ -57,10 +57,17 @@ function startAppSession(array $cookieParams = []): void
 
     configureAppSessionPath();
 
+    $basePath = rtrim(trim((string)(getenv('APP_BASE_PATH') ?: '')), '/');
+    if ($basePath !== '') {
+        session_name('bpmn_bpa_session');
+    }
+    $secureCookie = filter_var(getenv('SESSION_COOKIE_SECURE'), FILTER_VALIDATE_BOOLEAN)
+        || (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+
     $defaultCookieParams = [
         'lifetime' => 0,
-        'path' => '/',
-        'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'path' => $basePath !== '' ? $basePath . '/' : '/',
+        'secure' => $secureCookie,
         'httponly' => true,
         'samesite' => 'Strict',
     ];

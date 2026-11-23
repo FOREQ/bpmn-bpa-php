@@ -10,6 +10,7 @@ database/sessions/
 # Environment/secrets
 .env
 .env.local
+.env.dtc
 
 # OS files
 desktop.ini
@@ -24,3 +25,4 @@ vendor/
 
 # Generated certificates
 database/certificates/
+database/legacy_before_cleanup_*.json

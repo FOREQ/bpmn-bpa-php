@@ -87,6 +87,29 @@ CREATE TABLE IF NOT EXISTS LegacyCertificate (
 CREATE INDEX IF NOT EXISTS idx_legacy_token ON LegacyCertificate(certificateToken);
 CREATE INDEX IF NOT EXISTS idx_legacy_number ON LegacyCertificate(certificateNumber);
 
+CREATE TABLE IF NOT EXISTS custom_question (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    variant TEXT NOT NULL CHECK (variant IN ('A', 'B', 'C', 'all')),
+    question_text TEXT NOT NULL,
+    question_text_kk TEXT,
+    options_json TEXT NOT NULL,
+    options_json_kk TEXT,
+    correct_index INTEGER NOT NULL CHECK (correct_index BETWEEN 0 AND 3),
+    image_path TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS custom_practical_task (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pool TEXT NOT NULL CHECK (pool IN ('first', 'second')),
+    title TEXT,
+    title_kk TEXT,
+    description TEXT NOT NULL,
+    description_kk TEXT,
+    reference_file TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Дополнительная защита SQLite на случай прямой записи в базу в обход API.
 CREATE TRIGGER IF NOT EXISTS participant_required_fields_before_insert
 BEFORE INSERT ON Participant

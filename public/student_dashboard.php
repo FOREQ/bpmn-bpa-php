@@ -119,7 +119,7 @@ function certificateLabel(int $overallTotal, bool $practicalGraded): string
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="dashboard-page">
 
 <?php require __DIR__ . '/_header.php'; ?>
 
@@ -137,9 +137,18 @@ function certificateLabel(int $overallTotal, bool $practicalGraded): string
 
         <h1>Личный кабинет участника</h1>
 
-        <p class="hint">
+        <p class="hint dashboard-course-hint">
             Курс: «<?= htmlspecialchars($courseTitle) ?>»
         </p>
+
+        <div class="rp-actions dashboard-actions">
+            <a class="btn btn-primary" href="<?= htmlspecialchars($mainActionLink) ?>">
+                <?= htmlspecialchars($mainActionText) ?>
+            </a>
+            <?php if ($practicalGraded): ?>
+                <a class="btn btn-secondary" href="../api/certificate.php?sessionId=<?= urlencode($sessionId) ?>">Скачать сертификат</a>
+            <?php endif; ?>
+        </div>
 
         <div class="rp-card">
             <div class="rp-hero <?= $testStatus === 'passed' ? 'passed' : '' ?>">
@@ -155,6 +164,8 @@ function certificateLabel(int $overallTotal, bool $practicalGraded): string
                 </p>
             </div>
 
+            <details class="dashboard-details" data-participant-details open>
+            <summary><?= i18nLocale() === 'kk' ? 'Мәліметтер және нәтижелер' : 'Сведения и результаты' ?></summary>
             <div class="rp-grid">
                 <div class="rp-metric">
                     <div class="rp-metric-label">Название курса</div>
@@ -294,17 +305,8 @@ function certificateLabel(int $overallTotal, bool $practicalGraded): string
                 </div>
             </div>
 
-            <div style="display:flex;flex-wrap:wrap;gap:12px;padding:24px 32px 32px;">
-                <a class="btn btn-primary" href="<?= htmlspecialchars($mainActionLink) ?>">
-                    <?= htmlspecialchars($mainActionText) ?>
-                </a>
-
-                <?php if ($practicalGraded): ?>
-                    <a class="btn btn-secondary" href="../api/certificate.php?sessionId=<?= urlencode($sessionId) ?>">
-                        Скачать сертификат
-                    </a>
-                <?php endif; ?>
-
+            </details>
+            <div class="dashboard-footer">
                 <a class="btn btn-secondary" href="student_logout.php">
                     Выйти
                 </a>

@@ -3,8 +3,10 @@
 .vscode
 database/database.sqlite
 database/certificates
+database/legacy_before_cleanup_*.json
 logs
 *.log
 vendor
 desktop.ini
+.env.dtc
 Thumbs.db

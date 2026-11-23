@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../lib/test_data.php';
+require_once __DIR__ . '/../lib/content_bank.php';
 require_once __DIR__ . '/../lib/test_service.php';
 require_once __DIR__ . '/../lib/csrf.php';
 require_once __DIR__ . '/../lib/error_logger.php';
@@ -91,7 +92,7 @@ try {
     }
 
     $variantId = $participant['variantId'];
-    $variant = $TEST_DATA[$variantId] ?? null;
+    $variant = testVariantWithCustom($pdo, $variantId);
 
     if (!$variant) {
         respondJson([
@@ -100,7 +101,25 @@ try {
         ], 500);
     }
 
+    $questionIds = json_decode($participant['questionOrder'] ?? '[]', true);
+    if (!is_array($questionIds) || count($questionIds) === 0) {
+        respondJson(['success' => false, 'message' => 'Список вопросов участника не найден'], 500);
+    }
+
+    $byId = [];
     foreach ($variant as $question) {
+        $byId[(string)$question['id']] = $question;
+    }
+
+    $assignedQuestions = [];
+    foreach ($questionIds as $questionId) {
+        if (!isset($byId[(string)$questionId])) {
+            respondJson(['success' => false, 'message' => 'Один из вопросов участника больше не доступен'], 500);
+        }
+        $assignedQuestions[] = $byId[(string)$questionId];
+    }
+
+    foreach ($assignedQuestions as $question) {
         if (!array_key_exists((string)$question['id'], $answers)) {
             respondJson([
                 'success' => false,
@@ -109,7 +128,7 @@ try {
         }
     }
 
-    $grade = gradeAnswers($variant, $answers);
+    $grade = gradeAnswers($assignedQuestions, $answers);
 
     $stmt = $pdo->prepare("
         UPDATE Participant

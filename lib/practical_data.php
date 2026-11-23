@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/content_bank.php';
+
 function getFirstPracticalTasks(): array
 {
     return [
@@ -179,10 +181,15 @@ function getComplexityVariants(): array
     ];
 }
 
-function randomPracticalTaskIds(): array
+function randomPracticalTaskIds(?PDO $pdo = null): array
 {
     $firstTasks = getFirstPracticalTasks();
     $secondTasks = getPracticalTasks();
+
+    if ($pdo !== null) {
+        $firstTasks = array_merge($firstTasks, customPracticalTasks($pdo, 'first'));
+        $secondTasks = array_merge($secondTasks, customPracticalTasks($pdo, 'second'));
+    }
 
     $firstTask = $firstTasks[array_rand($firstTasks)];
     $secondTask = $secondTasks[array_rand($secondTasks)];
@@ -201,7 +208,7 @@ function randomComplexityVariantId(): string
     return $variant['id'];
 }
 
-function getPracticalTask(string $id): ?array
+function getPracticalTask(string $id, ?PDO $pdo = null): ?array
 {
     $allTasks = array_merge(getFirstPracticalTasks(), getPracticalTasks());
 
@@ -209,6 +216,14 @@ function getPracticalTask(string $id): ?array
         if ($task['id'] === $id) {
             return $task;
         }
+    }
+
+    if (str_starts_with($id, 'custom-')) {
+        if ($pdo === null) {
+            require_once __DIR__ . '/../config/db.php';
+            $pdo = getDb();
+        }
+        return customPracticalTask($pdo, $id);
     }
 
     return null;

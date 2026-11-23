@@ -1,0 +1,49 @@
+name: bpmn-bpa
+
+services:
+  portal:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env.dtc
+    environment:
+      APP_BASE_PATH: /bpmn
+      VERIFY_BASE_URL: https://dtc.govtec.kz/bpmn/certificate/
+      SESSION_COOKIE_SECURE: "true"
+      SESSION_SAVE_PATH: /app/database/sessions
+      MAIL_TRANSPORT: ews
+      MAIL_EWS_URL: https://mailfabric.govtec.kz/EWS/Exchange.asmx
+      MAIL_CREDENTIALS_FILE: /run/secrets/bpmn_mail
+    secrets:
+      - bpmn_mail
+    volumes:
+      - .:/app
+      - vendor:/app/vendor
+      - certificates:/app/database/certificates
+      - sessions:/app/database/sessions
+      - logs:/app/logs
+    networks:
+      erbp:
+        aliases:
+          - bpmn-bpa-app
+    healthcheck:
+      test: ["CMD-SHELL", "php -r '$$page = @file_get_contents(\"http://127.0.0.1:8000/bpmn/\"); exit($$page === false ? 1 : 0);'"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 60s
+
+secrets:
+  bpmn_mail:
+    file: ${BPMN_MAIL_CREDENTIALS_PATH:-/home/ernar/.config/bpmn-mail/ews.json}
+
+volumes:
+  vendor:
+  certificates:
+  sessions:
+  logs:
+
+networks:
+  erbp:
+    external: true
+    name: erbp_default

@@ -53,6 +53,9 @@ $adminUi = [
             </div>
 
             <div class="admin-actions">
+                <a class="btn btn-primary" href="admin_courses.php"><?= $isKazakh ? 'Курстарды басқару' : 'Управление курсами' ?></a>
+                <a class="btn btn-secondary" href="content.php">Вопросы и задания</a>
+                <a class="btn btn-secondary" href="admin_test.php"><?= $isKazakh ? 'Тестті сынап көру' : 'Пройти тест самому' ?></a>
                 <a class="btn btn-primary" href="../api/admin/export.php">Скачать CSV</a>
                 <button class="btn btn-secondary" id="refreshBtn" type="button">Обновить список</button>
                 <a class="btn btn-secondary" href="logout.php">Выйти из админки</a>
@@ -62,6 +65,24 @@ $adminUi = [
         <div id="participantsBody" class="admin-participants-list">
             <div class="admin-empty">Загрузка...</div>
         </div>
+
+        <section class="admin-legacy-section" aria-labelledby="legacyHeading">
+            <div class="admin-legacy-heading">
+                <div>
+                    <div class="admin-eyebrow">Архив</div>
+                    <h2 id="legacyHeading">Ранее выданные сертификаты <span id="legacyCount"></span></h2>
+                    <p class="admin-course-line">Сертификаты курса, выданные до регистрации участников на этом портале.</p>
+                    <a class="btn btn-secondary" href="admin_certificates.php"><?= $isKazakh ? 'Сертификаттарды тіркеу файлын жүктеу' : 'Загрузить файл регистрации сертификатов' ?></a>
+                </div>
+                <label class="admin-legacy-search-label">
+                    Поиск по имени или номеру
+                    <input id="legacySearch" class="admin-legacy-search" type="search" placeholder="Имя или номер сертификата">
+                </label>
+            </div>
+            <div id="legacyBody" class="admin-participants-list" aria-live="polite">
+                <div class="admin-empty">Загрузка...</div>
+            </div>
+        </section>
     </div>
 </section>
 
@@ -87,12 +108,79 @@ $adminUi = [
 
 <script>
     const participantsBody = document.getElementById('participantsBody');
+    const legacyBody = document.getElementById('legacyBody');
+    const legacyCount = document.getElementById('legacyCount');
+    const legacySearch = document.getElementById('legacySearch');
+    const siteBasePath = <?= json_encode(rtrim(trim((string)(getenv('APP_BASE_PATH') ?: '')), '/'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     const modal = document.getElementById('modal');
     const practicalContent = document.getElementById('practicalContent');
     const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
     const adminUi = <?= json_encode($adminUi, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
     let currentViewers = [];
+    let legacyCertificates = [];
+
+    function renderLegacyCertificates() {
+        const term = legacySearch.value.trim().toLocaleLowerCase();
+        const visible = legacyCertificates.filter(row =>
+            [row.fullName, row.certificateNumber, row.course]
+                .some(value => String(value || '').toLocaleLowerCase().includes(term))
+        );
+
+        legacyCount.textContent = `(${legacyCertificates.length})`;
+        legacyBody.innerHTML = '';
+
+        if (visible.length === 0) {
+            legacyBody.innerHTML = `<div class="admin-empty">${term ? 'По запросу ничего не найдено' : 'Исторических сертификатов пока нет'}</div>`;
+            return;
+        }
+
+        visible.forEach(row => {
+            const card = document.createElement('div');
+            card.className = 'admin-participant-card admin-legacy-card';
+            const verifyUrl = row.certificateToken
+                ? `${siteBasePath}/certificate/${encodeURIComponent(row.certificateToken)}`
+                : '';
+
+            card.innerHTML = `
+                <div class="admin-participant-col wide">
+                    <div class="admin-participant-label">Получатель</div>
+                    <div class="admin-participant-value"><b>${escapeHtml(row.fullName)}</b></div>
+                </div>
+                <div class="admin-participant-col">
+                    <div class="admin-participant-label">Номер сертификата</div>
+                    <div class="admin-participant-value">${escapeHtml(row.certificateNumber || '—')}</div>
+                </div>
+                <div class="admin-participant-col">
+                    <div class="admin-participant-label">Дата завершения</div>
+                    <div class="admin-participant-value">${escapeHtml(row.completionDate || '—')}</div>
+                </div>
+                <div class="admin-participant-col">
+                    <div class="admin-participant-label">Категория сертификата</div>
+                    <div class="admin-participant-value">${escapeHtml(row.level || 'Не указана в старой базе')}</div>
+                </div>
+                <div class="admin-participant-col actions">
+                    <div class="admin-participant-label">Проверка</div>
+                    ${verifyUrl ? `<a class="admin-action-btn secondary" href="${escapeHtml(verifyUrl)}" target="_blank" rel="noopener">Открыть сертификат</a>` : '<span class="small">Ссылка отсутствует</span>'}
+                </div>
+            `;
+            legacyBody.appendChild(card);
+        });
+    }
+
+    async function loadLegacyCertificates() {
+        try {
+            const response = await fetch('../api/admin/legacy_certificates.php');
+            const json = await response.json();
+            if (!response.ok || !json.success || !Array.isArray(json.certificates)) {
+                throw new Error(json.message || 'Ошибка загрузки');
+            }
+            legacyCertificates = json.certificates;
+            renderLegacyCertificates();
+        } catch (error) {
+            legacyBody.innerHTML = `<div class="admin-empty">${escapeHtml(error.message || 'Ошибка соединения с сервером')}</div>`;
+        }
+    }
 
     function escapeHtml(text) {
         return String(text ?? '')
@@ -750,7 +838,11 @@ json.participants.forEach(row => {
         });
     }
 
-    document.getElementById('refreshBtn').addEventListener('click', loadParticipants);
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+        loadParticipants();
+        loadLegacyCertificates();
+    });
+    legacySearch.addEventListener('input', renderLegacyCertificates);
 
     document.getElementById('closeModal').addEventListener('click', () => {
         modal.style.display = 'none';
@@ -765,6 +857,7 @@ json.participants.forEach(row => {
     });
 
     loadParticipants();
+    loadLegacyCertificates();
 
     let adminIdleTimer;
 

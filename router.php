@@ -2,9 +2,77 @@
 
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/';
 $decodedPath = urldecode($path);
+$basePath = rtrim(trim((string)(getenv('APP_BASE_PATH') ?: '')), '/');
+
+if ($basePath !== '') {
+    if (!preg_match('#^/[A-Za-z0-9_-]+(?:/[A-Za-z0-9_-]+)*$#', $basePath)) {
+        http_response_code(500);
+        return true;
+    }
+
+    if ($decodedPath === $basePath) {
+        header('Location: ' . $basePath . '/' . (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== '' ? '?' . $_SERVER['QUERY_STRING'] : ''), true, 308);
+        return true;
+    }
+
+    if (!str_starts_with($decodedPath, $basePath . '/')) {
+        http_response_code(404);
+        return true;
+    }
+
+    $decodedPath = substr($decodedPath, strlen($basePath));
+
+    $prettyPages = [
+        'index' => 'index.php',
+        'register' => 'register.php',
+        'login' => 'student_login.php',
+        'admin-login' => 'admin_login.php',
+        'admin' => 'admin.php',
+        'content' => 'content.php',
+        'admin-test' => 'admin_test.php',
+        'forgot-password' => 'forgot_password.php',
+        'dashboard' => 'student_dashboard.php',
+        'test' => 'test.php',
+        'result' => 'result.php',
+        'practical' => 'practical.php',
+        'bpmn-test' => 'bpmn_test.php',
+        'logout' => 'logout.php',
+        'student-logout' => 'student_logout.php',
+        'verify' => 'verify.php',
+    ];
+
+    if (in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'HEAD'], true)
+        && preg_match('#^/(?:public/)?([a-z_]+)\.php$#', $decodedPath, $matches)) {
+        $slug = array_search($matches[1] . '.php', $prettyPages, true);
+        if ($slug !== false) {
+            $canonical = $slug === 'index' ? $basePath . '/' : $basePath . '/' . $slug;
+            $query = $_SERVER['QUERY_STRING'] ?? '';
+            header('Location: ' . $canonical . ($query !== '' ? '?' . $query : ''), true, 308);
+            return true;
+        }
+    }
+
+    if ($decodedPath === '/') {
+        $decodedPath = '/public/index.php';
+    } else {
+        $slug = ltrim($decodedPath, '/');
+        if (isset($prettyPages[$slug])) {
+            $decodedPath = '/public/' . $prettyPages[$slug];
+        }
+    }
+}
+
+// Independent course enrollment pages use stable public IDs.
+if (preg_match('#^/courses/([a-f0-9]{32})/?$#', $decodedPath, $matches)) {
+    $_GET['id'] = $matches[1];
+    $_SERVER['SCRIPT_NAME'] = '/public/course.php';
+    $_SERVER['SCRIPT_FILENAME'] = __DIR__ . '/public/course.php';
+    require __DIR__ . '/public/course.php';
+    return true;
+}
 
 // Публичная проверка сертификата по QR-коду: /certificate/<токен>
-if (preg_match('#^/certificate/([a-zA-Z0-9]+)$#', $decodedPath, $matches)) {
+if (preg_match('#^/certificate/([a-zA-Z0-9_-]+)$#', $decodedPath, $matches)) {
     $_GET['token'] = $matches[1];
     $_SERVER['SCRIPT_NAME'] = '/public/verify.php';
     $_SERVER['SCRIPT_FILENAME'] = __DIR__ . '/public/verify.php';

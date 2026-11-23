@@ -3,7 +3,7 @@
 RewriteEngine On
 
 # Публичная проверка сертификата по QR-коду: /certificate/<токен>
-RewriteRule ^certificate/([a-zA-Z0-9]+)$ public/verify.php?token=$1 [L,QSA]
+RewriteRule ^certificate/([a-zA-Z0-9_-]+)$ public/verify.php?token=$1 [L,QSA]
 
 # Запрет прямого доступа к служебным папкам
 RewriteRule ^(database|logs|config|lib|vendor|docker)($|/) - [F]

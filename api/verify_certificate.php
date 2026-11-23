@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 $token = trim($_GET['token'] ?? '');
 
-if ($token === '' || !preg_match('/^[a-zA-Z0-9]{6,32}$/', $token)) {
+if ($token === '' || !preg_match('/^[a-zA-Z0-9_-]{6,32}$/', $token)) {
     respondJson([
         'valid' => false,
         'message' => 'Некорректный токен сертификата'

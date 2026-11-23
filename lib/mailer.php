@@ -9,16 +9,35 @@ function createMailer(): PHPMailer
 {
     $config = require __DIR__ . '/../config/mail.php';
 
-    $mail = new PHPMailer(true);
-
-    $mail->isSMTP();
-    $mail->Host = $config['host'];
-    $mail->SMTPAuth = true;
-    $mail->Username = $config['username'];
-    $mail->Password = $config['password'];
-    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-    $mail->Port = (int)$config['port'];
-    $mail->Timeout = 15;
+    foreach (['username', 'password', 'from_email'] as $field) {
+        if ($config[$field] === '') {
+            throw new RuntimeException('Mail is not configured: missing ' . $field);
+        }
+    }
+    if ($config['transport'] === 'ews') {
+        require_once __DIR__ . '/ews_mailer.php';
+        $mail = new EwsMailer(new EwsClient(
+            $config['ews_url'], $config['username'], $config['password'], $config['from_email']
+        ));
+    } elseif ($config['transport'] === 'smtp') {
+        if ($config['host'] === '' || $config['port'] < 1 || $config['port'] > 65535
+            || !in_array($config['encryption'], ['starttls', 'smtps'], true)) {
+            throw new RuntimeException('Mail SMTP settings are incomplete or invalid.');
+        }
+        $mail = new PHPMailer(true);
+        $mail->isSMTP();
+        $mail->Host = $config['host'];
+        $mail->SMTPAuth = true;
+        $mail->Username = $config['username'];
+        $mail->Password = $config['password'];
+        $mail->SMTPSecure = $config['encryption'] === 'smtps'
+            ? PHPMailer::ENCRYPTION_SMTPS
+            : PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = (int)$config['port'];
+        $mail->Timeout = 15;
+    } else {
+        throw new RuntimeException('Mail transport is not supported.');
+    }
 
     $mail->CharSet = 'UTF-8';
     $mail->Encoding = 'base64';

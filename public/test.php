@@ -7,6 +7,7 @@ $courseTitle = 'Практическое применение методики �
 $activeNav = 'login';
 $isKazakh = i18nLocale() === 'kk';
 $testUi = [
+    'answered' => $isKazakh ? 'Жауап берілді' : 'Заполнено',
     'submittedSuccessfully' => $isKazakh ? 'Тест сәтті жіберілді.' : 'Тест отправлен успешно.',
     'alreadySubmitted' => $isKazakh ? 'Тест бұрын жіберілген.' : 'Тест уже был отправлен.',
     'score' => $isKazakh ? 'Ұпай' : 'Баллы',
@@ -27,11 +28,11 @@ $testUi = [
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="assessment-page theory-page">
 
 <?php require __DIR__ . '/_header.php'; ?>
 
-<section style="position: relative; overflow: hidden;">
+<section class="assessment-section" style="position: relative;">
     <div class="decor-hex" style="top: 140px; right: calc(50% - 590px); width: 56px; height: 49px;">
         <div class="decor-hex-outer"></div>
         <div class="decor-hex-inner"></div>
@@ -45,11 +46,14 @@ $testUi = [
 
         <h1>Теоретический тест</h1>
 
+        <details class="participant-details" data-participant-details open>
+        <summary><?= $isKazakh ? 'Курс және қатысушы' : 'Курс и участник' ?></summary>
         <p class="hint">
             Курс: «<?= htmlspecialchars($courseTitle) ?>»
         </p>
 
         <div id="participantInfo"></div>
+        </details>
 
         <div id="progressBox" class="progress-box" style="display:none;">
             <div class="progress-top">
@@ -61,15 +65,15 @@ $testUi = [
             </div>
         </div>
 
+        <div id="message" class="message" role="status" aria-live="polite"></div>
         <form id="testForm"></form>
-
-        <div id="message" class="message"></div>
     </div>
 </section>
 
 <script>
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('sessionId');
+    const pageLocale = <?= json_encode(i18nLocale()) ?>;
     const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
     const courseTitle = <?= json_encode($courseTitle, JSON_UNESCAPED_UNICODE) ?>;
     const testUi = <?= json_encode($testUi, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
@@ -155,7 +159,7 @@ $testUi = [
         }
 
         try {
-            const response = await fetch('../api/test.php?sessionId=' + encodeURIComponent(sessionId));
+            const response = await fetch('../api/test.php?sessionId=' + encodeURIComponent(sessionId) + '&lang=' + encodeURIComponent(pageLocale));
             const json = await response.json();
 
             if (!json.success) {
@@ -212,9 +216,9 @@ $testUi = [
         question.options.forEach(option => {
             optionsHtml += `
                 <label>
-                    <input type="radio" name="${escapeHtml(question.id)}" value="${escapeHtml(option.id)}">
-                    ${escapeHtml(option.text || '')}
-                    ${option.image ? `<img src="${escapeHtml(option.image)}" class="option-image">` : ''}
+                    <input type="radio" name="${escapeHtml(question.id)}" value="${escapeHtml(option.id)}" aria-label="${escapeHtml(option.text || '<?= $isKazakh ? 'Жауап нұсқасы' : 'Вариант ответа' ?>')}">
+                    <span class="option-content">${escapeHtml(option.text || '')}
+                    ${option.image ? `<img src="${escapeHtml(option.image)}" class="option-image" alt="<?= $isKazakh ? 'Жауап нұсқасының сызбасы' : 'Схема варианта ответа' ?>">` : ''}</span>
                 </label>
             `;
         });
@@ -222,7 +226,8 @@ $testUi = [
         testForm.innerHTML = `
             <div class="question">
                 <div class="question-eyebrow">Вопрос ${currentQuestionIndex + 1} из ${questions.length}</div>
-                <p>${escapeHtml(question.text)}</p>
+                <p tabindex="-1" class="question-title">${escapeHtml(question.text)}</p>
+                ${question.image || question.options.some(option => option.image) ? '<div class="diagram-zoom-hint"><?= $isKazakh ? 'Үлкейту үшін сызбаны басыңыз.' : 'Нажмите на схему, чтобы увеличить.' ?></div>' : ''}
                 ${question.image ? `<img class="question-image" src="${escapeHtml(question.image)}" alt="Изображение к вопросу">` : ''}
                 <div class="question-options">
                     ${optionsHtml}
@@ -242,6 +247,7 @@ $testUi = [
             input.addEventListener('change', () => {
                 saveAnswersToLocalStorage();
                 updateProgress();
+                if (message.classList.contains('error')) message.textContent = '';
             });
         });
 
@@ -265,7 +271,7 @@ $testUi = [
                 saveCurrentQuestionIndex();
                 renderCurrentQuestion();
                 updateProgress();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                focusCurrentQuestion();
             }
         });
 
@@ -275,11 +281,17 @@ $testUi = [
                 saveCurrentQuestionIndex();
                 renderCurrentQuestion();
                 updateProgress();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                focusCurrentQuestion();
             }
         });
 
         updateProgress();
+    }
+
+    function focusCurrentQuestion() {
+        const title = testForm.querySelector('.question-title');
+        title?.focus({ preventScroll: true });
+        testForm.scrollIntoView({ block: 'start', behavior: 'auto' });
     }
 
     function saveAnswersToLocalStorage() {
@@ -351,7 +363,7 @@ $testUi = [
         const answered = Object.keys(answers).length;
         const percent = total > 0 ? Math.round((answered / total) * 100) : 0;
 
-        progressText.textContent = `Заполнено: ${answered}/${total}`;
+        progressText.textContent = `${testUi.answered}: ${answered}/${total}`;
         progressPercent.textContent = percent + '%';
         progressBar.style.width = percent + '%';
     }
@@ -378,13 +390,15 @@ $testUi = [
                 saveCurrentQuestionIndex();
                 renderCurrentQuestion();
                 updateProgress();
+                focusCurrentQuestion();
             }
 
+            message.scrollIntoView({ block: 'start', behavior: 'auto' });
             return;
         }
 
         try {
-            const response = await fetch('../api/submit_test.php', {
+            const response = await fetch('../api/submit_test.php?lang=' + encodeURIComponent(pageLocale), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

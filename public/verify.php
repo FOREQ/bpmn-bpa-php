@@ -17,12 +17,12 @@ $token = trim($_GET['token'] ?? '');
  */
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 
-if (preg_match('#^(.*)/certificate/[a-zA-Z0-9]+/?$#', $requestPath, $m)) {
+if (preg_match('#^(.*)/certificate/[a-zA-Z0-9_-]+/?$#', $requestPath, $m)) {
     $basePrefix = $m[1];
 } elseif (preg_match('#^(.*)/public(/|$)#', $requestPath, $m)) {
     $basePrefix = $m[1];
 } else {
-    $basePrefix = '';
+    $basePrefix = rtrim(trim((string)(getenv('APP_BASE_PATH') ?: '')), '/');
 }
 
 $publicBase = $basePrefix . '/public/';
@@ -34,7 +34,7 @@ $logoSrc = $assetsBase . 'logo.svg/logo-black.png';
 $certificate = null;
 $lookupError = false;
 
-if ($token !== '' && preg_match('/^[a-zA-Z0-9]{6,32}$/', $token)) {
+if ($token !== '' && preg_match('/^[a-zA-Z0-9_-]{6,32}$/', $token)) {
     try {
         $certificate = findCertificateByToken(getDb(), $token);
     } catch (Throwable $e) {

@@ -3,10 +3,12 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Тест BPMN-моделлера</title>
 
     <link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.9.1/dist/assets/diagram-js.css">
     <link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.9.1/dist/assets/bpmn-font/css/bpmn.css">
+    <link rel="stylesheet" href="style.css">
 
     <style>
         body {
@@ -30,7 +32,7 @@
             margin-top: 0;
         }
 
-        #canvas {
+        .bpmn-container {
             width: 100%;
             height: 550px;
             border: 1px solid #d8e4ea;
@@ -85,7 +87,7 @@
     <h1>Тест BPMN-моделлера</h1>
     <p>На этой странице проверяется подключение BPMN-моделлера перед добавлением его в практическое задание.</p>
 
-    <div id="canvas"></div>
+    <div id="canvas" class="bpmn-container"></div>
 
     <button id="getXmlBtn">Получить BPMN XML</button>
     <button id="clearXmlBtn">Очистить XML</button>
@@ -95,6 +97,9 @@
     <textarea id="xmlOutput" placeholder="Здесь появится BPMN XML"></textarea>
 </div>
 
+<script src="bpmn_tools.js"></script>
+<script src="bpmn_touch.js"></script>
+<script src="mobile_ui.js"></script>
 <script src="https://unpkg.com/bpmn-js@17.9.1/dist/bpmn-modeler.development.js"></script>
 
 <script>
@@ -112,48 +117,19 @@
         container: '#canvas'
     });
 
-    const initialDiagram = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    const initialDiagram = `<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
                   xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
                   xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
-                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
-                  id="Definitions_1"
-                  targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn:process id="Process_1" isExecutable="false">
-    <bpmn:startEvent id="StartEvent_1" name="Старт">
-      <bpmn:outgoing>Flow_1</bpmn:outgoing>
-    </bpmn:startEvent>
-    <bpmn:task id="Task_1" name="Задача">
-      <bpmn:incoming>Flow_1</bpmn:incoming>
-      <bpmn:outgoing>Flow_2</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:endEvent id="EndEvent_1" name="Конец">
-      <bpmn:incoming>Flow_2</bpmn:incoming>
-    </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_1" />
-    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="EndEvent_1" />
-  </bpmn:process>
-
+                  id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:collaboration id="Collaboration_1">
+    <bpmn:participant id="Participant_1" processRef="Process_1" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_1" isExecutable="false" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
-      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
-        <dc:Bounds x="160" y="180" width="36" height="36" />
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
+      <bpmndi:BPMNShape id="Participant_1_di" bpmnElement="Participant_1" isHorizontal="true">
+        <dc:Bounds x="100" y="100" width="900" height="360" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_1_di" bpmnElement="Task_1">
-        <dc:Bounds x="260" y="160" width="120" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
-        <dc:Bounds x="460" y="180" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
-        <di:waypoint x="196" y="198" />
-        <di:waypoint x="260" y="200" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
-        <di:waypoint x="380" y="200" />
-        <di:waypoint x="460" y="198" />
-      </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>`;
@@ -162,7 +138,8 @@
         try {
             await bpmnModeler.importXML(initialDiagram);
             const canvasService = bpmnModeler.get('canvas');
-            canvasService.zoom('fit-viewport');
+            canvasService.zoom('fit-viewport', 'auto');
+            window.PortalMobile.attachModeler(canvas, bpmnModeler);
 
             showMessage('BPMN-моделлер успешно загружен');
         } catch (error) {
