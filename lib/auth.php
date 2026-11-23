@@ -15,9 +15,11 @@ function isAdminLoggedIn(): bool
 function requireAdmin(): void
 {
     $timeoutSeconds = 20* 60;
+    $basePath = rtrim(trim((string)(getenv('APP_BASE_PATH') ?: '')), '/');
+    $loginUrl = $basePath !== '' ? $basePath . '/admin-login' : 'admin_login.php';
 
     if (!isAdminLoggedIn()) {
-        header('Location: admin_login.php');
+        header('Location: ' . $loginUrl);
         exit;
     }
 
@@ -26,7 +28,7 @@ function requireAdmin(): void
 
         if ($inactiveTime > $timeoutSeconds) {
             logoutAdmin();
-            header('Location: admin_login.php?timeout=1');
+            header('Location: ' . $loginUrl . '?timeout=1');
             exit;
         }
     }

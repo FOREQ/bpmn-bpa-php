@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../lib/helpers.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../lib/test_data.php';
+require_once __DIR__ . '/../lib/content_bank.php';
 require_once __DIR__ . '/../lib/test_service.php';
 require_once __DIR__ . '/../lib/practical_data.php';
 require_once __DIR__ . '/../lib/csrf.php';
@@ -149,7 +150,7 @@ try {
     }
 
     $variantId = randomVariantId();
-    $variant = $TEST_DATA[$variantId] ?? null;
+    $variant = testVariantWithCustom($pdo, $variantId);
 
     if (!$variant) {
         respondJson([
@@ -161,10 +162,11 @@ try {
     $id = createSessionId();
     $sessionId = createSessionId();
 
-    $questionOrder = questionOrder($variant);
-    $optionOrder = optionOrder($variant);
+    $assignedQuestions = assignedTestQuestions($variant);
+    $questionOrder = questionOrder($assignedQuestions);
+    $optionOrder = optionOrder($assignedQuestions);
 
-    $practicalTaskIds = randomPracticalTaskIds();
+    $practicalTaskIds = randomPracticalTaskIds($pdo);
     $complexityVariantId = randomComplexityVariantId();
 
     /*

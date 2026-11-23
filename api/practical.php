@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $tasks = [];
 
         foreach ($taskIds as $taskId) {
-            $task = getPracticalTask($taskId);
+            $task = getPracticalTask($taskId, $pdo);
 
             if ($task) {
                 $tasks[] = $task;

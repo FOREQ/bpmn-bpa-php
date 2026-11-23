@@ -38,17 +38,17 @@ $activeNav = 'register';
             <form id="registerForm">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken()) ?>">
 
-                <label>ФИО</label>
-                <input name="fullName" required placeholder="Введите ФИО">
+                <label for="fullName">ФИО</label>
+                <input id="fullName" name="fullName" autocomplete="name" required placeholder="Введите ФИО">
 
-                <label>Email</label>
-                <input name="email" type="email" required placeholder="example@mail.com">
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" autocomplete="email" required placeholder="example@mail.com">
 
-                <label>Телефон</label>
-                <input name="phone" required placeholder="+77001234567">
+                <label for="phone">Телефон</label>
+                <input id="phone" name="phone" type="tel" autocomplete="tel" required placeholder="+77001234567">
 
-                <label>Организация</label>
-                <input name="organization" required placeholder="Название организации">
+                <label for="organization">Организация</label>
+                <input id="organization" name="organization" autocomplete="organization" required placeholder="Название организации">
 
                 <button type="submit" id="submitBtn" class="btn btn-primary btn-block">Отправить заявку</button>
             </form>

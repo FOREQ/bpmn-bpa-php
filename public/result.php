@@ -15,6 +15,8 @@ $resultTitle = $isKazakh ? 'Қатысушы нәтижесі' : 'Результ
 $courseLabel = $isKazakh ? 'Курс' : 'Курс';
 $loadingLabel = $isKazakh ? 'Нәтиже жүктелуде...' : 'Загрузка результата...';
 $resultUi = [
+    'testDetails' => $isKazakh ? 'Тест туралы мәліметтер' : 'Подробности теста',
+    'practicalDetails' => $isKazakh ? 'Практикалық жұмыс туралы мәліметтер' : 'Подробности практики',
     'statusPassed' => $isKazakh ? 'Өтті' : 'Пройден',
     'statusFailed' => $isKazakh ? 'Өтпеді' : 'Не пройден',
     'statusIncomplete' => $isKazakh ? 'Аяқталмаған' : 'Не завершен',
@@ -92,9 +94,12 @@ $resultUi = [
 
         <h1><?= htmlspecialchars($resultTitle) ?></h1>
 
+        <details class="participant-details" data-participant-details open>
+        <summary><?= htmlspecialchars($courseLabel) ?></summary>
         <p class="hint">
             <?= htmlspecialchars($courseLabel) ?>: «<?= htmlspecialchars($courseTitle) ?>»
         </p>
+        </details>
 
         <div id="content"><?= htmlspecialchars($loadingLabel) ?></div>
     </div>
@@ -103,6 +108,7 @@ $resultUi = [
 <script>
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('sessionId');
+    const pageLocale = <?= json_encode(i18nLocale()) ?>;
     const content = document.getElementById('content');
     const courseTitle = <?= json_encode($courseTitle, JSON_UNESCAPED_UNICODE) ?>;
     const resultUi = <?= json_encode($resultUi, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
@@ -166,7 +172,7 @@ $resultUi = [
         }
 
         try {
-            const response = await fetch('../api/result.php?sessionId=' + encodeURIComponent(sessionId));
+            const response = await fetch('../api/result.php?sessionId=' + encodeURIComponent(sessionId) + '&lang=' + encodeURIComponent(pageLocale));
             const json = await response.json();
 
             if (!json.success) {
@@ -211,12 +217,34 @@ $resultUi = [
             const finalLabel = certificateLabel(overallTotal, practical.isGraded);
 
             content.innerHTML = `
+                <div class="rp-section result-summary">
+                    <div class="rp-section-header">
+                        <h2>${escapeHtml(resultUi.finalResult)}</h2>
+                    </div>
+                    <div class="rp-grid">
+                        ${metric(escapeHtml(resultUi.testPoints), escapeHtml(testPoints + ' ' + resultUi.scoreSeparator + ' 20'), 'emphasis')}
+                        ${metric(escapeHtml(resultUi.practicalPoints), practical.isGraded ? escapeHtml(practicalPoints + ' ' + resultUi.scoreSeparator + ' 30') : escapeHtml(resultUi.afterPracticalReview), 'emphasis')}
+                        ${metric(escapeHtml(resultUi.overallResult), practical.isGraded ? escapeHtml(overallTotal + ' ' + resultUi.scoreSeparator + ' 50') : escapeHtml(resultUi.afterPracticalReview), 'emphasis')}
+                        ${metric(escapeHtml(resultUi.outcome), escapeHtml(finalLabel), 'emphasis accent')}
+                    </div>
+                </div>
+                <div class="rp-actions">
+                    ${practical.isGraded ? `
+                        <a href="../api/certificate.php?sessionId=${encodeURIComponent(sessionId)}" class="rp-home primary">
+                            ${escapeHtml(resultUi.downloadCertificate)}
+                        </a>
+                    ` : ''}
+                    <a href="student_dashboard.php" class="rp-home">${escapeHtml(resultUi.dashboard)}</a>
+                    <a href="index.php" class="rp-home">${escapeHtml(resultUi.home)}</a>
+                </div>
                 <div class="rp-card">
                     <div class="rp-hero ${test.status === 'passed' ? 'passed' : ''}">
                         <p class="rp-label">${escapeHtml(resultUi.participantResult)}</p>
                         <h2 class="rp-title">${escapeHtml(test.status === 'passed' ? resultUi.testPassed : resultUi.testFailed)}</h2>
                     </div>
 
+                    <details class="result-details" data-participant-details open>
+                    <summary>${escapeHtml(resultUi.testDetails)}</summary>
                     <div class="rp-grid">
                         ${metric(escapeHtml(resultUi.courseName), escapeHtml(courseTitle))}
                         ${metric(escapeHtml(resultUi.fullName), escapeHtml(participant.fullName))}
@@ -228,6 +256,7 @@ $resultUi = [
                         ${metric(escapeHtml(resultUi.passingThreshold), '70%')}
                         ${metric(escapeHtml(resultUi.testStatus), `<span class="status ${statusClass(test.status)}">${escapeHtml(statusText(test.status))}</span>`)}
                     </div>
+                    </details>
                 </div>
 
                 <div class="rp-section">
@@ -235,6 +264,8 @@ $resultUi = [
                         <h2>${escapeHtml(resultUi.practicalAssignment)}</h2>
                     </div>
 
+                    <details class="result-details" data-participant-details open>
+                    <summary>${escapeHtml(resultUi.practicalDetails)}</summary>
                     <div class="rp-grid">
                         ${metric(escapeHtml(resultUi.practicalStatus), practicalStatus)}
                         ${metric(escapeHtml(resultUi.practicalSubmittedAt), escapeHtml(practical.submittedAt || resultUi.notSubmitted))}
@@ -250,36 +281,9 @@ $resultUi = [
                         <h3>${escapeHtml(resultUi.practicalTasks)}</h3>
                         <ul>${tasksHtml}</ul>
                     </div>
+                    </details>
                 </div>
 
-                <div class="rp-section">
-                    <div class="rp-section-header">
-                        <h2>${escapeHtml(resultUi.finalResult)}</h2>
-                    </div>
-
-                    <div class="rp-grid">
-                        ${metric(escapeHtml(resultUi.testPoints), escapeHtml(testPoints + ' ' + resultUi.scoreSeparator + ' 20'), 'emphasis')}
-                        ${metric(escapeHtml(resultUi.practicalPoints), practical.isGraded ? escapeHtml(practicalPoints + ' ' + resultUi.scoreSeparator + ' 30') : escapeHtml(resultUi.afterPracticalReview), 'emphasis')}
-                        ${metric(escapeHtml(resultUi.overallResult), practical.isGraded ? escapeHtml(overallTotal + ' ' + resultUi.scoreSeparator + ' 50') : escapeHtml(resultUi.afterPracticalReview), 'emphasis')}
-                        ${metric(escapeHtml(resultUi.outcome), escapeHtml(finalLabel), 'emphasis accent')}
-                    </div>
-                </div>
-
-                <div class="rp-actions">
-                    <a href="student_dashboard.php" class="rp-home">
-                        ${escapeHtml(resultUi.dashboard)}
-                    </a>
-
-                    <a href="index.php" class="rp-home">
-                        ${escapeHtml(resultUi.home)}
-                    </a>
-
-                    ${practical.isGraded ? `
-                        <a href="../api/certificate.php?sessionId=${encodeURIComponent(sessionId)}" class="rp-home primary">
-                            ${escapeHtml(resultUi.downloadCertificate)}
-                        </a>
-                    ` : ''}
-                </div>
             `;
         } catch (error) {
             content.innerHTML = '<div class="error">' + escapeHtml(resultUi.connectionError) + '</div>';

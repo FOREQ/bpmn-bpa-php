@@ -25,10 +25,14 @@ function i18nBootstrap(): void
         $_COOKIE[I18N_LOCALE_COOKIE] = $locale;
 
         if (!headers_sent()) {
+            $basePath = rtrim(trim((string)(getenv('APP_BASE_PATH') ?: '')), '/');
+            $secureCookie = filter_var(getenv('SESSION_COOKIE_SECURE'), FILTER_VALIDATE_BOOLEAN)
+                || (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+
             setcookie(I18N_LOCALE_COOKIE, $locale, [
                 'expires' => time() + 31536000,
-                'path' => '/',
-                'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+                'path' => $basePath !== '' ? $basePath . '/' : '/',
+                'secure' => $secureCookie,
                 'httponly' => false,
                 'samesite' => 'Lax',
             ]);
@@ -151,6 +155,12 @@ function i18nTransformOutput(string $output): string
             '<html lang="' . i18nLocale() . '">',
             $output
         );
+
+        $basePath = rtrim(trim((string)(getenv('APP_BASE_PATH') ?: '')), '/');
+        if ($basePath !== '' && !str_contains($output, '<base ')) {
+            $baseMarkup = '<base href="' . htmlspecialchars($basePath . '/public/', ENT_QUOTES, 'UTF-8') . '">';
+            $output = preg_replace('/<head([^>]*)>/i', '<head$1>' . $baseMarkup, $output, 1) ?? $output;
+        }
     }
 
     if ($isHtml && preg_match('/<meta[^>]+name=["\']viewport["\']/i', $output) !== 1) {

@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../lib/test_data.php';
+require_once __DIR__ . '/../lib/content_bank.php';
 require_once __DIR__ . '/../lib/test_service.php';
 require_once __DIR__ . '/../lib/error_logger.php';
 
@@ -48,7 +49,7 @@ try {
     }
 
     $variantId = $participant['variantId'];
-    $variant = $TEST_DATA[$variantId] ?? null;
+    $variant = testVariantWithCustom($pdo, $variantId);
 
     if (!$variant) {
         respondJson([

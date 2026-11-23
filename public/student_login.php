@@ -36,11 +36,11 @@ $activeNav = 'login';
             <form id="loginForm">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken()) ?>">
 
-                <label>Email</label>
-                <input name="email" type="email" required placeholder="example@mail.com">
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" autocomplete="username" required placeholder="example@mail.com">
 
-                <label>Временный пароль</label>
-                <input name="password" type="password" required placeholder="Введите временный пароль">
+                <label for="password">Временный пароль</label>
+                <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Введите временный пароль">
 
                 <button type="submit" id="submitBtn" class="btn btn-primary btn-block">Войти</button>
             </form>

@@ -7,6 +7,9 @@ $courseTitle = 'Практическое применение методики �
 $activeNav = 'login';
 $isKazakh = i18nLocale() === 'kk';
 $practicalUi = [
+    'draftSaved' => $isKazakh ? 'Браузерде сақталды ✓' : 'Сохранено в браузере ✓',
+    'draftFailed' => $isKazakh ? 'Жобаны сақтау мүмкін болмады. Жұмысты жібермейінше бетті жаппаңыз.' : 'Не удалось сохранить черновик. Не закрывайте страницу до отправки работы.',
+    'stepLabel' => $isKazakh ? '{total} қадамның {current}-қадамы' : 'Шаг {current} из {total}',
     'testResult' => $isKazakh ? 'Тест нәтижесі' : 'Результат теста',
     'scoreSeparator' => $isKazakh ? '/' : 'из',
     'submittedTitle' => $isKazakh ? 'Практикалық жұмыс жіберілді' : 'Практическая работа отправлена',
@@ -29,11 +32,11 @@ $practicalUi = [
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="assessment-page practice-page">
 
 <?php require __DIR__ . '/_header.php'; ?>
 
-<section style="position: relative; overflow: hidden;">
+<section class="assessment-section" style="position: relative;">
 <div class="decor-hex" style="top: 130px; right: calc(50% - 590px); width: 56px; height: 49px;">
     <div class="decor-hex-outer"></div>
     <div class="decor-hex-inner"></div>
@@ -47,11 +50,14 @@ $practicalUi = [
 
     <h1>Практическое задание</h1>
 
+    <details class="participant-details" data-participant-details open>
+    <summary><?= $isKazakh ? 'Курс және қатысушы' : 'Курс и участник' ?></summary>
     <p class="hint">
         Курс: «<?= htmlspecialchars($courseTitle) ?>»
     </p>
 
     <div id="participantInfo"></div>
+    </details>
 
     <div id="practicalProgress" class="progress-box">
         <div class="progress-top">
@@ -63,6 +69,7 @@ $practicalUi = [
         </div>
     </div>
 
+    <div id="message" class="message" role="status" aria-live="polite"></div>
     <form id="practicalForm" class="practical-form">
         <div id="tasksContainer"></div>
 
@@ -78,13 +85,12 @@ $practicalUi = [
 
         <div class="step-buttons practical-buttons">
             <button type="button" id="prevStepBtn" class="back-btn">Назад</button>
-            <button type="button" id="saveDraftBtn" class="draft-btn">Сохранить черновик</button>
+            <button type="button" id="saveDraftBtn" class="draft-btn" aria-live="polite">Сохранить черновик</button>
             <button type="button" id="nextStepBtn" class="next-btn">Далее</button>
-            <button type="submit" id="submitBtn" class="finish-btn">Завершить практическое задание</button>
+            <button type="submit" id="submitBtn" class="finish-btn" aria-label="<?= $isKazakh ? 'Практикалық тапсырманы аяқтау' : 'Завершить практическое задание' ?>"><span class="full-button-label">Завершить практическое задание</span><span class="mobile-button-label" aria-hidden="true"><?= $isKazakh ? 'Аяқтау' : 'Завершить' ?></span></button>
         </div>
     </form>
 
-    <div id="message" class="message"></div>
 </div>
 </section>
 
@@ -93,6 +99,7 @@ $practicalUi = [
 <script>
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('sessionId');
+    const pageLocale = <?= json_encode(i18nLocale()) ?>;
     const csrfToken = '<?= htmlspecialchars(csrfToken()) ?>';
     const courseTitle = <?= json_encode($courseTitle, JSON_UNESCAPED_UNICODE) ?>;
     const practicalUi = <?= json_encode($practicalUi, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
@@ -135,6 +142,7 @@ $practicalUi = [
         message.innerHTML = text;
         message.className = 'message ' + type;
         message.style.display = 'block';
+        if (type === 'error') message.scrollIntoView({ block: 'start', behavior: 'auto' });
     }
 
     function showSubmittedState(submittedAt = '') {
@@ -156,47 +164,19 @@ $practicalUi = [
         `, 'success');
     }
 
-    const initialDiagram = `<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    const initialDiagram = `<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
                   xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
                   xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
-                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
-                  id="Definitions_1"
-                  targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn:process id="Process_1" isExecutable="false">
-    <bpmn:startEvent id="StartEvent_1" name="Старт">
-      <bpmn:outgoing>Flow_1</bpmn:outgoing>
-    </bpmn:startEvent>
-    <bpmn:task id="Task_1" name="Задача">
-      <bpmn:incoming>Flow_1</bpmn:incoming>
-      <bpmn:outgoing>Flow_2</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:endEvent id="EndEvent_1" name="Конец">
-      <bpmn:incoming>Flow_2</bpmn:incoming>
-    </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_1" />
-    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="EndEvent_1" />
-  </bpmn:process>
-
+                  id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:collaboration id="Collaboration_1">
+    <bpmn:participant id="Participant_1" processRef="Process_1" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_1" isExecutable="false" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
-      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
-        <dc:Bounds x="160" y="180" width="36" height="36" />
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
+      <bpmndi:BPMNShape id="Participant_1_di" bpmnElement="Participant_1" isHorizontal="true">
+        <dc:Bounds x="100" y="100" width="900" height="360" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_1_di" bpmnElement="Task_1">
-        <dc:Bounds x="260" y="160" width="120" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
-        <dc:Bounds x="460" y="180" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
-        <di:waypoint x="196" y="198" />
-        <di:waypoint x="260" y="200" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
-        <di:waypoint x="380" y="200" />
-        <di:waypoint x="460" y="198" />
-      </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>`;
@@ -208,7 +188,7 @@ $practicalUi = [
         }
 
         try {
-            const response = await fetch('../api/practical.php?sessionId=' + encodeURIComponent(sessionId));
+            const response = await fetch('../api/practical.php?sessionId=' + encodeURIComponent(sessionId) + '&lang=' + encodeURIComponent(pageLocale));
             const json = await response.json();
 
             if (!json.success) {
@@ -240,13 +220,10 @@ $practicalUi = [
                 return;
             }
 
-            renderTasks(json.practical.tasks);
+            await renderTasks(json.practical.tasks);
             renderComplexity(json.practical.complexityVariant);
-
-            setTimeout(() => {
-                restoreDraft();
-                updateStepView();
-            }, 500);
+            await restoreDraft();
+            updateStepView();
 
         } catch (error) {
             console.error(error);
@@ -254,9 +231,10 @@ $practicalUi = [
         }
     }
 
-    function renderTasks(tasks) {
+    async function renderTasks(tasks) {
         tasksContainer.innerHTML = '';
         bpmnModelers = {};
+        const initializations = [];
 
         tasks.forEach((task, index) => {
             const block = document.createElement('div');
@@ -277,8 +255,9 @@ $practicalUi = [
             `;
 
             tasksContainer.appendChild(block);
-            initBpmnModeler(task.id, modelerId);
+            initializations.push(initBpmnModeler(task.id, modelerId));
         });
+        await Promise.all(initializations);
     }
 
     async function initBpmnModeler(taskId, modelerId) {
@@ -291,8 +270,8 @@ $practicalUi = [
         try {
             await modeler.importXML(initialDiagram);
 
-            const canvas = modeler.get('canvas');
-            canvas.zoom('fit-viewport');
+            fitModeler(modeler);
+            window.PortalMobile?.attachModeler(document.getElementById(modelerId), modeler);
 
             const eventBus = modeler.get('eventBus');
 
@@ -314,6 +293,7 @@ $practicalUi = [
             complexityImage.innerHTML = `
                 <div class="complexity-image-box">
                     <p><b>Диаграмма для расчета сложности:</b></p>
+                    <div class="diagram-zoom-hint"><?= $isKazakh ? 'Үлкейту үшін сызбаны басыңыз.' : 'Нажмите на схему, чтобы увеличить.' ?></div>
                     <img
                         src="../assets/complexity/${escapeHtml(complexityVariant.image)}"
                         alt="Диаграмма расчета сложности"
@@ -327,8 +307,8 @@ $practicalUi = [
             row.className = 'field-row';
 
             row.innerHTML = `
-                <label>${escapeHtml(field.label)} (${escapeHtml(field.weight)})</label>
-                <input name="complexity_${escapeHtml(field.id)}" required placeholder="Введите ответ">
+                <label for="complexity_${escapeHtml(field.id)}">${escapeHtml(field.label)} (${escapeHtml(field.weight)})</label>
+                <input id="complexity_${escapeHtml(field.id)}" name="complexity_${escapeHtml(field.id)}" inputmode="${field.id === 'complexity' ? 'decimal' : 'numeric'}" required placeholder="Введите ответ">
             `;
 
             complexityContainer.appendChild(row);
@@ -356,7 +336,7 @@ $practicalUi = [
 
         const percent = Math.round(((currentStep + 1) / totalSteps) * 100);
 
-        stepText.innerText = `Шаг ${currentStep + 1} из ${totalSteps}`;
+        stepText.innerText = practicalUi.stepLabel.replace('{current}', currentStep + 1).replace('{total}', totalSteps);
         progressPercent.innerText = percent + '%';
         progressBar.style.width = percent + '%';
 
@@ -369,6 +349,15 @@ $practicalUi = [
         }, 100);
     }
 
+    function fitModeler(modeler) {
+        const canvas = modeler.get('canvas');
+        const size = canvas.getSize();
+        if (size.width > 0 && size.height > 0) {
+            canvas.resized();
+            canvas.zoom('fit-viewport', 'auto');
+        }
+    }
+
     function resizeCurrentModeler() {
         if (!loadedPractical || currentStep >= 2) {
             return;
@@ -378,9 +367,7 @@ $practicalUi = [
         const modeler = bpmnModelers[task.id];
 
         if (modeler) {
-            const canvas = modeler.get('canvas');
-            canvas.resized();
-            canvas.zoom('fit-viewport');
+            modeler.get('canvas').resized();
         }
     }
 
@@ -388,6 +375,8 @@ $practicalUi = [
         if (currentStep > 0) {
             currentStep--;
             updateStepView();
+            autoSaveDraft();
+            practicalForm.scrollIntoView({ block: 'start', behavior: 'auto' });
         }
     });
 
@@ -395,12 +384,23 @@ $practicalUi = [
         if (currentStep < totalSteps - 1) {
             currentStep++;
             updateStepView();
+            autoSaveDraft();
+            practicalForm.scrollIntoView({ block: 'start', behavior: 'auto' });
         }
     });
 
+    const draftButtonLabel = saveDraftBtn.textContent;
+    let draftLabelTimer;
     saveDraftBtn.addEventListener('click', async () => {
-        await saveDraft();
-        showMessage('Черновик сохранен в браузере.', 'success');
+        try {
+            await saveDraft();
+            showMessage('Черновик сохранен в браузере.', 'success');
+            clearTimeout(draftLabelTimer);
+            saveDraftBtn.textContent = practicalUi.draftSaved;
+            draftLabelTimer = setTimeout(() => { saveDraftBtn.textContent = draftButtonLabel; }, 2500);
+        } catch (error) {
+            showMessage(practicalUi.draftFailed, 'error');
+        }
     });
 
     async function collectAnswers() {
@@ -510,8 +510,7 @@ $practicalUi = [
                     if (diagram && diagram.xml && bpmnModelers[task.id]) {
                         await bpmnModelers[task.id].importXML(diagram.xml);
 
-                        const canvas = bpmnModelers[task.id].get('canvas');
-                        canvas.zoom('fit-viewport');
+                        fitModeler(bpmnModelers[task.id]);
                     }
                 }
             }
@@ -589,7 +588,7 @@ $practicalUi = [
                 }
             }
 
-            const response = await fetch('../api/practical.php', {
+            const response = await fetch('../api/practical.php?lang=' + encodeURIComponent(pageLocale), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
