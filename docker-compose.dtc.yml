@@ -35,7 +35,9 @@ services:
 
 secrets:
   bpmn_mail:
-    file: ${BPMN_MAIL_CREDENTIALS_PATH:-/home/ernar/.config/bpmn-mail/ews.json}
+    # Путь подставляется при запуске: export BPMN_MAIL_CREDENTIALS_PATH=...
+    # или docker compose --env-file .env.dtc -f docker-compose.dtc.yml up -d
+    file: ${BPMN_MAIL_CREDENTIALS_PATH:-./secrets/ews.json}
 
 volumes:
   vendor:
