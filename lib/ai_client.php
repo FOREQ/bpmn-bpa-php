@@ -207,7 +207,8 @@ function aiHttpPost(string $url, array $headers, string $body, int $timeout): ar
 /** Достаёт JSON из ответа модели (в том числе из ```json ... ``` блоков). */
 function aiExtractJson(string $text): array
 {
-    $text = trim($text);
+    // Модели с рассуждениями (Qwen3, DeepSeek-R1 и т.п.) могут вернуть блок <think>…</think> перед ответом.
+    $text = trim(preg_replace('#<think>.*?</think>#s', '', $text) ?? $text);
     if (preg_match('/```(?:json)?\s*(.*?)```/s', $text, $m)) {
         $text = trim($m[1]);
     }
