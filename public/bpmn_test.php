@@ -38,10 +38,11 @@
             border: 1px solid #d8e4ea;
             border-radius: 10px;
             background: #fff;
-            margin-top: 20px;
+            margin: 20px 0 0;
+            box-sizing: border-box;
         }
 
-        button {
+        .container > button {
             margin-top: 16px;
             margin-right: 10px;
             padding: 12px 20px;
@@ -79,6 +80,11 @@
         .error {
             background: #fee2e2;
             color: #991b1b;
+        }
+
+        @media (max-width: 700px) {
+            body { padding: 12px; }
+            .container { padding: 16px; }
         }
     </style>
 </head>

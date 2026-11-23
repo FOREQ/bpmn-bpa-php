@@ -21,10 +21,14 @@
     });
     document.addEventListener('click', (event) => {
         if (!header?.contains(event.target)) setMenu(false);
+        // Phone-only dropdowns such as the admin "Ещё" menu close on an outside tap.
+        if (phone.matches) document.querySelectorAll('details[data-desktop-open][open]').forEach(item => {
+            if (!item.contains(event.target)) item.open = false;
+        });
     });
     const details = new Set();
     function enhanceDetails(root) {
-        root.querySelectorAll('[data-participant-details]').forEach(item => {
+        root.querySelectorAll('[data-participant-details], [data-desktop-open]').forEach(item => {
             if (details.has(item)) return;
             item.open = !phone.matches;
             details.add(item);
