@@ -76,8 +76,8 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
                 <input type="hidden" name="csrf_token" value="<?= $h(csrfToken()) ?>">
                 <label for="sourceTitle">Название</label>
                 <input id="sourceTitle" type="text" name="title" maxlength="200" placeholder="Методика реинжиниринга, 2026">
-                <label for="sourceFile">Файл .docx, .txt или .md</label>
-                <input id="sourceFile" type="file" name="file" accept=".docx,.txt,.md">
+                <label for="sourceFile">Файл .pdf, .docx, .txt или .md</label>
+                <input id="sourceFile" type="file" name="file" accept=".pdf,.docx,.txt,.md">
                 <label for="sourceText">…или вставьте текст</label>
                 <textarea id="sourceText" name="text" rows="4"></textarea>
                 <button class="btn btn-primary" type="submit">Загрузить</button>
