@@ -628,7 +628,27 @@ function aiTextToBpmn(string $text, string $name): array
         $ir = $ir['ir'] ?? $ir;
     }
 
-    return ['xml' => cctLayout($ir), 'ir' => $ir];
+    // Если XML от сборщика не разобрался (обрыв ответа и т.п.), повторяем сборку один раз.
+    $xml = cctLayout($ir);
+    if (!aiXmlParses($xml)) {
+        $xml = cctLayout($ir);
+        if (!aiXmlParses($xml)) {
+            throw new BpmnServiceException('Сервис сборки вернул повреждённый BPMN XML, повторите генерацию');
+        }
+    }
+
+    return ['xml' => $xml, 'ir' => $ir];
+}
+
+function aiXmlParses(string $xml): bool
+{
+    $previous = libxml_use_internal_errors(true);
+    $doc = new DOMDocument();
+    $ok = $doc->loadXML($xml, LIBXML_NONET) && $doc->getElementsByTagNameNS('*', 'definitions')->length > 0;
+    libxml_clear_errors();
+    libxml_use_internal_errors($previous);
+
+    return $ok;
 }
 
 /** Задание 3: короткий текст процесса → схема → правильные ответы калькулятора. */
