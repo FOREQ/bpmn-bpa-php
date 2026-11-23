@@ -305,20 +305,30 @@ powershell -ExecutionPolicy Bypass -File scripts/start_local_pgsql.ps1
 
 ### 6. Настроить почту
 
-Настройки SMTP находятся в файле:
+Учётные данные почты **не хранятся в коде**: `config/mail.php` читает их из
+переменных окружения. Скопируйте пример и заполните его:
 
-```text
-config/mail.php
+```powershell
+copy .env.example .env
 ```
 
-Проверьте значения:
+Файл `.env` игнорируется Git. `docker compose` подхватывает его автоматически.
+При запуске без Docker задайте те же переменные в окружении сервера.
 
-- `host` - SMTP-сервер;
-- `port` - порт SMTP;
-- `username` - логин почты;
-- `password` - пароль приложения или SMTP-пароль;
-- `from_email` - email отправителя;
-- `from_name` - имя отправителя.
+| Переменная | Назначение |
+|---|---|
+| `MAIL_TRANSPORT` | `smtp` (по умолчанию) или `ews` |
+| `MAIL_HOST` | SMTP-сервер |
+| `MAIL_PORT` | порт SMTP (по умолчанию `587`) |
+| `MAIL_USERNAME` | логин почты |
+| `MAIL_PASSWORD` | пароль приложения или SMTP-пароль |
+| `MAIL_FROM_EMAIL` | email отправителя |
+| `MAIL_FROM_NAME` | имя отправителя |
+| `MAIL_ENCRYPTION` | `starttls` (по умолчанию) или `smtps` |
+| `MAIL_EWS_URL` | адрес EWS, только для `MAIL_TRANSPORT=ews` |
+| `MAIL_CREDENTIALS_FILE` | путь к JSON с `username`/`password`/`from_email` (Docker secret), заменяет три переменные выше |
+
+Проверить отправку можно скриптом `php scripts/check_mail.php`.
 
 Для Gmail обычно нужен не обычный пароль от аккаунта, а **App Password**. Он создается в настройках Google-аккаунта при включенной двухфакторной аутентификации.
 
