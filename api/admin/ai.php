@@ -97,6 +97,9 @@ try {
             $text = trim((string)($input['text'] ?? ''));
             $file = $_FILES['file'] ?? null;
             if ($file && $file['error'] !== UPLOAD_ERR_NO_FILE) {
+                if (in_array($file['error'], [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
+                    throw new InvalidArgumentException('Файл больше допустимого размера (' . ini_get('upload_max_filesize') . '). Нужно поднять upload_max_filesize на сервере.');
+                }
                 if ($file['error'] !== UPLOAD_ERR_OK || $file['size'] > 30_000_000 || !is_uploaded_file($file['tmp_name'])) {
                     throw new InvalidArgumentException('Файл не загружен или больше 30 МБ');
                 }

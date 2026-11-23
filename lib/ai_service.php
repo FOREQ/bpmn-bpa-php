@@ -337,17 +337,47 @@ function aiExtractSourceText(string $path, string $originalName): string
         $xml = preg_replace('#</w:p>#', "\n", $xml);
         $xml = preg_replace('#<w:tab/>#', "\t", $xml);
         $text = html_entity_decode(strip_tags($xml), ENT_QUOTES | ENT_XML1, 'UTF-8');
+    } elseif ($ext === 'pdf') {
+        $text = aiExtractPdfText($path);
     } elseif (in_array($ext, ['txt', 'md'], true)) {
         $text = (string)file_get_contents($path);
         if (!mb_check_encoding($text, 'UTF-8')) {
             $text = mb_convert_encoding($text, 'UTF-8', 'Windows-1251');
         }
     } else {
-        throw new InvalidArgumentException('Поддерживаются файлы .docx, .txt и .md');
+        throw new InvalidArgumentException('Поддерживаются файлы .pdf, .docx, .txt и .md');
     }
 
     $text = preg_replace("/[ \t]+/u", ' ', $text);
     $text = trim(preg_replace("/\n{3,}/", "\n\n", $text));
+
+    return $text;
+}
+
+/** Текст из PDF через pdftotext (poppler-utils). Сканы без текстового слоя не распознаются. */
+function aiExtractPdfText(string $path): string
+{
+    $bin = trim((string)@shell_exec('command -v pdftotext 2>/dev/null'));
+    if ($bin === '') {
+        throw new RuntimeException('Для PDF на сервере нужна программа pdftotext (пакет poppler-utils). Пересоберите контейнер портала.');
+    }
+
+    $cmd = escapeshellarg($bin) . ' -enc UTF-8 -nopgbrk ' . escapeshellarg($path) . ' - 2>&1';
+    $output = [];
+    $code = 0;
+    exec($cmd, $output, $code);
+    $text = implode("\n", $output);
+    if ($code !== 0) {
+        throw new InvalidArgumentException('Не удалось прочитать PDF: ' . mb_substr($text, 0, 200));
+    }
+    if (!mb_check_encoding($text, 'UTF-8')) {
+        $text = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
+    }
+    // Переносы слов на конце строки: «процес-\nса» → «процесса».
+    $text = preg_replace('/(\p{L})-\n(\p{Ll})/u', '$1$2', $text) ?? $text;
+    if (mb_strlen(trim(preg_replace('/\s+/u', '', $text) ?? '')) < 200) {
+        throw new InvalidArgumentException('В PDF почти нет текста: похоже, это скан. Загрузите .docx или PDF с текстовым слоем.');
+    }
 
     return $text;
 }
