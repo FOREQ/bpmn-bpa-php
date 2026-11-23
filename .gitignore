@@ -26,3 +26,7 @@ vendor/
 # Generated certificates
 database/certificates/
 database/legacy_before_cleanup_*.json
+
+# Схемы, созданные через «ИИ: генерация» на сервере
+assets/complexity/ai_*.bpmn
+assets/reference_bpmn/ai_*.bpmn

@@ -5,10 +5,12 @@ require_once __DIR__ . '/../lib/auth.php';
 requireAdmin();
 require_once __DIR__ . '/../lib/csrf.php';
 require_once __DIR__ . '/../lib/ai_client.php';
+require_once __DIR__ . '/../lib/bpmn_services.php';
 
 $activeNav = 'admin';
 $h = static fn(string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 $generatorReady = aiEnabled('generator');
+$schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -17,6 +19,8 @@ $generatorReady = aiEnabled('generator');
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ИИ: генерация заданий | BPMN</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.9.1/dist/assets/diagram-js.css">
+    <link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.9.1/dist/assets/bpmn-font/css/bpmn.css">
     <link rel="stylesheet" href="style.css">
     <style>
         .ai-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
@@ -39,6 +43,10 @@ $generatorReady = aiEnabled('generator');
         .ai-two { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
         .ai-msg { margin-top: 8px; }
         .ai-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        .ai-bpmn { height: 360px; border: 1px solid #e2e6ee; border-radius: 10px; background: #fff; margin: 8px 0; }
+        .ai-answers { border-collapse: collapse; margin: 8px 0; }
+        .ai-answers td { border-bottom: 1px solid #eef1f7; padding: 4px 10px 4px 0; }
+        .ai-warn { color: #9a5b00; }
     </style>
 </head>
 <body>
@@ -91,8 +99,8 @@ $generatorReady = aiEnabled('generator');
                     <option value="B">Вариант B</option>
                     <option value="C">Вариант C</option>
                 </select>
-                <label for="qCount">Количество (1–10)</label>
-                <input id="qCount" type="number" name="count" min="1" max="10" value="5">
+                <label for="qCount">Количество (1–20, полный набор — 20)</label>
+                <input id="qCount" type="number" name="count" min="1" max="20" value="20">
                 <label for="qTopic">Тема или акцент <small>· необязательно</small></label>
                 <input id="qTopic" type="text" name="topic" maxlength="300" placeholder="шлюзы, события, параметры оптимизации">
                 <button class="btn btn-primary" type="submit" <?= $generatorReady ? '' : 'disabled' ?>>Сгенерировать</button>
@@ -117,6 +125,24 @@ $generatorReady = aiEnabled('generator');
                 <button class="btn btn-primary" type="submit" <?= $generatorReady ? '' : 'disabled' ?>>Сгенерировать</button>
                 <div class="ai-msg" id="practicalMsg"></div>
             </form>
+            <p class="small">Если подключена сборка схем, к каждому заданию сразу строится эталон .bpmn.</p>
+        </section>
+
+        <section class="ai-card">
+            <h2>4. Задание 3: расчёт сложности</h2>
+            <p class="small">ИИ пишет короткий процесс, сервис строит по нему схему, калькулятор считает правильные ответы.
+                Участник видит схему без возможности её менять, ответы проверяются автоматически.</p>
+            <form id="complexityForm">
+                <label for="cCount">Количество (1–3)</label>
+                <input id="cCount" type="number" name="count" min="1" max="3" value="1">
+                <label for="cTopic">Тематика <small>· необязательно</small></label>
+                <input id="cTopic" type="text" name="topic" maxlength="300" placeholder="документооборот, кадры">
+                <button class="btn btn-primary" type="submit" <?= $schemesReady ? '' : 'disabled' ?>>Сгенерировать</button>
+                <?php if (!$schemesReady): ?>
+                    <p class="small ai-warn">Нужны переменные CCT_MCP_URL (сборка схем) и CALCULATOR_URL (калькулятор).</p>
+                <?php endif; ?>
+                <div class="ai-msg" id="complexityMsg"></div>
+            </form>
         </section>
     </div>
 
@@ -126,12 +152,24 @@ $generatorReady = aiEnabled('generator');
     </section>
 </main>
 
+<script src="https://unpkg.com/bpmn-js@17.9.1/dist/bpmn-navigated-viewer.development.js"></script>
 <script>
     const csrfToken = <?= json_encode(csrfToken()) ?>;
     const api = '../api/admin/ai.php';
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
     const variantNames = {all: 'Все варианты', A: 'Вариант A', B: 'Вариант B', C: 'Вариант C'};
     const poolNames = {first: 'Первое задание', second: 'Второе задание'};
+    const kindNames = {question: 'Вопрос', practical: 'Практическое задание', complexity: 'Задание 3: расчёт сложности'};
+    const answerLabels = {contacts: 'Непосредственные контакты', incomingDocuments: 'Входящие документы',
+        generatedDocuments: 'Порождаемые документы', managers: 'Руководители', steps: 'Шаги', businessRoles: 'Бизнес-роли',
+        handoffs: 'Передачи', complexity: 'Сложность процесса'};
+    const diagrams = {};
+
+    function issuesHtml(list, title) {
+        return list && list.length
+            ? '<p class="small ai-warn"><b>' + title + ':</b></p><ul class="small">' + list.map(i => '<li>' + escapeHtml(i) + '</li>').join('') + '</ul>'
+            : '';
+    }
 
     function message(id, text, ok) {
         document.getElementById(id).innerHTML = '<p style="color:' + (ok ? 'green' : 'red') + ';">' + escapeHtml(text) + '</p>';
@@ -157,6 +195,17 @@ $generatorReady = aiEnabled('generator');
 
     function draftHtml(d) {
         const p = d.payload || {};
+        if (d.kind === 'complexity') {
+            diagrams['bpmn_' + d.id] = p.xml;
+            const rows = Object.entries(p.answers || {}).map(([k, v]) => `<tr><td>${escapeHtml(answerLabels[k] || k)}</td><td><b>${escapeHtml(v)}</b></td></tr>`).join('');
+            return `
+                <p><b>${escapeHtml(p.title)}</b></p>
+                <p class="small">${escapeHtml(p.description)}</p>
+                <div id="bpmn_${d.id}" class="ai-bpmn"></div>
+                <p class="small"><b>Правильные ответы (калькулятор):</b></p>
+                <table class="ai-answers">${rows}</table>
+                ${issuesHtml(p.issues, 'Замечания калькулятора к схеме')}`;
+        }
         if (d.kind === 'question') {
             const options = [0, 1, 2, 3].map(i => `
                 <div class="ai-option">
@@ -185,7 +234,10 @@ $generatorReady = aiEnabled('generator');
                 <div><label>Название (KZ)</label><input type="text" data-field="title_kk" value="${escapeHtml(p.title_kk)}">
                     <label>Описание (KZ)</label><textarea data-field="description_kk" rows="6">${escapeHtml(p.description_kk)}</textarea></div>
             </div>
-            <label>Эталонное решение (для ИИ-проверки, участник его не видит)</label>
+            ${p.reference_xml ? (diagrams['bpmn_' + d.id] = p.reference_xml, `<label>Эталонная схема (построена автоматически, участник её не видит)</label><div id="bpmn_${d.id}" class="ai-bpmn"></div>`) : ''}
+            ${p.reference_error ? '<p class="small ai-warn">Эталон не построен: ' + escapeHtml(p.reference_error) + '</p>' : ''}
+            ${issuesHtml(p.reference_issues, 'Замечания калькулятора к эталону')}
+            <label>Эталонное решение словами (для ИИ-проверки, участник его не видит)</label>
             <textarea data-field="solution_notes" rows="5">${escapeHtml(p.solution_notes)}</textarea>
             <label>Пул</label>
             <select data-field="target">${Object.entries(poolNames).map(([v, n]) => `<option value="${v}" ${d.target === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`;
@@ -200,7 +252,7 @@ $generatorReady = aiEnabled('generator');
         box.innerHTML = drafts.map(d => `
             <article class="ai-draft" data-id="${d.id}" data-kind="${d.kind}">
                 <div class="ai-draft-head">
-                    <span class="ai-badge">${d.kind === 'question' ? 'Вопрос' : 'Практическое задание'} · ${escapeHtml(d.kind === 'question' ? variantNames[d.target] : poolNames[d.target])}</span>
+                    <span class="ai-badge">${kindNames[d.kind] || d.kind}${d.kind === 'complexity' ? '' : ' · ' + escapeHtml(d.kind === 'question' ? variantNames[d.target] : poolNames[d.target])}</span>
                     <span class="small">${escapeHtml(d.createdAt)}</span>
                 </div>
                 ${draftHtml(d)}
@@ -210,6 +262,27 @@ $generatorReady = aiEnabled('generator');
                 </div>
                 <div class="ai-msg"></div>
             </article>`).join('');
+        renderDiagrams();
+    }
+
+    async function renderDiagrams() {
+        if (typeof BpmnJS === 'undefined') {
+            return;
+        }
+        for (const [id, xml] of Object.entries(diagrams)) {
+            const container = document.getElementById(id);
+            if (!container || !xml || container.dataset.rendered) {
+                continue;
+            }
+            container.dataset.rendered = '1';
+            try {
+                const viewer = new BpmnJS({container: container});
+                await viewer.importXML(xml);
+                viewer.get('canvas').zoom('fit-viewport');
+            } catch (e) {
+                container.textContent = 'Не удалось показать схему';
+            }
+        }
     }
 
     function collectEdits(article) {
@@ -288,6 +361,7 @@ $generatorReady = aiEnabled('generator');
 
     document.getElementById('questionsForm').addEventListener('submit', e => { e.preventDefault(); generate('questionsForm', 'questionsMsg', 'generate_questions'); });
     document.getElementById('practicalForm').addEventListener('submit', e => { e.preventDefault(); generate('practicalForm', 'practicalMsg', 'generate_practical'); });
+    document.getElementById('complexityForm').addEventListener('submit', e => { e.preventDefault(); generate('complexityForm', 'complexityMsg', 'generate_complexity'); });
 
     (async () => {
         const [sources, drafts] = await Promise.all([

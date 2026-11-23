@@ -11,6 +11,7 @@
  * POST action=source          multipart: file | text, title
  * POST action=generate_questions {sourceId, variant, count, topic}
  * POST action=generate_practical {pool, count, topic, sourceId?}
+ * POST action=generate_complexity {count, topic}  — задание 3: текст → схема → ответы калькулятора
  * POST action=approve_draft   {id, edited?}
  * POST action=reject_draft    {id}
  */
@@ -37,6 +38,8 @@ function aiStatusPayload(): array
         'grader' => aiEnabled('grader'),
         'generator' => aiEnabled('generator'),
         'graderModel' => aiConfig('grader')['model'],
+        'calculator' => calculatorEnabled(),
+        'bpmnBuilder' => cctMcpEnabled(),
         'generatorModel' => aiConfig('generator')['model'],
     ];
 }
@@ -73,7 +76,7 @@ try {
     }
 
     // Генерация и проверка могут занимать до пары минут.
-    set_time_limit(300);
+    set_time_limit(900);
     $action = (string)($input['action'] ?? '');
 
     switch ($action) {
@@ -125,6 +128,14 @@ try {
             writeAdminLog('ai_practical_generated', 'count=' . count($ids));
             aiRespond(['success' => true, 'created' => count($ids), 'drafts' => aiListDrafts($pdo)]);
 
+        case 'generate_complexity':
+            if (!cctMcpEnabled() || !calculatorEnabled()) {
+                throw new InvalidArgumentException('Для задания 3 нужны сервис сборки схем (CCT_MCP_URL) и калькулятор (CALCULATOR_URL)');
+            }
+            $ids = aiGenerateComplexityTasks($pdo, (int)($input['count'] ?? 1), mb_substr(trim((string)($input['topic'] ?? '')), 0, 300));
+            writeAdminLog('ai_complexity_generated', 'count=' . count($ids));
+            aiRespond(['success' => true, 'created' => count($ids), 'drafts' => aiListDrafts($pdo)]);
+
         case 'approve_draft':
             $edited = is_array($input['edited'] ?? null) ? $input['edited'] : [];
             $publishedId = aiApproveDraft($pdo, (int)($input['id'] ?? 0), $edited);
@@ -140,8 +151,8 @@ try {
     aiRespond(['success' => false, 'message' => 'Неизвестное действие'], 400);
 } catch (AiNotConfiguredException $e) {
     aiRespond(['success' => false, 'notConfigured' => true, 'message' => $e->getMessage()], 503);
-} catch (AiRequestException | InvalidArgumentException $e) {
-    aiRespond(['success' => false, 'message' => $e->getMessage()], $e instanceof AiRequestException ? 502 : 400);
+} catch (AiRequestException | BpmnServiceException | InvalidArgumentException $e) {
+    aiRespond(['success' => false, 'message' => $e->getMessage()], $e instanceof InvalidArgumentException ? 400 : 502);
 } catch (Throwable $e) {
     logError($e, 'api/admin/ai.php');
     aiRespond(['success' => false, 'message' => 'Произошла ошибка сервера'], 500);

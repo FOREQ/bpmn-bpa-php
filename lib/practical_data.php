@@ -200,12 +200,59 @@ function randomPracticalTaskIds(?PDO $pdo = null): array
     ];
 }
 
-function randomComplexityVariantId(): string
+function randomComplexityVariantId(?PDO $pdo = null): string
 {
-    $variants = getComplexityVariants();
-    $variant = $variants[array_rand($variants)];
+    $ids = array_column(getComplexityVariants(), 'id');
 
-    return $variant['id'];
+    // Задания на расчёт сложности, созданные через «ИИ: генерация» (схема + ответы калькулятора).
+    try {
+        $pdo = $pdo ?? complexityDb();
+        if ($pdo && complexityTableExists($pdo)) {
+            foreach ($pdo->query('SELECT id FROM custom_complexity_task')->fetchAll(PDO::FETCH_COLUMN) as $id) {
+                $ids[] = 'custom-' . $id;
+            }
+        }
+    } catch (Throwable) {
+        // без базы — только встроенные варианты
+    }
+
+    return $ids[array_rand($ids)];
+}
+
+function complexityDb(): ?PDO
+{
+    if (!function_exists('getDb')) {
+        require_once __DIR__ . '/../config/db.php';
+    }
+
+    return getDb();
+}
+
+function complexityTableExists(PDO $pdo): bool
+{
+    static $exists = null;
+    if ($exists === null) {
+        try {
+            $pdo->query('SELECT 1 FROM custom_complexity_task LIMIT 1');
+            $exists = true;
+        } catch (Throwable) {
+            $exists = false;
+        }
+    }
+
+    return $exists;
+}
+
+/** Поля для заданий на расчёт сложности, созданных с калькулятором. */
+function getComplexityFieldsForCustom(): array
+{
+    $common = getCommonComplexityFields();
+
+    return array_merge(
+        array_slice($common, 0, 3),
+        [['id' => 'managers', 'label' => 'Руководители', 'weight' => '15%']],
+        array_slice($common, 3)
+    );
 }
 
 function getPracticalTask(string $id, ?PDO $pdo = null): ?array
@@ -240,7 +287,11 @@ function isFirstPracticalTaskId(string $id): bool
     return false;
 }
 
-function getComplexityVariant(string $id): ?array
+/**
+ * Вариант расчёта сложности. Для созданных ИИ вариантов (custom-N) есть bpmn (схема) и answers
+ * (правильные ответы калькулятора) — answers нельзя отдавать участнику, см. publicComplexityVariant().
+ */
+function getComplexityVariant(string $id, ?PDO $pdo = null): ?array
 {
     foreach (getComplexityVariants() as $variant) {
         if ($variant['id'] === $id) {
@@ -248,5 +299,38 @@ function getComplexityVariant(string $id): ?array
         }
     }
 
+    if (preg_match('/^custom-([1-9][0-9]*)$/', $id, $m)) {
+        try {
+            $pdo = $pdo ?? complexityDb();
+            if (!$pdo || !complexityTableExists($pdo)) {
+                return null;
+            }
+            $stmt = $pdo->prepare('SELECT id, title, bpmn_file, answers_json FROM custom_complexity_task WHERE id = :id');
+            $stmt->execute([':id' => $m[1]]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Throwable) {
+            return null;
+        }
+        if ($row) {
+            return [
+                'id' => $id,
+                'title' => $row['title'] ?: 'Расчёт сложности',
+                'image' => null,
+                'bpmn' => $row['bpmn_file'],
+                'fields' => getComplexityFieldsForCustom(),
+                'answers' => json_decode((string)$row['answers_json'], true) ?: [],
+            ];
+        }
+    }
+
     return null;
+}
+
+function publicComplexityVariant(?array $variant): ?array
+{
+    if ($variant !== null) {
+        unset($variant['answers']);
+    }
+
+    return $variant;
 }

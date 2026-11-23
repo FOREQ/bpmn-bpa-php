@@ -952,6 +952,20 @@ input[type="radio"] {
     border-radius: 10px;
 }
 
+/* Схема задания 3 в виде BPMN только для чтения (SVG): на телефоне прокручивается по горизонтали. */
+.complexity-bpmn-static {
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    user-select: none;
+}
+
+.complexity-bpmn-static svg {
+    display: block;
+    width: 100%;
+    min-width: 680px;
+    height: auto;
+}
+
 .field-row {
     display: grid;
     grid-template-columns: 1fr 180px;

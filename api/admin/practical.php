@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             }
         }
 
-        $complexityVariant = getComplexityVariant($participant['complexityVariantId']);
+        $complexityVariant = getComplexityVariant((string)$participant['complexityVariantId'], $pdo);
 
         respondJson([
             'success' => true,

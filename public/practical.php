@@ -287,6 +287,45 @@ $practicalUi = [
         }
     }
 
+    /*
+     * Схема для расчёта сложности: настоящий BPMN, но только для чтения.
+     * Модель рендерится во временном контейнере и вставляется как векторный SVG:
+     * элементы нельзя двигать или менять, текст остаётся чётким при увеличении.
+     */
+    async function renderStaticBpmn(file) {
+        const box = document.createElement('div');
+        box.className = 'complexity-image-box';
+        box.innerHTML = '<p><b>Диаграмма для расчета сложности:</b></p><div class="complexity-bpmn-static">Загрузка схемы…</div>';
+        complexityImage.appendChild(box);
+        const target = box.querySelector('.complexity-bpmn-static');
+        const holder = document.createElement('div');
+        holder.style.cssText = 'position:absolute;left:-10000px;top:0;width:1200px;height:800px;';
+        document.body.appendChild(holder);
+        try {
+            const response = await fetch('../assets/complexity/' + encodeURIComponent(file));
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
+            }
+            const renderer = new BpmnJS({ container: holder });
+            await renderer.importXML(await response.text());
+            const { svg } = await renderer.saveSVG();
+            renderer.destroy();
+            target.innerHTML = svg;
+            const svgElement = target.querySelector('svg');
+            if (svgElement) {
+                svgElement.removeAttribute('width');
+                svgElement.removeAttribute('height');
+                svgElement.setAttribute('role', 'img');
+                svgElement.setAttribute('aria-label', 'Диаграмма для расчета сложности');
+            }
+        } catch (error) {
+            console.error(error);
+            target.textContent = 'Не удалось загрузить схему. Обновите страницу.';
+        } finally {
+            holder.remove();
+        }
+    }
+
     function renderComplexity(complexityVariant) {
         complexityImage.innerHTML = '';
         complexityContainer.innerHTML = '';
@@ -302,6 +341,10 @@ $practicalUi = [
                     >
                 </div>
             `;
+        }
+
+        if (complexityVariant.bpmn) {
+            renderStaticBpmn(complexityVariant.bpmn);
         }
 
         complexityVariant.fields.forEach(field => {

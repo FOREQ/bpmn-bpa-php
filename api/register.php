@@ -167,7 +167,7 @@ try {
     $optionOrder = optionOrder($assignedQuestions);
 
     $practicalTaskIds = randomPracticalTaskIds($pdo);
-    $complexityVariantId = randomComplexityVariantId();
+    $complexityVariantId = randomComplexityVariantId($pdo);
 
     /*
      * Участник НЕ создает пароль при регистрации.

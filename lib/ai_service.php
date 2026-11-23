@@ -14,6 +14,7 @@ require_once __DIR__ . '/ai_client.php';
 require_once __DIR__ . '/ai_bpmn.php';
 require_once __DIR__ . '/content_bank.php';
 require_once __DIR__ . '/practical_data.php';
+require_once __DIR__ . '/bpmn_services.php';
 
 const AI_SOURCE_MAX_CHARS = 2_000_000;
 const AI_SOURCE_CHUNK_CHARS = 14_000;
@@ -50,6 +51,14 @@ function ensureAiSchema(PDO $pdo): void
         session_id TEXT NOT NULL,
         result_json TEXT NOT NULL,
         model TEXT,
+        created_at $ts NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS custom_complexity_task (
+        id $id,
+        title TEXT,
+        description TEXT,
+        bpmn_file TEXT NOT NULL,
+        answers_json TEXT NOT NULL,
+        analyze_json TEXT,
         created_at $ts NOT NULL DEFAULT CURRENT_TIMESTAMP)");
     $pdo->exec('CREATE INDEX IF NOT EXISTS idx_ai_review_session ON ai_practical_review(session_id)');
     $pdo->exec('CREATE INDEX IF NOT EXISTS idx_ai_draft_status ON ai_draft(status)');
@@ -125,14 +134,20 @@ function aiReviewPractical(PDO $pdo, array $participant): array
         }
 
         $reference = aiTaskReference($pdo, $task);
-        $results[] = aiGradeDiagram($task, $max, $student['text'], $reference);
+        $structure = aiStructureCheck($pdo, $task, $studentXml, $student['stats']);
+        $graded = aiGradeDiagram($task, $max, $student['text'], $reference, $structure);
+        $graded['structure'] = $structure;
+        $results[] = $graded;
     }
+
+    $metrics = aiCheckComplexityAnswers($pdo, $participant, $answers);
 
     $suggestion = [
         'previousTaskScore' => (int)($results[0]['score'] ?? 0),
         'newTaskScore' => (int)($results[1]['score'] ?? 0),
-        // Расчёт сложности сверяется с картинкой варианта — оставляем админу.
-        'metricsScore' => null,
+        // Расчёт сложности проверяется автоматически только для заданий с эталонными ответами калькулятора.
+        'metricsScore' => $metrics['score'] ?? null,
+        'metrics' => $metrics,
         'tasks' => $results,
         'model' => aiConfig('grader')['model'],
         'createdAt' => date('Y-m-d H:i:s'),
@@ -181,7 +196,84 @@ function aiTaskReference(PDO $pdo, array $task): string
     return 'Эталона нет — оценивай по тексту задания и правилам BPMN.';
 }
 
-function aiGradeDiagram(array $task, int $max, string $studentSummary, string $reference): array
+/**
+ * Проверка структуры без ИИ: замечания калькулятора и сравнение состава схемы с эталоном.
+ * @return array{issues: string[], comparison: string[], calculatorError: ?string}
+ */
+function aiStructureCheck(PDO $pdo, array $task, string $studentXml, array $studentStats): array
+{
+    $out = ['issues' => [], 'comparison' => [], 'calculatorError' => null];
+
+    if (calculatorEnabled()) {
+        try {
+            $out['issues'] = calculatorIssueList(calculatorAnalyze($studentXml)['issues']);
+        } catch (Throwable $e) {
+            $out['calculatorError'] = $e->getMessage();
+        }
+    }
+
+    $file = $task['referenceBpmn'] ?? null;
+    $path = $file && preg_match('/^[A-Za-z0-9._-]+\.bpmn$/', $file) ? __DIR__ . '/../assets/reference_bpmn/' . $file : null;
+    if ($path && is_file($path)) {
+        $ref = bpmnSummarize((string)file_get_contents($path))['stats'];
+        $labels = [
+            'lanes' => 'дорожек', 'startEvent' => 'стартовых событий', 'endEvent' => 'конечных событий',
+            'exclusiveGateway' => 'шлюзов «или»', 'parallelGateway' => 'параллельных шлюзов',
+            'eventBasedGateway' => 'событийных шлюзов',
+        ];
+        $taskCount = static function (array $stats): int {
+            $n = 0;
+            foreach ($stats as $key => $value) {
+                if (str_ends_with($key, 'ask')) {
+                    $n += $value;
+                }
+            }
+            return $n;
+        };
+        $refTasks = $taskCount($ref);
+        $stuTasks = $taskCount($studentStats);
+        if ($refTasks > 0 && abs($refTasks - $stuTasks) > max(1, (int)round($refTasks * 0.25))) {
+            $out['comparison'][] = "Задач: у участника {$stuTasks}, в эталоне {$refTasks}";
+        }
+        foreach ($labels as $key => $label) {
+            $r = (int)($ref[$key] ?? 0);
+            $s = (int)($studentStats[$key] ?? 0);
+            if ($r !== $s && ($r > 0 || $s > 0)) {
+                $out['comparison'][] = ucfirst($label) . ": у участника {$s}, в эталоне {$r}";
+            }
+        }
+    }
+
+    return $out;
+}
+
+/** Автопроверка расчёта сложности для заданий, созданных с калькулятором. */
+function aiCheckComplexityAnswers(PDO $pdo, array $participant, array $answers): ?array
+{
+    $variant = getComplexityVariant((string)($participant['complexityVariantId'] ?? ''), $pdo);
+    if (!$variant || empty($variant['answers'])) {
+        return null;
+    }
+
+    $rows = [];
+    $correct = 0;
+    foreach ($variant['fields'] as $field) {
+        $expected = $variant['answers'][$field['id']] ?? null;
+        if ($expected === null) {
+            continue;
+        }
+        $given = trim((string)($answers['complexity'][$field['id']] ?? ''));
+        $givenNumber = is_numeric(str_replace(',', '.', $given)) ? (float)str_replace(',', '.', $given) : null;
+        $ok = $givenNumber !== null && abs($givenNumber - (float)$expected) <= ($field['id'] === 'complexity' ? 0.05 : 0.0001);
+        $correct += $ok ? 1 : 0;
+        $rows[] = ['field' => $field['label'], 'expected' => $expected, 'given' => $given, 'ok' => $ok];
+    }
+
+    return $rows ? ['rows' => $rows, 'correct' => $correct, 'total' => count($rows),
+        'score' => (int)round(5 * $correct / count($rows))] : null;
+}
+
+function aiGradeDiagram(array $task, int $max, string $studentSummary, string $reference, array $structure = []): array
 {
     $system = "Ты — строгий и справедливый экзаменатор по моделированию бизнес-процессов в нотации BPMN 2.0 "
         . "для госслужащих Казахстана (методика реинжиниринга бизнес-процессов госорганов). "
@@ -196,6 +288,12 @@ function aiGradeDiagram(array $task, int $max, string $studentSummary, string $r
     $user = "Задание (максимум {$max} баллов):\n" . $task['description']
         . "\n\n" . $reference
         . "\n\nСхема участника:\n" . $studentSummary;
+    $found = array_merge($structure['issues'] ?? [], $structure['comparison'] ?? []);
+    if ($found) {
+        $user .= "\n\nСтруктурные замечания уже найдены алгоритмом (учти их в баллах, но не переписывай в errors):\n- "
+            . implode("\n- ", $found)
+            . "\nТвоя главная задача — смысл: соответствуют ли подписи, участники и порядок действий тексту задания.";
+    }
 
     $json = aiChatJson([
         ['role' => 'system', 'content' => $system],
@@ -332,7 +430,19 @@ function aiExistingQuestionTexts(PDO $pdo, int $limit = 80): array
 function aiGenerateQuestions(PDO $pdo, int $sourceId, string $variant, int $count, string $topic = ''): array
 {
     ensureAiSchema($pdo);
-    $count = max(1, min(10, $count));
+    $count = max(1, min(20, $count));
+    if ($count > 10) {
+        // Большой набор — частями, каждая часть по своему фрагменту методички.
+        $created = [];
+        while (count($created) < $count) {
+            $batch = aiGenerateQuestions($pdo, $sourceId, $variant, min(10, $count - count($created)), $topic);
+            if (!$batch) {
+                break;
+            }
+            $created = array_merge($created, $batch);
+        }
+        return $created;
+    }
     $chunk = aiSourceChunk($pdo, $sourceId);
     $existing = aiExistingQuestionTexts($pdo);
 
@@ -449,6 +559,7 @@ function aiGeneratePracticalTasks(PDO $pdo, string $pool, int $count, string $to
             'description_kk' => mb_substr(trim((string)($t['description_kk'] ?? '')), 0, 6000),
             'solution_notes' => mb_substr(trim((string)($t['solution_notes'] ?? '')), 0, 6000),
         ];
+        $payload = aiAttachReference($payload);
         $created[] = aiInsertId($pdo, 'INSERT INTO ai_draft (kind, target, payload_json, source_id) VALUES (:k, :t, :p, :s)', [
             ':k' => 'practical', ':t' => $pool,
             ':p' => json_encode($payload, JSON_UNESCAPED_UNICODE), ':s' => $sourceId,
@@ -456,6 +567,114 @@ function aiGeneratePracticalTasks(PDO $pdo, string $pool, int $count, string $to
     }
 
     return $created;
+}
+
+/**
+ * Текст процесса → BPMN: модель пишет IR, cct-mcp проверяет и раскладывает схему.
+ * @return array{xml: string, ir: array}
+ */
+function aiTextToBpmn(string $text, string $name): array
+{
+    $guide = (string)file_get_contents(__DIR__ . '/../config/ai_ir_guide.md');
+    $messages = [
+        ['role' => 'system', 'content' => "Ты строишь модели бизнес-процессов в нотации BPMN 2.0 для учебных заданий. "
+            . "По тексту процесса составь IR — JSON строго по формату ниже. Отвечай только JSON.\n\n" . $guide],
+        ['role' => 'user', 'content' => "Название процесса: {$name}\n\nТекст процесса:\n{$text}"],
+    ];
+
+    $ir = aiChatJson($messages, 'generator');
+    $ir = $ir['ir'] ?? $ir;
+    for ($attempt = 0; $attempt < 2; $attempt++) {
+        $check = cctValidateIr($ir);
+        if ($check['ok']) {
+            break;
+        }
+        if ($attempt === 1) {
+            throw new BpmnServiceException("Модель не смогла построить корректную схему:\n" . mb_substr($check['errors'], 0, 800));
+        }
+        $messages[] = ['role' => 'assistant', 'content' => json_encode($ir, JSON_UNESCAPED_UNICODE)];
+        $messages[] = ['role' => 'user', 'content' => "Проверка нашла ошибки, исправь IR и верни его целиком:\n" . $check['errors']];
+        $ir = aiChatJson($messages, 'generator');
+        $ir = $ir['ir'] ?? $ir;
+    }
+
+    return ['xml' => cctLayout($ir), 'ir' => $ir];
+}
+
+/** Задание 3: короткий текст процесса → схема → правильные ответы калькулятора. */
+function aiGenerateComplexityTasks(PDO $pdo, int $count, string $topic = ''): array
+{
+    ensureAiSchema($pdo);
+    $count = max(1, min(3, $count));
+
+    $system = "Ты составляешь короткие описания бизнес-процессов госоргана или организации для задания «рассчитать "
+        . "сложность процесса по схеме». В каждом: 2–4 участника (должности), 6–12 действий, хотя бы одно ветвление, "
+        . "явно названные входящие документы (что поступает) и порождаемые документы (что создаётся), передачи "
+        . "между участниками. 4–8 предложений, без лишних деталей.\n"
+        . 'Ответ — строго JSON: {"tasks":[{"title":"...","description":"..."}]}';
+    $json = aiChatJson([
+        ['role' => 'system', 'content' => $system],
+        ['role' => 'user', 'content' => "Составь {$count} описаний." . ($topic !== '' ? " Тематика: {$topic}." : '')],
+    ], 'generator');
+
+    $fields = getComplexityFieldsForCustom();
+    $created = [];
+    foreach (array_slice((array)($json['tasks'] ?? []), 0, $count) as $t) {
+        $t = (array)$t;
+        $description = trim((string)($t['description'] ?? ''));
+        if (mb_strlen($description) < 40) {
+            continue;
+        }
+        $title = mb_substr(trim((string)($t['title'] ?? '')) ?: 'Процесс', 0, 200);
+        $built = aiTextToBpmn($description, $title);
+        $calc = calculatorAnalyze($built['xml']);
+        $payload = [
+            'title' => $title,
+            'description' => mb_substr($description, 0, 4000),
+            'xml' => $built['xml'],
+            'analyze' => $calc['analyze'],
+            'issues' => calculatorIssueList($calc['issues']),
+            'answers' => complexityAnswers($calc['analyze'], $fields),
+        ];
+        $created[] = aiInsertId($pdo, 'INSERT INTO ai_draft (kind, target, payload_json, source_id) VALUES (:k, :t, :p, NULL)', [
+            ':k' => 'complexity', ':t' => 'complexity', ':p' => json_encode($payload, JSON_UNESCAPED_UNICODE),
+        ]);
+    }
+
+    return $created;
+}
+
+/** Эталон .bpmn к сгенерированному практическому заданию (если сервисы настроены). */
+function aiAttachReference(array $payload): array
+{
+    if (!cctMcpEnabled() || !aiEnabled('generator')) {
+        return $payload;
+    }
+    try {
+        $built = aiTextToBpmn($payload['description_ru'], $payload['title_ru'] ?: 'Процесс');
+        $payload['reference_xml'] = $built['xml'];
+        if (calculatorEnabled()) {
+            $payload['reference_issues'] = calculatorIssueList(calculatorAnalyze($built['xml'])['issues']);
+        }
+    } catch (Throwable $e) {
+        $payload['reference_error'] = mb_substr($e->getMessage(), 0, 500);
+    }
+
+    return $payload;
+}
+
+function aiStoreBpmnFile(string $directory, string $xml): string
+{
+    $dir = __DIR__ . '/../assets/' . $directory;
+    if (!is_dir($dir) && !mkdir($dir, 0755, true)) {
+        throw new RuntimeException('Не удалось создать папку ' . $directory);
+    }
+    $name = 'ai_' . bin2hex(random_bytes(8)) . '.bpmn';
+    if (file_put_contents($dir . '/' . $name, $xml) === false) {
+        throw new RuntimeException('Не удалось сохранить схему');
+    }
+
+    return $name;
 }
 
 function aiListDrafts(PDO $pdo, string $status = 'pending'): array
@@ -506,13 +725,28 @@ function aiApproveDraft(PDO $pdo, int $draftId, array $edited = []): int
             ':ok' => $payload['options_kk'] ? json_encode($payload['options_kk'], JSON_UNESCAPED_UNICODE) : null,
             ':c' => $payload['correct_index'],
         ]);
+    } elseif ($draft['kind'] === 'complexity') {
+        if (empty($payload['xml']) || empty($payload['answers'])) {
+            throw new InvalidArgumentException('В черновике нет схемы или ответов калькулятора');
+        }
+        $file = aiStoreBpmnFile('complexity', (string)$payload['xml']);
+        $publishedId = aiInsertId($pdo, 'INSERT INTO custom_complexity_task (title, description, bpmn_file, answers_json, analyze_json)
+            VALUES (:t, :d, :f, :a, :z)', [
+            ':t' => (string)($payload['title'] ?? ''),
+            ':d' => (string)($payload['description'] ?? ''),
+            ':f' => $file,
+            ':a' => json_encode($payload['answers'], JSON_UNESCAPED_UNICODE),
+            ':z' => json_encode($payload['analyze'] ?? [], JSON_UNESCAPED_UNICODE),
+        ]);
+        $target = 'complexity';
     } else {
         $description = trim((string)($payload['description_ru'] ?? ''));
         if ($description === '' || !in_array($target, ['first', 'second'], true)) {
             throw new InvalidArgumentException('Нужно описание задания и пул (first/second)');
         }
         $publishedId = aiInsertId($pdo, 'INSERT INTO custom_practical_task (pool, title, title_kk, description, description_kk, reference_file, solution_notes)
-            VALUES (:p, :t, :tk, :d, :dk, NULL, :n)', [
+            VALUES (:p, :t, :tk, :d, :dk, :r, :n)', [
+            ':r' => !empty($payload['reference_xml']) ? aiStoreBpmnFile('reference_bpmn', (string)$payload['reference_xml']) : null,
             ':p' => $target,
             ':t' => trim((string)($payload['title_ru'] ?? '')) ?: null,
             ':tk' => trim((string)($payload['title_kk'] ?? '')) ?: null,
