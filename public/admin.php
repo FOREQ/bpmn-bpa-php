@@ -574,7 +574,7 @@ $adminUi = [
             const viewerId = 'viewer_' + task.id;
             const xmlId = 'xml_' + task.id;
             const referenceViewerId = 'reference_' + task.id;
-            const hasReference = task.referenceBpmn && index === 1;
+            const hasReference = Boolean(task.referenceBpmn);
 
             tasksHtml += `
                 <section class="admin-review-task">
@@ -617,14 +617,24 @@ $adminUi = [
                 `;
             }
 
+            if (practical.complexityVariant.bpmn) {
+                complexityHtml += `
+                    <p><b>Диаграмма для расчета сложности (BPMN):</b></p>
+                    <div id="complexityViewer" class="bpmn-viewer-box"></div>
+                `;
+            }
+
             if (practical.complexityVariant.fields) {
+                const expected = practical.complexityVariant.answers || null;
                 practical.complexityVariant.fields.forEach(field => {
                     const value = practical.answers?.complexity?.[field.id] ?? '—';
+                    const right = expected && expected[field.id] !== undefined
+                        ? ` <span class="small">(верно: ${escapeHtml(String(expected[field.id]))})</span>` : '';
 
                     complexityHtml += `
                         <p>
                             <b>${field.label} (${field.weight}):</b>
-                            ${escapeHtml(String(value))}
+                            ${escapeHtml(String(value))}${right}
                         </p>
                     `;
                 });
@@ -709,6 +719,10 @@ $adminUi = [
         renderCertificateSection(p.sessionId, json.certificate);
         loadAiReview(p.sessionId, practical.tasks);
 
+        if (practical.complexityVariant && practical.complexityVariant.bpmn) {
+            renderReferenceBpmn('complexityViewer', '../assets/complexity/' + practical.complexityVariant.bpmn);
+        }
+
         practical.tasks.forEach((task, index) => {
             const answer = practical.answers?.diagrams?.[task.id]?.xml || '';
 
@@ -722,7 +736,7 @@ $adminUi = [
                 }
             }
 
-            const hasReference = task.referenceBpmn && index === 1;
+            const hasReference = Boolean(task.referenceBpmn);
 
             if (hasReference) {
                 renderReferenceBpmn(
@@ -853,21 +867,34 @@ $adminUi = [
                 <p>${escapeHtml(task.summary || '')}</p>
                 ${task.errors && task.errors.length ? '<p class="small"><b>Ошибки:</b></p>' + list(task.errors) : ''}
                 ${task.strengths && task.strengths.length ? '<p class="small"><b>Сделано верно:</b></p>' + list(task.strengths) : ''}
+                ${task.structure && task.structure.issues && task.structure.issues.length ? '<p class="small"><b>Калькулятор нашёл:</b></p>' + list(task.structure.issues) : ''}
+                ${task.structure && task.structure.comparison && task.structure.comparison.length ? '<p class="small"><b>Отличия от эталона:</b></p>' + list(task.structure.comparison) : ''}
+                ${task.structure && task.structure.calculatorError ? '<p class="small">Калькулятор недоступен: ' + escapeHtml(task.structure.calculatorError) + '</p>' : ''}
             </div>
         `).join('');
+        const metrics = review.metrics;
+        const metricsHtml = metrics ? `
+            <div class="ai-review-task">
+                <p><b>Расчёт сложности (автопроверка по калькулятору): ${Number(metrics.score)} / 5</b>, верно ${Number(metrics.correct)} из ${Number(metrics.total)}</p>
+                ${list(metrics.rows.filter(r => !r.ok).map(r => r.field + ': ответ «' + (r.given || '—') + '», верно ' + r.expected))}
+            </div>` : '';
 
         document.getElementById('aiReviewResult').innerHTML = `
             ${tasksHtml}
-            <p class="small">Модель: ${escapeHtml(review.model || '—')}, ${escapeHtml(review.createdAt || '')}. Расчёт сложности ИИ не оценивает.</p>
-            <button class="admin-action-btn secondary" type="button" onclick="applyAiScores(${Number(review.previousTaskScore)}, ${Number(review.newTaskScore)})">
+            ${metricsHtml}
+            <p class="small">Модель: ${escapeHtml(review.model || '—')}, ${escapeHtml(review.createdAt || '')}.${metrics ? '' : ' Расчёт сложности для этого варианта проверяет админ.'}</p>
+            <button class="admin-action-btn secondary" type="button" onclick="applyAiScores(${Number(review.previousTaskScore)}, ${Number(review.newTaskScore)}, ${metrics ? Number(metrics.score) : 'null'})">
                 Подставить баллы ИИ в форму
             </button>
         `;
     }
 
-    function applyAiScores(previousTaskScore, newTaskScore) {
+    function applyAiScores(previousTaskScore, newTaskScore, metricsScore) {
         document.getElementById('previousTaskScore').value = previousTaskScore;
         document.getElementById('newTaskScore').value = newTaskScore;
+        if (metricsScore !== null && metricsScore !== undefined) {
+            document.getElementById('metricsScore').value = metricsScore;
+        }
         document.getElementById('scoreMessage').innerHTML =
             '<p class="small">Баллы ИИ подставлены. Проверьте их и нажмите «Сохранить оценку».</p>';
     }

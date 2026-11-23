@@ -132,6 +132,17 @@ CREATE TABLE IF NOT EXISTS ai_draft (
 );
 CREATE INDEX IF NOT EXISTS idx_ai_draft_status ON ai_draft(status);
 
+-- Задание 3 (расчёт сложности), созданное ИИ: схема + правильные ответы BPMN-Calculator
+CREATE TABLE IF NOT EXISTS custom_complexity_task (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT,
+    description TEXT,
+    bpmn_file TEXT NOT NULL,      -- assets/complexity/<файл>.bpmn
+    answers_json TEXT NOT NULL,   -- правильные ответы по полям задания
+    analyze_json TEXT,            -- все показатели калькулятора
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS ai_practical_review (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id TEXT NOT NULL,
