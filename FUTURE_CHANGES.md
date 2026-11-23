@@ -23,7 +23,7 @@ Critical issues to fix before real deployment
     - Anyone with a leaked sessionId can view or submit another participant’s test/practical work.
     - Better: require logged-in student session and compare against $_SESSION['student_session_id'], or do not accept sessionId from the client at all.
 
-3. Password reset flow appears broken
+3. Password reset flow appears broken — FIXED (student_login now accepts passwordHash via lib/student_auth.php, see tests/StudentAuthTest.php)
     - api/set_new_password.php saves passwordHash and clears tempPasswordHash.
     - But api/student_login.php only checks tempPasswordHash.
     - Result: after setting a new password, the user may not be able to log in.
