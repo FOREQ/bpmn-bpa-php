@@ -31,7 +31,7 @@ $activeNav = 'login';
         <div class="auth-card">
             <span class="eyebrow">Личный кабинет</span>
             <h1>Вход участника</h1>
-            <p>Введите email и временный пароль, который был отправлен на вашу почту после подтверждения заявки на курс «Практическое применение методики реинжиниринга бизнес-процессов государственных органов».</p>
+            <p>Введите email и пароль: временный, который был отправлен на вашу почту после подтверждения заявки на курс «Практическое применение методики реинжиниринга бизнес-процессов государственных органов», или новый, если вы уже меняли пароль.</p>
 
             <form id="loginForm">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken()) ?>">
@@ -39,8 +39,8 @@ $activeNav = 'login';
                 <label for="email">Email</label>
                 <input id="email" name="email" type="email" autocomplete="username" required placeholder="example@mail.com">
 
-                <label for="password">Временный пароль</label>
-                <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Введите временный пароль">
+                <label for="password">Пароль</label>
+                <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Временный или ваш новый пароль">
 
                 <button type="submit" id="submitBtn" class="btn btn-primary btn-block">Войти</button>
             </form>

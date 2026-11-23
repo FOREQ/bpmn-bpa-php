@@ -8,6 +8,7 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../lib/csrf.php';
 require_once __DIR__ . '/../lib/error_logger.php';
 require_once __DIR__ . '/../lib/student_logger.php';
+require_once __DIR__ . '/../lib/student_auth.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -50,7 +51,7 @@ $password = trim($input['password'] ?? '');
 if ($email === '' || $password === '') {
     respondJson([
         'success' => false,
-        'message' => 'Введите email и временный пароль'
+        'message' => 'Введите email и пароль'
     ], 400);
 }
 
@@ -124,16 +125,13 @@ try {
         }
     }
 
-    if (empty($participant['tempPasswordHash']) || empty($participant['tempPasswordExpiresAt'])) {
-        respondJson([
-            'success' => false,
-            'message' => 'Временный пароль не найден. Обратитесь к администратору.'
-        ], 401);
-    }
+    /*
+     * Пароль может быть постоянным (passwordHash, задается через сброс пароля)
+     * или временным (tempPasswordHash, выдается администратором).
+     */
+    $passwordCheck = verifyStudentPassword($participant, $password);
 
-    $expiresAt = strtotime($participant['tempPasswordExpiresAt']);
-
-    if ($expiresAt === false || time() > $expiresAt) {
+    if ($passwordCheck === 'temp_expired') {
         writeStudentLog(
             'student_login_failed',
             'email=' . $email . '; reason=temp_password_expired'
@@ -145,7 +143,7 @@ try {
         ], 401);
     }
 
-    if (!password_verify($password, $participant['tempPasswordHash'])) {
+    if ($passwordCheck === 'invalid') {
         $failedAttempts = (int)($participant['failedLoginAttempts'] ?? 0) + 1;
 
         if ($failedAttempts >= STUDENT_MAX_LOGIN_ATTEMPTS) {
@@ -190,12 +188,12 @@ try {
 
         writeStudentLog(
             'student_login_failed',
-            'email=' . $email . '; reason=wrong_temp_password; attempts=' . $failedAttempts
+            'email=' . $email . '; reason=wrong_password; attempts=' . $failedAttempts
         );
 
         respondJson([
             'success' => false,
-            'message' => 'Неверный email или временный пароль. Осталось попыток: ' . (STUDENT_MAX_LOGIN_ATTEMPTS - $failedAttempts)
+            'message' => 'Неверный email или пароль. Осталось попыток: ' . (STUDENT_MAX_LOGIN_ATTEMPTS - $failedAttempts)
         ], 401);
     }
 
@@ -217,7 +215,9 @@ try {
     $_SESSION['student_session_id'] = $participant['sessionId'];
 
     writeStudentLog(
-        'student_login_success_temp_password',
+        $passwordCheck === 'permanent'
+            ? 'student_login_success_password'
+            : 'student_login_success_temp_password',
         'email=' . $email . '; sessionId=' . $participant['sessionId']
     );
 
