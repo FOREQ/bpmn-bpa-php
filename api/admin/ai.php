@@ -12,6 +12,9 @@
  * POST action=generate_questions {sourceId, variant, count, topic}
  * POST action=generate_practical {pool, count, topic, sourceId?}
  * POST action=generate_complexity {count, topic}  — задание 3: текст → схема → ответы калькулятора
+ * GET  ?action=job&id=...                  — статус фоновой задачи (queued|running|done|failed)
+ *
+ * review и generate_* выполняются фоновой задачей: ответ {jobId}, страница опрашивает action=job.
  * POST action=approve_draft   {id, edited?}
  * POST action=reject_draft    {id}
  */
@@ -21,7 +24,7 @@ requireAdmin();
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../lib/csrf.php';
 require_once __DIR__ . '/../../lib/error_logger.php';
-require_once __DIR__ . '/../../lib/ai_service.php';
+require_once __DIR__ . '/../../lib/ai_jobs.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -44,6 +47,21 @@ function aiStatusPayload(): array
     ];
 }
 
+/** Создаёт фоновую задачу и сразу отвечает её id. Без возможности запускать процессы выполняет её здесь же. */
+function aiStartJob(PDO $pdo, string $action, array $params, string $logAction, string $logDetails = ''): never
+{
+    $purpose = $action === 'review' ? 'grader' : 'generator';
+    if (!aiEnabled($purpose)) {
+        throw new AiNotConfiguredException('ИИ не настроен: задайте AI_BASE_URL и AI_MODEL в .env');
+    }
+    $jobId = aiJobCreate($pdo, $action, $params);
+    writeAdminLog($logAction, trim('job=' . $jobId . '; ' . $logDetails, '; '));
+    if (!aiJobSpawn($jobId)) {
+        aiJobRun($pdo, $jobId);
+    }
+    aiRespond(['success' => true, 'jobId' => $jobId, 'job' => aiJobGet($pdo, $jobId)]);
+}
+
 try {
     $pdo = getDb();
     ensureAiSchema($pdo);
@@ -60,6 +78,16 @@ try {
                 aiRespond(['success' => true, 'drafts' => aiListDrafts($pdo, $status)]);
             case 'sources':
                 aiRespond(['success' => true, 'sources' => aiListSources($pdo)]);
+            case 'job':
+                $job = aiJobGet($pdo, (int)($_GET['id'] ?? 0));
+                if (!$job) {
+                    aiRespond(['success' => false, 'message' => 'Задача не найдена'], 404);
+                }
+                $payload = ['success' => true, 'job' => $job];
+                if ($job['status'] === 'done' && str_starts_with($job['action'], 'generate_')) {
+                    $payload['drafts'] = aiListDrafts($pdo);
+                }
+                aiRespond($payload);
         }
         aiRespond(['success' => false, 'message' => 'Неизвестное действие'], 400);
     }
@@ -84,15 +112,10 @@ try {
     switch ($action) {
         case 'review':
             $sessionId = trim((string)($input['sessionId'] ?? ''));
-            $stmt = $pdo->prepare('SELECT * FROM Participant WHERE sessionId = :s LIMIT 1');
-            $stmt->execute([':s' => $sessionId]);
-            $participant = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$participant || empty($participant['practicalSubmittedAt'])) {
-                aiRespond(['success' => false, 'message' => 'Практика участника не найдена или не сдана'], 404);
+            if ($sessionId === '') {
+                throw new InvalidArgumentException('Не указан участник');
             }
-            $review = aiReviewPractical($pdo, $participant);
-            writeAdminLog('ai_practical_review', 'sessionId=' . $sessionId . '; suggested=' . ($review['previousTaskScore'] + $review['newTaskScore']));
-            aiRespond(['success' => true, 'review' => $review]);
+            aiStartJob($pdo, 'review', ['sessionId' => $sessionId], 'ai_practical_review', 'sessionId=' . $sessionId);
 
         case 'source':
             $title = trim((string)($input['title'] ?? ''));
@@ -117,29 +140,31 @@ try {
             if (!in_array($variant, ['A', 'B', 'C', 'all'], true)) {
                 throw new InvalidArgumentException('Неизвестный вариант теста');
             }
-            $ids = aiGenerateQuestions($pdo, (int)($input['sourceId'] ?? 0), $variant,
-                (int)($input['count'] ?? 5), mb_substr(trim((string)($input['topic'] ?? '')), 0, 300));
-            writeAdminLog('ai_questions_generated', 'count=' . count($ids));
-            aiRespond(['success' => true, 'created' => count($ids), 'drafts' => aiListDrafts($pdo)]);
+            if ((int)($input['sourceId'] ?? 0) <= 0) {
+                throw new InvalidArgumentException('Сначала загрузите методичку');
+            }
+            aiStartJob($pdo, 'generate_questions', [
+                'sourceId' => (int)$input['sourceId'], 'variant' => $variant,
+                'count' => (int)($input['count'] ?? 5), 'topic' => mb_substr(trim((string)($input['topic'] ?? '')), 0, 300),
+            ], 'ai_questions_generated');
 
         case 'generate_practical':
             $pool = (string)($input['pool'] ?? 'second');
             if (!in_array($pool, ['first', 'second'], true)) {
                 throw new InvalidArgumentException('Неизвестный пул заданий');
             }
-            $sourceId = (int)($input['sourceId'] ?? 0);
-            $ids = aiGeneratePracticalTasks($pdo, $pool, (int)($input['count'] ?? 2),
-                mb_substr(trim((string)($input['topic'] ?? '')), 0, 300), $sourceId > 0 ? $sourceId : null);
-            writeAdminLog('ai_practical_generated', 'count=' . count($ids));
-            aiRespond(['success' => true, 'created' => count($ids), 'drafts' => aiListDrafts($pdo)]);
+            aiStartJob($pdo, 'generate_practical', [
+                'pool' => $pool, 'count' => (int)($input['count'] ?? 2), 'sourceId' => (int)($input['sourceId'] ?? 0),
+                'topic' => mb_substr(trim((string)($input['topic'] ?? '')), 0, 300),
+            ], 'ai_practical_generated');
 
         case 'generate_complexity':
             if (!cctMcpEnabled() || !calculatorEnabled()) {
                 throw new InvalidArgumentException('Для задания 3 нужны сервис сборки схем (CCT_MCP_URL) и калькулятор (CALCULATOR_URL)');
             }
-            $ids = aiGenerateComplexityTasks($pdo, (int)($input['count'] ?? 1), mb_substr(trim((string)($input['topic'] ?? '')), 0, 300));
-            writeAdminLog('ai_complexity_generated', 'count=' . count($ids));
-            aiRespond(['success' => true, 'created' => count($ids), 'drafts' => aiListDrafts($pdo)]);
+            aiStartJob($pdo, 'generate_complexity', [
+                'count' => (int)($input['count'] ?? 1), 'topic' => mb_substr(trim((string)($input['topic'] ?? '')), 0, 300),
+            ], 'ai_complexity_generated');
 
         case 'approve_draft':
             $edited = is_array($input['edited'] ?? null) ? $input['edited'] : [];

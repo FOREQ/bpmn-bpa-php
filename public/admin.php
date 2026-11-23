@@ -837,19 +837,41 @@ $adminUi = [
         const button = document.getElementById('aiReviewButton');
         const result = document.getElementById('aiReviewResult');
         button.disabled = true;
-        result.innerHTML = '<p class="small">ИИ проверяет схемы, это может занять до минуты…</p>';
+        result.innerHTML = '<p class="small">ИИ проверяет схемы, это может занять 1–2 минуты…</p>';
         try {
             const response = await fetch('../api/admin/ai.php', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({csrf_token: csrfToken, action: 'review', sessionId: sessionId})
             });
-            const json = await response.json();
-            if (!json.success) {
-                result.innerHTML = '<p style="color:red;">' + escapeHtml(json.message || 'Ошибка ИИ') + '</p>';
+            const start = await response.json();
+            if (!start.success) {
+                result.innerHTML = '<p style="color:red;">' + escapeHtml(start.message || 'Ошибка ИИ') + '</p>';
                 return;
             }
-            renderAiReview(json.review);
+            // Проверка идёт фоновой задачей: опрашиваем статус.
+            let job = start.job;
+            const began = Date.now();
+            while (job && (job.status === 'queued' || job.status === 'running')) {
+                await new Promise(r => setTimeout(r, 3000));
+                try {
+                    const poll = await fetch('../api/admin/ai.php?action=job&id=' + encodeURIComponent(start.jobId)).then(r => r.json());
+                    if (!poll.success) {
+                        result.innerHTML = '<p style="color:red;">' + escapeHtml(poll.message || 'Ошибка ИИ') + '</p>';
+                        return;
+                    }
+                    job = poll.job;
+                } catch (e) {
+                    continue;
+                }
+                result.innerHTML = '<p class="small">' + (job.status === 'queued' ? 'В очереди к ИИ' : 'ИИ проверяет схемы')
+                    + ', прошло ' + Math.round((Date.now() - began) / 1000) + ' с…</p>';
+            }
+            if (!job || job.status !== 'done') {
+                result.innerHTML = '<p style="color:red;">' + escapeHtml((job && job.error) || 'Ошибка ИИ') + '</p>';
+                return;
+            }
+            renderAiReview(job.result.review);
         } catch (e) {
             result.innerHTML = '<p style="color:red;">Не удалось связаться с сервером</p>';
         } finally {
