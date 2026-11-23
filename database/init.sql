@@ -107,8 +107,39 @@ CREATE TABLE IF NOT EXISTS custom_practical_task (
     description TEXT NOT NULL,
     description_kk TEXT,
     reference_file TEXT,
+    solution_notes TEXT,   -- эталонное решение словами (для ИИ-проверки)
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ИИ: загруженные методички, черновики сгенерированных материалов, подсказки оценок
+CREATE TABLE IF NOT EXISTS ai_source (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ai_draft (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind TEXT NOT NULL,              -- question | practical
+    target TEXT NOT NULL,            -- A/B/C/all или first/second
+    payload_json TEXT NOT NULL,
+    source_id BIGINT,
+    status TEXT NOT NULL DEFAULT 'pending', -- pending | approved | rejected
+    published_id BIGINT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    reviewed_at DATETIME
+);
+CREATE INDEX IF NOT EXISTS idx_ai_draft_status ON ai_draft(status);
+
+CREATE TABLE IF NOT EXISTS ai_practical_review (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL,
+    result_json TEXT NOT NULL,
+    model TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_ai_review_session ON ai_practical_review(session_id);
 
 -- Дополнительная защита SQLite на случай прямой записи в базу в обход API.
 CREATE TRIGGER IF NOT EXISTS participant_required_fields_before_insert

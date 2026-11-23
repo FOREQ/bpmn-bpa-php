@@ -1,6 +1,11 @@
 services:
   app:
     build: .
+    # Секреты (ключи ИИ, почта) — в файле .env рядом с docker-compose.yml.
+    # Шаблон переменных ИИ: .env.ai.example
+    env_file:
+      - path: .env
+        required: false
     ports:
       - "8000:8000"
     volumes:
