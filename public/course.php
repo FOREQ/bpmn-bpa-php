@@ -2,6 +2,9 @@
 require_once __DIR__ . '/../lib/security.php';
 require_once __DIR__ . '/../lib/csrf.php';
 require_once __DIR__ . '/../lib/managed_courses.php';
+require_once __DIR__ . '/../lib/rate_limit.php';
+const MC_SIGNUP_MIN_FILL_SECONDS = 3;
+const MC_SIGNUP_COURSE_DAILY_LIMIT = 300;
 $base = mcBase();
 $logoSrc = $base . '/assets/logo.svg/logo-black.png';
 $navBase = $base . '/public/';
@@ -13,8 +16,18 @@ catch (InvalidArgumentException $e) { http_response_code(404); }
 if ($course && $_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if (!csrfVerify($_POST['csrf'] ?? null)) throw new InvalidArgumentException(mcUi('Обновите страницу и повторите запись.', 'Бетті жаңартып, қайта тіркеліңіз.'));
-        if (($_POST['website'] ?? '') !== '' || time() - ($_SESSION['mc_last_signup'] ?? 0) < 60) {
-            throw new InvalidArgumentException(mcUi('Подождите минуту перед повторной записью.', 'Қайта тіркелмес бұрын бір минут күтіңіз.'));
+        $wait = mcUi('Подождите минуту перед повторной записью.', 'Қайта тіркелмес бұрын бір минут күтіңіз.');
+        $shownAt = (int)($_SESSION['mc_form_shown'][$course['id']] ?? 0);
+        // Скрытое поле, повтор с той же сессии и форма, отправленная быстрее человека.
+        if (($_POST['website'] ?? '') !== '' || time() - ($_SESSION['mc_last_signup'] ?? 0) < 60
+            || $shownAt === 0 || time() - $shownAt < MC_SIGNUP_MIN_FILL_SECONDS) {
+            throw new InvalidArgumentException($wait);
+        }
+        if (!rateLimitHit('course_signup_ip', clientIp(), [600 => 5, 86400 => 20])) {
+            throw new InvalidArgumentException(mcUi('Слишком много заявок с вашего адреса. Повторите позже.', 'Сіздің мекенжайыңыздан өтінім тым көп. Кейінірек қайталаңыз.'));
+        }
+        if (!rateLimitHit('course_signup_course', $course['id'], [86400 => MC_SIGNUP_COURSE_DAILY_LIMIT])) {
+            throw new InvalidArgumentException(mcUi('Набор на сегодня заполнен. Повторите завтра или обратитесь к организатору.', 'Бүгінгі қабылдау толды. Ертең қайталаңыз немесе ұйымдастырушыға хабарласыңыз.'));
         }
         mcAddPeople(getDb(), $course['id'], [$_POST], true, mcUploadedPdf('resume', 2 * 1024 * 1024));
         $_SESSION['mc_last_signup'] = time();
@@ -25,6 +38,7 @@ if ($course && $_SERVER['REQUEST_METHOD'] === 'POST') {
     catch (Throwable $e) { error_log('Course signup failed: ' . get_class($e)); $error = mcUi('Не удалось отправить заявку. Повторите позже.', 'Өтінімді жіберу мүмкін болмады. Кейін қайталап көріңіз.'); }
 }
 if ($course && ($_SESSION['mc_signup_success'] ?? '') === $course['id']) { $success = true; unset($_SESSION['mc_signup_success']); }
+if ($course && !$success) { $_SESSION['mc_form_shown'][$course['id']] = time(); }
 $count = 0;
 if ($course) { $q = getDb()->prepare('SELECT COUNT(*) FROM managed_course_person WHERE course_id = ?'); $q->execute([$course['id']]); $count = (int)$q->fetchColumn(); }
 ?>

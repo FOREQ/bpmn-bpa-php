@@ -10,3 +10,5 @@ vendor
 desktop.ini
 .env.dtc
 Thumbs.db
+database/ratelimit
+secrets

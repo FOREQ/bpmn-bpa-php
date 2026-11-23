@@ -26,3 +26,13 @@ vendor/
 # Generated certificates
 database/certificates/
 database/legacy_before_cleanup_*.json
+
+# Uploaded via admin content editor (reference files shipped in repo stay tracked)
+assets/custom_questions/
+assets/reference_bpmn/custom-*.bpmn
+
+# Rate limit counters
+database/ratelimit/
+
+# Local secrets for docker-compose.dtc.yml
+secrets/
