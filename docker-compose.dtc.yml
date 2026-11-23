@@ -8,6 +8,8 @@ services:
       - .env.dtc
     environment:
       APP_BASE_PATH: /bpmn
+      # Несколько процессов PHP: долгая генерация ИИ не блокирует студентов.
+      PHP_CLI_SERVER_WORKERS: "4"
       VERIFY_BASE_URL: https://dtc.govtec.kz/bpmn/certificate/
       SESSION_COOKIE_SECURE: "true"
       SESSION_SAVE_PATH: /app/database/sessions

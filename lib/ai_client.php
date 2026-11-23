@@ -25,6 +25,9 @@ final class AiRequestException extends RuntimeException
 {
 }
 
+/** Жёсткий потолок ответа: длинные ответы тормозят общий GPU (сайт ЦЦТ на той же модели). */
+const AI_MAX_TOKENS_CAP = 20000;
+
 function aiEnv(string $name, string $default = ''): string
 {
     $value = getenv($name);
@@ -32,7 +35,7 @@ function aiEnv(string $name, string $default = ''): string
     return $value === false ? $default : trim((string)$value);
 }
 
-/** @return array{style:string,base_url:string,api_key:string,model:string,timeout:int,temperature:float,max_tokens:int,json_mode:bool} */
+/** @return array{style:string,base_url:string,api_key:string,model:string,timeout:int,temperature:float,max_tokens:int,json_mode:bool,thinking:bool} */
 function aiConfig(string $purpose = 'default'): array
 {
     $prefix = match ($purpose) {
@@ -57,11 +60,18 @@ function aiConfig(string $purpose = 'default'): array
         'base_url' => rtrim($pick('BASE_URL'), '/'),
         'api_key' => $pick('API_KEY'),
         'model' => $pick('MODEL'),
-        'timeout' => max(5, (int)$pick('TIMEOUT', '120')),
+        'timeout' => max(5, (int)$pick('TIMEOUT', match ($purpose) { 'generator' => '300', 'grader' => '240', default => '120' })),
         'temperature' => (float)$pick('TEMPERATURE', $purpose === 'grader' ? '0.1' : '0.7'),
-        'max_tokens' => max(256, (int)$pick('MAX_TOKENS', '4000')),
-        'json_mode' => in_array(strtolower($pick('JSON_MODE', '0')), ['1', 'true', 'yes', 'on'], true),
+        'max_tokens' => min(AI_MAX_TOKENS_CAP, max(256, (int)$pick('MAX_TOKENS', match ($purpose) { 'generator' => '16000', 'grader' => '8000', default => '4000' }))),
+        'json_mode' => aiFlag($pick('JSON_MODE', '0')),
+        // Рассуждения модели (Qwen3 и т.п.) по умолчанию выключены: они съедают лимит токенов.
+        'thinking' => aiFlag($pick('THINKING', '0')),
     ];
+}
+
+function aiFlag(string $value): bool
+{
+    return in_array(strtolower(trim($value)), ['1', 'true', 'yes', 'on'], true);
 }
 
 function aiEnabled(string $purpose = 'default'): bool
@@ -122,15 +132,31 @@ function aiChat(array $messages, string $purpose = 'default', array $overrides =
         if ($config['json_mode']) {
             $payload['response_format'] = ['type' => 'json_object'];
         }
+        // vLLM/LiteLLM: включает или выключает режим рассуждений в шаблоне чата Qwen.
+        if (!aiFlag(aiEnv('AI_NO_TEMPLATE_KWARGS', '0'))) {
+            $payload['chat_template_kwargs'] = ['enable_thinking' => (bool)$config['thinking']];
+        }
         $headers = ['Content-Type: application/json'];
         if ($config['api_key'] !== '') {
             $headers[] = 'Authorization: Bearer ' . $config['api_key'];
         }
     }
 
-    [$status, $body] = aiHttpPost($url, $headers, json_encode($payload, JSON_UNESCAPED_UNICODE), $config['timeout']);
+    $encoded = json_encode($payload, JSON_UNESCAPED_UNICODE);
+    $slot = aiAcquireSlot();
+    try {
+        [$status, $body] = aiSendWithRetry($url, $headers, $encoded, (int)$config['timeout']);
+    } finally {
+        aiReleaseSlot($slot);
+    }
 
     $json = json_decode($body, true);
+    if (in_array($status, [502, 503, 504], true)) {
+        throw new AiRequestException('ИИ временно недоступен (нет связи с сервером модели). Повторите через несколько минут.');
+    }
+    if ($status === 429) {
+        throw new AiRequestException('ИИ занят другими запросами. Повторите через минуту.');
+    }
     if ($status < 200 || $status >= 300 || !is_array($json)) {
         $detail = is_array($json) ? ($json['error']['message'] ?? $json['message'] ?? '') : '';
         throw new AiRequestException('ИИ вернул ошибку HTTP ' . $status . ($detail !== '' ? ': ' . mb_substr((string)$detail, 0, 300) : ''));
@@ -143,15 +169,84 @@ function aiChat(array $messages, string $purpose = 'default', array $overrides =
                 $text .= $block['text'];
             }
         }
+        $finish = (string)($json['stop_reason'] ?? '');
+        $truncated = $finish === 'max_tokens';
     } else {
         $text = (string)($json['choices'][0]['message']['content'] ?? '');
+        $finish = (string)($json['choices'][0]['finish_reason'] ?? '');
+        $truncated = $finish === 'length';
     }
 
-    if (trim($text) === '') {
+    // Блок рассуждений, если модель всё же его выдала, ответом не считается.
+    $visible = trim(preg_replace('#<think>.*?(</think>|$)#s', '', $text) ?? $text);
+    if ($visible === '') {
+        if ($truncated) {
+            throw new AiRequestException('ИИ не уложился в лимит ответа (' . $config['max_tokens']
+                . ' токенов) и ничего не вернул. Повторите или уменьшите объём задания.');
+        }
         throw new AiRequestException('ИИ вернул пустой ответ');
     }
 
     return $text;
+}
+
+/** Запрос к ИИ с повтором при 429 (лимит параллельных запросов ключа). */
+function aiSendWithRetry(string $url, array $headers, string $body, int $timeout): array
+{
+    $attempts = max(1, (int)aiEnv('AI_RETRY_429', '3') + 1);
+    for ($i = 1; ; $i++) {
+        try {
+            $response = aiHttpPost($url, $headers, $body, $timeout);
+        } catch (AiRequestException $e) {
+            throw new AiRequestException('ИИ временно недоступен: ' . $e->getMessage());
+        }
+        if ($response[0] !== 429 || $i >= $attempts) {
+            return $response;
+        }
+        usleep((int)(min(20, 2 ** $i + random_int(0, 1000) / 1000) * 1_000_000));
+    }
+}
+
+/**
+ * Семафор на весь портал: не больше AI_MAX_PARALLEL (по умолчанию 2) одновременных запросов к ИИ.
+ * Слоты — файлы с flock; блокировка снимается сама, если процесс PHP упал.
+ *
+ * @return resource
+ */
+function aiAcquireSlot()
+{
+    $slots = max(1, (int)aiEnv('AI_MAX_PARALLEL', '2'));
+    $wait = max(0, (int)aiEnv('AI_QUEUE_WAIT', '60'));
+    $dir = aiEnv('AI_SLOTS_DIR', rtrim(sys_get_temp_dir(), '/') . '/bpmn_ai_slots');
+    if (!is_dir($dir) && !@mkdir($dir, 0777, true) && !is_dir($dir)) {
+        throw new AiRequestException('Не удалось создать папку очереди ИИ: ' . $dir);
+    }
+
+    $deadline = microtime(true) + $wait;
+    do {
+        for ($n = 1; $n <= $slots; $n++) {
+            $handle = @fopen($dir . '/slot' . $n . '.lock', 'c');
+            if ($handle === false) {
+                continue;
+            }
+            if (flock($handle, LOCK_EX | LOCK_NB)) {
+                return $handle;
+            }
+            fclose($handle);
+        }
+        usleep(500_000);
+    } while (microtime(true) < $deadline);
+
+    throw new AiRequestException('ИИ занят другими запросами, повторите позже.');
+}
+
+/** @param resource $handle */
+function aiReleaseSlot($handle): void
+{
+    if (is_resource($handle)) {
+        flock($handle, LOCK_UN);
+        fclose($handle);
+    }
 }
 
 /** @return array{0:int,1:string} */
