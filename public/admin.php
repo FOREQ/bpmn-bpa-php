@@ -55,6 +55,7 @@ $adminUi = [
             <div class="admin-actions">
                 <a class="btn btn-primary" href="admin_courses.php"><?= $isKazakh ? 'Курстарды басқару' : 'Управление курсами' ?></a>
                 <a class="btn btn-secondary" href="content.php">Вопросы и задания</a>
+                <a class="btn btn-secondary" href="admin_ai.php"><?= $isKazakh ? 'ЖИ: генерация' : 'ИИ: генерация' ?></a>
                 <a class="btn btn-secondary" href="admin_test.php"><?= $isKazakh ? 'Тестті сынап көру' : 'Пройти тест самому' ?></a>
                 <a class="btn btn-primary" href="../api/admin/export.php">Скачать CSV</a>
                 <button class="btn btn-secondary" id="refreshBtn" type="button">Обновить список</button>
@@ -625,6 +626,15 @@ json.participants.forEach(row => {
                 <div id="scoreMessage"></div>
             </section>
 
+            <section class="admin-review-task ai-review" id="aiReviewSection">
+                <h3>Подсказка ИИ</h3>
+                <p class="small">ИИ сравнивает схемы с заданием и эталоном и предлагает баллы. Итоговую оценку ставит администратор.</p>
+                <button class="admin-action-btn secondary" id="aiReviewButton" onclick="requestAiReview('${p.sessionId}')" type="button">
+                    Проверить с помощью ИИ
+                </button>
+                <div id="aiReviewResult"></div>
+            </section>
+
             <section class="admin-review-task" id="certificateSection" style="display:none;">
                 <h3>Сертификат</h3>
 
@@ -652,6 +662,7 @@ json.participants.forEach(row => {
         `;
 
         renderCertificateSection(p.sessionId, json.certificate);
+        loadAiReview(p.sessionId, practical.tasks);
 
         practical.tasks.forEach((task, index) => {
             const answer = practical.answers?.diagrams?.[task.id]?.xml || '';
@@ -736,6 +747,84 @@ json.participants.forEach(row => {
         }
 
         block.style.display = block.style.display === 'block' ? 'none' : 'block';
+    }
+
+    let aiReviewTasks = [];
+
+    async function loadAiReview(sessionId, tasks) {
+        aiReviewTasks = tasks || [];
+        const button = document.getElementById('aiReviewButton');
+        try {
+            const [statusResponse, reviewResponse] = await Promise.all([
+                fetch('../api/admin/ai.php?action=status'),
+                fetch('../api/admin/ai.php?action=review&sessionId=' + encodeURIComponent(sessionId))
+            ]);
+            const status = await statusResponse.json();
+            const review = await reviewResponse.json();
+            if (!status.success || !status.ai.grader) {
+                button.disabled = true;
+                document.getElementById('aiReviewResult').innerHTML =
+                    '<p class="small">ИИ не подключён: задайте AI_BASE_URL, AI_MODEL и ключ в .env на сервере.</p>';
+            }
+            if (review.success && review.review) {
+                renderAiReview(review.review);
+            }
+        } catch (e) {
+            button.disabled = true;
+        }
+    }
+
+    async function requestAiReview(sessionId) {
+        const button = document.getElementById('aiReviewButton');
+        const result = document.getElementById('aiReviewResult');
+        button.disabled = true;
+        result.innerHTML = '<p class="small">ИИ проверяет схемы, это может занять до минуты…</p>';
+        try {
+            const response = await fetch('../api/admin/ai.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({csrf_token: csrfToken, action: 'review', sessionId: sessionId})
+            });
+            const json = await response.json();
+            if (!json.success) {
+                result.innerHTML = '<p style="color:red;">' + escapeHtml(json.message || 'Ошибка ИИ') + '</p>';
+                return;
+            }
+            renderAiReview(json.review);
+        } catch (e) {
+            result.innerHTML = '<p style="color:red;">Не удалось связаться с сервером</p>';
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    function renderAiReview(review) {
+        const list = items => items && items.length
+            ? '<ul>' + items.map(item => '<li>' + escapeHtml(item) + '</li>').join('') + '</ul>' : '';
+        const labels = ['Первое задание', 'Второе задание'];
+        const tasksHtml = (review.tasks || []).map((task, index) => `
+            <div class="ai-review-task">
+                <p><b>${labels[index] || 'Задание'}: ${Number(task.score)} / ${Number(task.max)}</b></p>
+                <p>${escapeHtml(task.summary || '')}</p>
+                ${task.errors && task.errors.length ? '<p class="small"><b>Ошибки:</b></p>' + list(task.errors) : ''}
+                ${task.strengths && task.strengths.length ? '<p class="small"><b>Сделано верно:</b></p>' + list(task.strengths) : ''}
+            </div>
+        `).join('');
+
+        document.getElementById('aiReviewResult').innerHTML = `
+            ${tasksHtml}
+            <p class="small">Модель: ${escapeHtml(review.model || '—')}, ${escapeHtml(review.createdAt || '')}. Расчёт сложности ИИ не оценивает.</p>
+            <button class="admin-action-btn secondary" type="button" onclick="applyAiScores(${Number(review.previousTaskScore)}, ${Number(review.newTaskScore)})">
+                Подставить баллы ИИ в форму
+            </button>
+        `;
+    }
+
+    function applyAiScores(previousTaskScore, newTaskScore) {
+        document.getElementById('previousTaskScore').value = previousTaskScore;
+        document.getElementById('newTaskScore').value = newTaskScore;
+        document.getElementById('scoreMessage').innerHTML =
+            '<p class="small">Баллы ИИ подставлены. Проверьте их и нажмите «Сохранить оценку».</p>';
     }
 
     async function saveScores(sessionId) {
