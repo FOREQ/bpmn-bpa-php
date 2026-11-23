@@ -21,6 +21,10 @@
     });
     document.addEventListener('click', (event) => {
         if (!header?.contains(event.target)) setMenu(false);
+        // Phone-only dropdowns such as the admin "Ещё" menu close on an outside tap.
+        if (phone.matches) document.querySelectorAll('details[data-desktop-open][open]').forEach(item => {
+            if (!item.contains(event.target)) item.open = false;
+        });
     });
     const details = new Set();
     function enhanceDetails(root) {
