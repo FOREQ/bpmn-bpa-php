@@ -56,10 +56,30 @@ $adminUi = [
                 <a class="btn btn-primary" href="admin_courses.php"><?= $isKazakh ? 'Курстарды басқару' : 'Управление курсами' ?></a>
                 <a class="btn btn-secondary" href="content.php">Вопросы и задания</a>
                 <a class="btn btn-secondary" href="admin_ai.php"><?= $isKazakh ? 'ЖИ: генерация' : 'ИИ: генерация' ?></a>
-                <a class="btn btn-secondary" href="admin_test.php"><?= $isKazakh ? 'Тестті сынап көру' : 'Пройти тест самому' ?></a>
-                <a class="btn btn-primary" href="../api/admin/export.php">Скачать CSV</a>
-                <button class="btn btn-secondary" id="refreshBtn" type="button">Обновить список</button>
-                <a class="btn btn-secondary" href="logout.php">Выйти из админки</a>
+                <a class="btn btn-secondary" href="../api/admin/export.php">Скачать CSV</a>
+                <details class="admin-more" data-desktop-open open>
+                    <summary class="btn btn-secondary"><?= $isKazakh ? 'Тағы' : 'Ещё' ?></summary>
+                    <div class="admin-more-menu">
+                        <a class="btn btn-secondary" href="admin_test.php"><?= $isKazakh ? 'Тестті сынап көру' : 'Пройти тест самому' ?></a>
+                        <button class="btn btn-secondary" id="refreshBtn" type="button">Обновить список</button>
+                        <a class="btn btn-secondary" href="logout.php">Выйти из админки</a>
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <div class="admin-toolbar" role="search">
+            <label class="admin-search-label">
+                <span class="visually-hidden">Поиск участника</span>
+                <input id="participantSearch" class="admin-legacy-search" type="search" placeholder="Поиск: ФИО, email, телефон, организация" autocomplete="off">
+            </label>
+            <div class="admin-filter-chips" id="participantFilters" role="group" aria-label="Фильтр участников">
+                <button type="button" class="admin-chip active" data-filter="all" aria-pressed="true">Все <span data-count="all"></span></button>
+                <button type="button" class="admin-chip" data-filter="pending" aria-pressed="false">Новые заявки <span data-count="pending"></span></button>
+                <button type="button" class="admin-chip" data-filter="review" aria-pressed="false">Проверить практику <span data-count="review"></span></button>
+                <button type="button" class="admin-chip" data-filter="progress" aria-pressed="false">В процессе <span data-count="progress"></span></button>
+                <button type="button" class="admin-chip" data-filter="done" aria-pressed="false">Завершили <span data-count="done"></span></button>
+                <button type="button" class="admin-chip" data-filter="rejected" aria-pressed="false">Отклонены <span data-count="rejected"></span></button>
             </div>
         </div>
 
@@ -323,99 +343,124 @@ $adminUi = [
         `;
     }
 
+    let allParticipants = [];
+    let participantFilter = 'all';
+    const participantSearch = document.getElementById('participantSearch');
+    const participantFilters = document.getElementById('participantFilters');
+
+    // One bucket per participant so the filter chips always add up to "Все".
+    function participantBucket(row) {
+        const status = row.accountStatus || 'pending';
+        if (status === 'rejected') return 'rejected';
+        if (status === 'pending') return 'pending';
+        if (row.practicalSubmittedAt && !row.practicalGradedAt) return 'review';
+        if (row.practicalGradedAt) return 'done';
+        return 'progress';
+    }
+
+    function participantCard(row) {
+        const card = document.createElement('article');
+        card.className = 'admin-participant-card is-' + participantBucket(row);
+        card.innerHTML = `
+            <div class="admin-participant-col wide">
+                <div class="admin-participant-label">Участник</div>
+                <div class="admin-participant-value">
+                    <b>${escapeHtml(row.fullName)}</b>
+                    <div class="admin-participant-contacts">
+                        <a class="small" href="mailto:${escapeHtml(row.email)}">${escapeHtml(row.email)}</a>
+                        <a class="small" href="tel:${escapeHtml(String(row.phone || '').replace(/[^+\d]/g, ''))}">${escapeHtml(row.phone)}</a>
+                    </div>
+                    <div class="admin-participant-org">${escapeHtml(row.organization)}</div>
+                    <div class="admin-participant-dates">Регистрация: ${escapeHtml(row.createdAt || '—')} · Обновлено: ${escapeHtml(row.updatedAt || '—')}</div>
+                </div>
+            </div>
+
+            <div class="admin-participant-col">
+                <div class="admin-participant-label">Статус заявки</div>
+                <div class="admin-participant-value">${accountStatus(row)}</div>
+            </div>
+
+            <div class="admin-participant-col">
+                <div class="admin-participant-label">Тест</div>
+                <div class="admin-participant-value">${testColumn(row)}</div>
+            </div>
+
+            <div class="admin-participant-col">
+                <div class="admin-participant-label">Практика</div>
+                <div class="admin-participant-value">${practicalStatus(row)}</div>
+            </div>
+
+            <div class="admin-participant-col">
+                <div class="admin-participant-label">Итог</div>
+                <div class="admin-participant-value">${overallGrade(row.percent, row.practicalScoreTotal)}</div>
+            </div>
+
+            <div class="admin-participant-col actions">
+                ${actionButtons(row)}
+            </div>
+        `;
+        return card;
+    }
+
+    function renderParticipants() {
+        const counts = { all: allParticipants.length, pending: 0, review: 0, progress: 0, done: 0, rejected: 0 };
+        allParticipants.forEach(row => { counts[participantBucket(row)]++; });
+        participantFilters.querySelectorAll('[data-count]').forEach(node => {
+            node.textContent = counts[node.dataset.count] ?? 0;
+        });
+
+        const term = participantSearch.value.trim().toLocaleLowerCase();
+        const visible = allParticipants.filter(row =>
+            (participantFilter === 'all' || participantBucket(row) === participantFilter)
+            && (!term || [row.fullName, row.email, row.phone, row.organization]
+                .some(value => String(value || '').toLocaleLowerCase().includes(term)))
+        );
+
+        participantsBody.innerHTML = '';
+
+        if (allParticipants.length === 0) {
+            participantsBody.innerHTML = '<div class="admin-empty">Участников пока нет</div>';
+            return;
+        }
+
+        if (visible.length === 0) {
+            participantsBody.innerHTML = '<div class="admin-empty">По этому фильтру участников нет</div>';
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        visible.forEach(row => fragment.appendChild(participantCard(row)));
+        participantsBody.appendChild(fragment);
+    }
+
+    participantSearch.addEventListener('input', renderParticipants);
+    participantFilters.addEventListener('click', event => {
+        const chip = event.target.closest('[data-filter]');
+        if (!chip) return;
+        participantFilter = chip.dataset.filter;
+        participantFilters.querySelectorAll('[data-filter]').forEach(node => {
+            const active = node === chip;
+            node.classList.toggle('active', active);
+            node.setAttribute('aria-pressed', String(active));
+        });
+        renderParticipants();
+    });
+
     async function loadParticipants() {
         try {
             const response = await fetch('../api/admin/results.php');
             const json = await response.json();
 
-           if (!json.success) {
-    participantsBody.innerHTML = `
-        <div class="admin-empty">
-            Ошибка загрузки: ${escapeHtml(json.message || '')}
-        </div>
-    `;
-    return;
-}
+            if (!json.success) {
+                participantsBody.innerHTML = `<div class="admin-empty">Ошибка загрузки: ${escapeHtml(json.message || '')}</div>`;
+                return;
+            }
 
-if (json.participants.length === 0) {
-    participantsBody.innerHTML = `
-        <div class="admin-empty">
-            Участников пока нет
-        </div>
-    `;
-    return;
-}
-
-participantsBody.innerHTML = '';
-
-json.participants.forEach(row => {
-    const card = document.createElement('div');
-    card.className = 'admin-participant-card';
-
-    card.innerHTML = `
-        <div class="admin-participant-col wide">
-            <div class="admin-participant-label">Участник</div>
-            <div class="admin-participant-value">
-                <b>${escapeHtml(row.fullName)}</b><br>
-                <span class="small">${escapeHtml(row.email)}</span><br>
-                <span class="small">${escapeHtml(row.phone)}</span>
-            </div>
-        </div>
-
-        <div class="admin-participant-col">
-            <div class="admin-participant-label">Организация</div>
-            <div class="admin-participant-value">
-                ${escapeHtml(row.organization)}
-            </div>
-        </div>
-
-        <div class="admin-participant-col">
-            <div class="admin-participant-label">Статус заявки</div>
-            <div class="admin-participant-value">
-                ${accountStatus(row)}
-            </div>
-        </div>
-
-        <div class="admin-participant-col">
-            <div class="admin-participant-label">Тест</div>
-            <div class="admin-participant-value">
-                ${testColumn(row)}
-            </div>
-        </div>
-
-        <div class="admin-participant-col">
-            <div class="admin-participant-label">Практика</div>
-            <div class="admin-participant-value">
-                ${practicalStatus(row)}
-            </div>
-        </div>
-
-        <div class="admin-participant-col">
-            <div class="admin-participant-label">Итог</div>
-            <div class="admin-participant-value">
-                ${overallGrade(row.percent, row.practicalScoreTotal)}
-            </div>
-        </div>
-
-        <div class="admin-participant-col actions">
-            <div class="admin-participant-label">Действие</div>
-            ${actionButtons(row)}
-
-            <div class="admin-participant-label" style="margin-top: 4px;">Дата</div>
-            <div class="admin-participant-value">
-                Регистрация:<br>
-                <span class="small">${escapeHtml(row.createdAt)}</span><br>
-                Обновлено:<br>
-                <span class="small">${escapeHtml(row.updatedAt)}</span>
-            </div>
-        </div>
-    `;
-
-    participantsBody.appendChild(card);
-});
+            allParticipants = Array.isArray(json.participants) ? json.participants : [];
+            renderParticipants();
         } catch (e) {
             console.error(e);
-            participantsBody.innerHTML = '<tr><td colspan="8">Ошибка соединения с сервером</td></tr>';
+            participantsBody.innerHTML = '<div class="admin-empty">Ошибка соединения с сервером</div>';
         }
     }
 
@@ -590,7 +635,7 @@ json.participants.forEach(row => {
             <div class="admin-info-box">
                 <p><b>Участник:</b><br>${escapeHtml(p.fullName)}</p>
                 <p><b>Организация:</b><br>${escapeHtml(p.organization)}</p>
-                <p><b>Курс:</b><br>Практическое применение методики реинжиниринга бизнес-процессов государственных органов</p>
+                <p class="admin-info-course"><b>Курс:</b><br>Практическое применение методики реинжиниринга бизнес-процессов государственных органов</p>
                 <p><b>Тест:</b><br>${p.testScore} / ${p.testTotal}, ${p.testPercent}% (${testStatusText(p.testStatus)})</p>
             </div>
 
@@ -606,17 +651,17 @@ json.participants.forEach(row => {
 
                 <div class="score-row">
                     <label for="previousTaskScore">Первое задание, максимум 10:</label>
-                    <input id="previousTaskScore" type="number" min="0" max="10" value="${practical.scores.previousTaskScore ?? 0}">
+                    <input id="previousTaskScore" type="number" inputmode="numeric" min="0" max="10" value="${practical.scores.previousTaskScore ?? 0}">
                 </div>
 
                 <div class="score-row">
                     <label for="newTaskScore">Второе задание, максимум 15:</label>
-                    <input id="newTaskScore" type="number" min="0" max="15" value="${practical.scores.newTaskScore ?? 0}">
+                    <input id="newTaskScore" type="number" inputmode="numeric" min="0" max="15" value="${practical.scores.newTaskScore ?? 0}">
                 </div>
 
                 <div class="score-row">
                     <label for="metricsScore">Расчет сложности, максимум 5:</label>
-                    <input id="metricsScore" type="number" min="0" max="5" value="${practical.scores.metricsScore ?? 0}">
+                    <input id="metricsScore" type="number" inputmode="numeric" min="0" max="5" value="${practical.scores.metricsScore ?? 0}">
                 </div>
 
                 <button class="admin-action-btn" onclick="saveScores('${p.sessionId}')" type="button">

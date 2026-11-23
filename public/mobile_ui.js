@@ -24,7 +24,7 @@
     });
     const details = new Set();
     function enhanceDetails(root) {
-        root.querySelectorAll('[data-participant-details]').forEach(item => {
+        root.querySelectorAll('[data-participant-details], [data-desktop-open]').forEach(item => {
             if (details.has(item)) return;
             item.open = !phone.matches;
             details.add(item);

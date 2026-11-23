@@ -1500,31 +1500,145 @@ input[type="radio"] {
 }
 
 .admin-participant-card {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 18px;
-    align-items: flex-start;
-    padding: 20px;
+    display: grid;
+    grid-template-columns: minmax(220px, 1.6fr) repeat(4, minmax(110px, 1fr)) minmax(190px, 1.1fr);
+    gap: 14px 18px;
+    align-items: start;
+    padding: 18px 20px;
     border: 1px solid var(--line);
+    border-left: 4px solid var(--line);
     border-radius: var(--radius-lg);
     background: #ffffff;
     box-shadow: 0 6px 18px rgba(20, 40, 65, 0.06);
 }
 
-.admin-participant-col {
-    flex: 1 1 140px;
-    min-width: 0;
+.admin-participant-card.is-pending { border-left-color: #f59e0b; }
+.admin-participant-card.is-review { border-left-color: var(--accent); }
+.admin-participant-card.is-done { border-left-color: #16a34a; }
+.admin-participant-card.is-rejected { border-left-color: #b91c1c; opacity: 0.85; }
+
+.admin-legacy-card {
+    grid-template-columns: minmax(200px, 1.6fr) repeat(3, minmax(120px, 1fr)) minmax(170px, 1fr);
+    border-left-width: 1px;
 }
 
-.admin-participant-col.wide {
-    flex-basis: 190px;
+.admin-participant-col {
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .admin-participant-col.actions {
-    flex: 1 1 180px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
+}
+
+.admin-participant-contacts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 12px;
+    margin-top: 2px;
+}
+
+.admin-participant-contacts a {
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.admin-participant-contacts a:hover { color: var(--accent); text-decoration: underline; }
+
+.admin-participant-org {
+    margin-top: 4px;
+    font-size: 13.5px;
+    color: var(--ink);
+}
+
+.admin-participant-dates {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--faint);
+}
+
+.admin-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 16px;
+    margin-top: 26px;
+}
+
+.admin-search-label {
+    flex: 1 1 280px;
+    max-width: 420px;
+}
+
+.admin-filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.admin-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 38px;
+    padding: 7px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #ffffff;
+    color: var(--ink);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.admin-chip span {
+    min-width: 22px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: #eef2f7;
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+}
+
+.admin-chip.active {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #ffffff;
+}
+
+.admin-chip.active span { background: rgba(255, 255, 255, 0.22); color: #ffffff; }
+
+.admin-more { position: relative; }
+.admin-more > summary { list-style: none; cursor: pointer; }
+.admin-more > summary::-webkit-details-marker { display: none; }
+.admin-more > summary::after { content: '\00a0▾'; }
+
+.admin-more-menu {
+    display: contents;
+}
+
+@media (min-width: 701px) {
+    .admin-more,
+    .admin-more[open] {
+        display: contents;
+    }
+    .admin-more > summary { display: none; }
+}
+
+.visually-hidden {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 .admin-participant-label {
@@ -1866,17 +1980,31 @@ pre {
 }
 
 @media (max-width: 900px) {
-    .admin-participant-card {
-        flex-direction: column;
+    .admin-participant-card,
+    .admin-legacy-card {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px 14px;
+        padding: 16px;
+    }
+
+    .admin-participant-col.wide,
+    .admin-participant-col.actions {
+        grid-column: 1 / -1;
     }
 
     .admin-participant-col.actions {
         flex-direction: row;
         flex-wrap: wrap;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
     }
 
     .admin-participant-col.actions .admin-action-btn {
-        flex: 1 1 auto;
+        flex: 1 1 160px;
+    }
+
+    .admin-participant-col.actions > .admin-participant-label {
+        display: none;
     }
 }
 
@@ -2171,3 +2299,106 @@ pre {
 .bpmn-desktop .bpmn-touch-hint { grid-column: 1 / -1; }
 .bpmn-desktop-actions { display: flex; align-items: center; gap: 6px; }
 .bpmn-desktop .bpmn-expand { margin-left: auto; }
+
+/* Admin header and participant filters on phones. */
+@media (max-width: 700px) {
+    .admin-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        gap: 8px;
+    }
+
+    .admin-actions > :first-child {
+        grid-column: 1 / -1;
+    }
+
+    .admin-actions .btn,
+    .admin-more > summary {
+        width: 100%;
+        padding: 11px 12px;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .admin-more[open] > .admin-more-menu {
+        position: absolute;
+        right: 0;
+        z-index: 20;
+        width: max(100%, 240px);
+        display: grid;
+        gap: 8px;
+        margin-top: 8px;
+        padding: 8px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: #ffffff;
+        box-shadow: 0 10px 24px rgba(20, 40, 65, 0.12);
+    }
+
+    .admin-toolbar {
+        margin-top: 18px;
+    }
+
+    .admin-search-label {
+        flex-basis: 100%;
+        max-width: none;
+    }
+
+    /* One swipeable row keeps the list visible instead of a wall of chips. */
+    .admin-filter-chips {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        width: calc(100% + 16px);
+        margin-right: -16px;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+    }
+
+    .admin-filter-chips::-webkit-scrollbar { display: none; }
+
+    .admin-chip { flex: 0 0 auto; }
+
+    .admin-participants-list { margin-top: 16px; gap: 12px; }
+}
+
+.admin-search-label input { font-weight: 500; }
+
+@media (max-width: 900px) {
+    .admin-participant-col.actions .admin-action-btn { flex-basis: 130px; }
+    .admin-participant-col.wide > .admin-participant-label { display: none; }
+}
+
+/* Practical task on a computer: wider page, editor uses the screen height. */
+.container-practical { width: min(1240px, calc(100% - 32px)); }
+.container-practical .card p,
+.container-practical .practical-description { max-width: 80ch; }
+
+@media (min-width: 901px) {
+    .container-practical .bpmn-container {
+        height: clamp(460px, calc(100vh - 240px), 860px);
+    }
+}
+
+/* Practical review on a phone: full-screen sheet, header with "Закрыть" stays in reach. */
+@media (max-width: 700px) {
+    .modal { padding: 0; overscroll-behavior: contain; }
+    .modal-content { width: 100%; min-height: 100%; border-radius: 0; overflow: clip; }
+    .admin-modal-top {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        align-items: center;
+        padding: 10px 16px;
+        padding-top: max(10px, env(safe-area-inset-top, 0px));
+        box-shadow: 0 4px 12px rgba(20, 40, 65, 0.06);
+    }
+    .admin-modal-top .admin-eyebrow,
+    .admin-modal-top .small { display: none; }
+    .admin-modal-title { margin: 0; font-size: 19px; }
+    .admin-modal-close { min-width: 0; }
+    #practicalContent { padding: 16px; }
+    .admin-info-box { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .admin-info-box p { padding: 10px 12px; font-size: 13.5px; overflow-wrap: anywhere; }
+}
+@media (max-width: 700px) { .admin-info-course { display: none; } }

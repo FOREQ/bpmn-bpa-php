@@ -38,7 +38,7 @@ $activeNav = 'login';
 
             <form id="resetForm">
                 <label>Email</label>
-                <input type="email" id="email" placeholder="example@mail.com" required>
+                <input type="email" id="email" autocomplete="email" placeholder="example@mail.com" required>
 
                 <button type="submit" class="btn btn-primary btn-block">Отправить запрос</button>
             </form>

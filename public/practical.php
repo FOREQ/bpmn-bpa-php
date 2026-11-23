@@ -43,7 +43,7 @@ $practicalUi = [
 </div>
 <div class="decor-dots" style="bottom: 40px; left: calc(50% - 590px); width: 48px; height: 48px;"></div>
 
-<div class="container container-940">
+<div class="container container-practical">
     <div class="top-nav">
         <a href="student_dashboard.php">← В личный кабинет</a>
     </div>
@@ -210,7 +210,9 @@ $practicalUi = [
                     </div>
                     <div class="info-strip-cell" style="border-right:none;">
                         <div class="info-strip-label">${escapeHtml(practicalUi.testResult)}</div>
-                        <div class="info-strip-value">${escapeHtml(json.participant.score)} ${escapeHtml(practicalUi.scoreSeparator)} ${escapeHtml(json.participant.total)}, ${escapeHtml(json.participant.percent)}%</div>
+                        <div class="info-strip-value">${json.participant.score === null || json.participant.score === undefined
+                            ? '—'
+                            : `${escapeHtml(json.participant.score)} ${escapeHtml(practicalUi.scoreSeparator)} ${escapeHtml(json.participant.total)}, ${escapeHtml(json.participant.percent)}%`}</div>
                     </div>
                 </div>
             `;

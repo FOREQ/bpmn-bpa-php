@@ -59,10 +59,10 @@ $activeNav = 'admin';
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken()) ?>">
 
                 <label>Логин</label>
-                <input type="text" name="login" required>
+                <input type="text" name="login" autocomplete="username" autocapitalize="none" spellcheck="false" required>
 
                 <label>Пароль</label>
-                <input type="password" name="password" required>
+                <input type="password" name="password" autocomplete="current-password" required>
 
                 <button type="submit" class="btn btn-primary btn-block">Войти</button>
             </form>
