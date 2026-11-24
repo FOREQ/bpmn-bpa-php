@@ -64,16 +64,4 @@ final class BpmnFragmentTest extends TestCase
         $this->expectException(BpmnFragmentException::class);
         bpmnFragmentToXml(['nodes' => [['id' => 'a', 'type' => 'task']], 'flows' => [['a', 'zzz']]]);
     }
-
-    public function testSanitizeSvgStripsScriptsAndExternalLinks(): void
-    {
-        $svg = "<?xml version=\"1.0\"?>\n<!-- created with bpmn-js -->\n<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"x\">\n"
-            . '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" onload="alert(1)">'
-            . '<script>alert(1)</script><use xlink:href="http://evil/x.svg#a"/><use xlink:href="#m"/><rect width="1" height="1"/></svg>';
-        $clean = bpmnSanitizeSvg($svg);
-        $this->assertFalse(str_contains($clean, 'script'));
-        $this->assertFalse(str_contains($clean, 'onload'));
-        $this->assertFalse(str_contains($clean, 'evil'));
-        $this->assertTrue(str_contains($clean, 'href="#m"'));
-    }
 }

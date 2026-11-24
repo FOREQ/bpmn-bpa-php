@@ -149,7 +149,7 @@ try {
         ], 400);
     }
 
-    $variantId = randomVariantId();
+    $variantId = randomVariantId($pdo);
     $variant = testVariantWithCustom($pdo, $variantId);
 
     if (!$variant) {

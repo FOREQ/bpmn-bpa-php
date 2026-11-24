@@ -7,6 +7,7 @@
  * GET  ?action=review&sessionId=...         — последняя ИИ-оценка практики
  * GET  ?action=drafts&status=pending        — черновики
  * GET  ?action=sources                      — загруженные методички
+ * GET  ?action=variants                     — варианты теста (A, B, C и созданные генерацией) с готовностью
  * POST action=review          {sessionId}   — запросить ИИ-оценку практики
  * POST action=source          multipart: file | text, title
  * POST action=generate_questions {sourceId, variant, count, topic, template?: 'A'} — template A: 20 вопросов по образцу варианта A
@@ -78,6 +79,8 @@ try {
                 aiRespond(['success' => true, 'drafts' => aiListDrafts($pdo, $status)]);
             case 'sources':
                 aiRespond(['success' => true, 'sources' => aiListSources($pdo)]);
+            case 'variants':
+                aiRespond(['success' => true, 'variants' => examVariants($pdo), 'size' => EXAM_VARIANT_SIZE]);
             case 'job':
                 $job = aiJobGet($pdo, (int)($_GET['id'] ?? 0));
                 if (!$job) {
@@ -146,6 +149,7 @@ try {
             aiStartJob($pdo, 'generate_questions', [
                 'sourceId' => (int)$input['sourceId'], 'variant' => $variant,
                 'template' => ($input['template'] ?? '') === 'A' ? 'A' : '',
+                'fillVariant' => isExamVariantCode((string)($input['fillVariant'] ?? '')) ? (string)$input['fillVariant'] : '',
                 'count' => (int)($input['count'] ?? 5), 'topic' => mb_substr(trim((string)($input['topic'] ?? '')), 0, 300),
             ], 'ai_questions_generated');
 

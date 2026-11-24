@@ -39,7 +39,8 @@ $_SESSION['admin_test_previews'] = $previews;
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $variantId = (string)($_GET['variant'] ?? '');
-    if (!in_array($variantId, ['A', 'B', 'C'], true)) {
+    require_once __DIR__ . '/../../lib/exam_variants.php';
+    if (!in_array($variantId, ['A', 'B', 'C'], true) && !examCustomVariantExists(getDb(), $variantId)) {
         previewResponse(['success' => false, 'message' => previewText('Выберите вариант A, B или C', 'A, B немесе C нұсқасын таңдаңыз')], 400);
     }
 

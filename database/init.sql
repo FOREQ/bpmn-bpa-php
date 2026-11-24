@@ -89,7 +89,7 @@ CREATE INDEX IF NOT EXISTS idx_legacy_number ON LegacyCertificate(certificateNum
 
 CREATE TABLE IF NOT EXISTS custom_question (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    variant TEXT NOT NULL CHECK (variant IN ('A', 'B', 'C', 'all')),
+    variant TEXT NOT NULL CHECK (variant <> ''),
     question_text TEXT NOT NULL,
     question_text_kk TEXT,
     options_json TEXT NOT NULL,
@@ -190,4 +190,11 @@ CREATE TABLE IF NOT EXISTS ai_job (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     started_at DATETIME,
     finished_at DATETIME
+);
+
+-- Варианты теста, созданные генерацией по образцу A (D, E, F…)
+CREATE TABLE IF NOT EXISTS exam_variant (
+    code TEXT PRIMARY KEY,
+    title TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

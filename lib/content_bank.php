@@ -39,11 +39,16 @@ function testVariantWithCustom(PDO $pdo, string $variantId): ?array
 
     ensureCustomContentSchema($pdo);
 
-    if (!isset($TEST_DATA[$variantId])) {
-        return null;
+    if (isset($TEST_DATA[$variantId])) {
+        $questions = $TEST_DATA[$variantId];
+    } else {
+        // Сгенерированный вариант (D, E…): все вопросы — из custom_question.
+        require_once __DIR__ . '/exam_variants.php';
+        if (!examCustomVariantExists($pdo, $variantId)) {
+            return null;
+        }
+        $questions = [];
     }
-
-    $questions = $TEST_DATA[$variantId];
     $stmt = $pdo->prepare("SELECT id, question_text, question_text_kk, options_json, options_json_kk,
         correct_index, image_path
         FROM custom_question WHERE variant = :variant OR variant = 'all' ORDER BY id");

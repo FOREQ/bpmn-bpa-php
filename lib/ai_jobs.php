@@ -151,10 +151,31 @@ function aiJobExecute(PDO $pdo, string $action, array $p): array
     switch ($action) {
         case 'generate_questions':
             if (($p['template'] ?? '') === 'A') {
-                $result = aiGenerateQuestionsByTemplate($pdo, (int)($p['sourceId'] ?? 0), (string)($p['variant'] ?? 'all'),
-                    (string)($p['topic'] ?? ''));
+                // Каждая генерация по образцу A — новый вариант теста (D, E, F…).
+                $topic = (string)($p['topic'] ?? '');
+                $fill = (string)($p['fillVariant'] ?? '');
+                if ($fill !== '') {
+                    // Дополнить неполный вариант: только слоты, которых нет среди одобренных и ждущих проверки.
+                    if (!examCustomVariantExists($pdo, $fill)) {
+                        throw new InvalidArgumentException('Вариант не найден');
+                    }
+                    $missing = aiMissingTemplateSlots($pdo, $fill);
+                    if (!$missing) {
+                        return ['created' => 0, 'errors' => [], 'variant' => $fill];
+                    }
+                    $result = aiGenerateQuestionsByTemplate($pdo, (int)($p['sourceId'] ?? 0), $fill, $topic, $missing);
 
-                return ['created' => count($result['ids']), 'errors' => $result['errors']];
+                    return ['created' => count($result['ids']), 'errors' => $result['errors'], 'variant' => $fill];
+                }
+                $code = examReserveVariant($pdo, 'По образцу A' . ($topic !== '' ? ': ' . $topic : ''));
+                try {
+                    $result = aiGenerateQuestionsByTemplate($pdo, (int)($p['sourceId'] ?? 0), $code, $topic);
+                } catch (Throwable $e) {
+                    $pdo->prepare('DELETE FROM exam_variant WHERE code = :c')->execute([':c' => $code]);
+                    throw $e;
+                }
+
+                return ['created' => count($result['ids']), 'errors' => $result['errors'], 'variant' => $code];
             }
             $ids = aiGenerateQuestions($pdo, (int)($p['sourceId'] ?? 0), (string)($p['variant'] ?? 'all'),
                 (int)($p['count'] ?? 5), (string)($p['topic'] ?? ''));
@@ -181,4 +202,30 @@ function aiJobExecute(PDO $pdo, string $action, array $p): array
             return ['review' => aiReviewPractical($pdo, $participant)];
     }
     throw new InvalidArgumentException('Неизвестное действие');
+}
+
+/** Номера слотов образца A, которых в варианте ещё нет (ни одобренных, ни ждущих проверки). */
+function aiMissingTemplateSlots(PDO $pdo, string $variant): array
+{
+    $template = require __DIR__ . '/../config/ai_question_template_a.php';
+    $stmt = $pdo->prepare("SELECT payload_json FROM ai_draft WHERE kind = 'question' AND target = :t AND status IN ('pending', 'approved')");
+    $stmt->execute([':t' => $variant]);
+    $covered = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $json) {
+        $slot = (int)((json_decode((string)$json, true) ?: [])['slot'] ?? 0);
+        if ($slot > 0) {
+            $covered[$slot] = true;
+        }
+    }
+    // Вопросы, добавленные в вариант вручную, тоже занимают место из 20.
+    $count = $pdo->prepare('SELECT COUNT(*) FROM custom_question WHERE variant = :v');
+    $count->execute([':v' => $variant]);
+    $pendingStmt = $pdo->prepare("SELECT COUNT(*) FROM ai_draft WHERE kind = 'question' AND target = :t AND status = 'pending'");
+    $pendingStmt->execute([':t' => $variant]);
+    $need = EXAM_VARIANT_SIZE - (int)$count->fetchColumn() - (int)$pendingStmt->fetchColumn();
+    if ($need <= 0) {
+        return [];
+    }
+
+    return array_slice(array_values(array_diff(array_keys($template), array_keys($covered))), 0, $need);
 }
