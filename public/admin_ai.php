@@ -102,6 +102,8 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
                     <option value="A">По образцу варианта A: 20 вопросов тех же тем и форматов, со схемами</option>
                     <option value="">Свободно по методичке (только текст)</option>
                 </select>
+                <p class="small" id="qNewVariantNote">Будет создан новый вариант теста (D, E, F…). Студентам он начнёт выдаваться, когда вы одобрите все 20 вопросов.</p>
+                <div id="qVariantBox">
                 <label for="qVariant">Вариант теста</label>
                 <select id="qVariant" name="variant">
                     <option value="all">Все варианты</option>
@@ -109,6 +111,7 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
                     <option value="B">Вариант B</option>
                     <option value="C">Вариант C</option>
                 </select>
+                </div>
                 <div id="qCountBox">
                 <label for="qCount">Количество (1–20, полный набор — 20)</label>
                 <input id="qCount" type="number" name="count" min="1" max="20" value="20">
@@ -118,6 +121,8 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
                 <button class="btn btn-primary" type="submit" <?= $generatorReady ? '' : 'disabled' ?>>Сгенерировать</button>
                 <div class="ai-msg" id="questionsMsg"></div>
             </form>
+            <label>Варианты теста</label>
+            <ul id="variantList" class="small"><li>Загрузка…</li></ul>
         </section>
 
         <section class="ai-card">
@@ -400,6 +405,7 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
             return;
         }
         renderDrafts(json.drafts);
+        loadVariants();
     });
 
     document.getElementById('sourceForm').addEventListener('submit', async event => {
@@ -455,8 +461,9 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
                 return;
             }
             const result = json.job.result || {};
-            message(msgId, 'Создано черновиков: ' + (result.created || 0) + '. Проверьте их ниже.'
+            message(msgId, (result.variant ? 'Создан вариант ' + result.variant + '. ' : '') + 'Создано черновиков: ' + (result.created || 0) + '. Проверьте их ниже.'
                 + (result.errors && result.errors.length ? ' Не получились: ' + result.errors.join('; ') : ''), true);
+            await loadVariants();
             const drafts = json.drafts || (await fetch(api + '?action=drafts').then(r => r.json())).drafts || [];
             renderDrafts(drafts);
         } catch (e) {
@@ -467,7 +474,12 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
     }
 
     const qTemplate = document.getElementById('qTemplate');
-    const syncTemplate = () => { document.getElementById('qCountBox').style.display = qTemplate.value ? 'none' : ''; };
+    const syncTemplate = () => {
+        const byTemplate = qTemplate.value !== '';
+        document.getElementById('qCountBox').style.display = byTemplate ? 'none' : '';
+        document.getElementById('qVariantBox').style.display = byTemplate ? 'none' : '';
+        document.getElementById('qNewVariantNote').style.display = byTemplate ? '' : 'none';
+    };
     qTemplate.addEventListener('change', syncTemplate);
     syncTemplate();
 
@@ -475,14 +487,76 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
     document.getElementById('practicalForm').addEventListener('submit', e => { e.preventDefault(); generate('practicalForm', 'practicalMsg', 'generate_practical'); });
     document.getElementById('complexityForm').addEventListener('submit', e => { e.preventDefault(); generate('complexityForm', 'complexityMsg', 'generate_complexity'); });
 
-    (async () => {
+    // Варианты теста: встроенные A, B, C и созданные генерацией (D, E…), с готовностью.
+    async function loadVariants() {
+        let json;
+        try {
+            json = await fetch(api + '?action=variants').then(r => r.json());
+        } catch (e) {
+            return;
+        }
+        const variants = json.variants || [];
+        variants.forEach(v => { variantNames[v.code] = 'Вариант ' + v.code; });
+        document.getElementById('variantList').innerHTML = variants.map(v => {
+            if (v.builtin) {
+                return '<li><b>' + escapeHtml(v.code) + '</b> — встроенный' + (v.approved ? ', добавлено вопросов: ' + v.approved : '') + '</li>';
+            }
+            const state = v.active
+                ? '<span style="color:green">выдаётся студентам</span>'
+                : 'пока не выдаётся: одобрено ' + v.approved + ' из ' + json.size + (v.pending ? ', ждут проверки ' + v.pending : '');
+            const fill = !v.active && v.approved + v.pending < json.size
+                ? ` <button type="button" class="btn btn-secondary" data-fill="${escapeHtml(v.code)}">Догенерировать недостающие</button>` : '';
+            return '<li><b>' + escapeHtml(v.code) + '</b> — ' + escapeHtml(v.title || 'создан генерацией') + ' · ' + state + fill + '</li>';
+        }).join('');
+    }
+
+    // Дополнить неполный вариант недостающими вопросами (если часть отклонили или не получилась).
+    document.getElementById('variantList').addEventListener('click', async event => {
+        const button = event.target.closest('[data-fill]');
+        if (!button) {
+            return;
+        }
+        const source = document.getElementById('qSource').value;
+        if (!source) {
+            message('questionsMsg', 'Сначала загрузите методичку', false);
+            return;
+        }
+        button.disabled = true;
+        const form = document.getElementById('questionsForm');
+        const submit = form.querySelector('button[type=submit]');
+        submit.disabled = true;
+        try {
+            const start = await postJson({action: 'generate_questions', template: 'A', fillVariant: button.dataset.fill, sourceId: Number(source)});
+            if (!start.success) {
+                message('questionsMsg', start.message || 'Ошибка', false);
+                return;
+            }
+            const json = await waitJob(start.jobId, (job, sec) => message('questionsMsg', 'Дополняю вариант ' + button.dataset.fill + ', прошло ' + sec + ' с…', true));
+            if (!json.success || json.job.status === 'failed') {
+                message('questionsMsg', json.message || json.job.error || 'Ошибка', false);
+                return;
+            }
+            const result = json.job.result || {};
+            message('questionsMsg', 'Вариант ' + button.dataset.fill + ': добавлено черновиков ' + (result.created || 0) + '.'
+                + (result.errors && result.errors.length ? ' Не получились: ' + result.errors.join('; ') : ''), true);
+            await reloadAll();
+        } catch (e) {
+            message('questionsMsg', 'Не удалось связаться с сервером', false);
+        } finally {
+            submit.disabled = false;
+        }
+    });
+
+    async function reloadAll() {
+        await loadVariants();
         const [sources, drafts] = await Promise.all([
             fetch(api + '?action=sources').then(r => r.json()),
             fetch(api + '?action=drafts').then(r => r.json())
         ]);
         renderSources(sources.sources || []);
         renderDrafts(drafts.drafts || []);
-    })();
+    }
+    reloadAll();
 </script>
 </body>
 </html>
