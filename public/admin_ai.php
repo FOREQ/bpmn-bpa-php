@@ -100,7 +100,7 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
                 <label for="qTemplate">Как составлять</label>
                 <select id="qTemplate" name="template">
                     <option value="A">По образцу варианта A: 20 вопросов тех же тем и форматов, со схемами</option>
-                    <option value="">Свободно по методичке (только текст)</option>
+                    <option value="">Свободно по методичке (ИИ сам решает, где нужна схема)</option>
                 </select>
                 <p class="small" id="qNewVariantNote">Будет создан новый вариант теста (D, E, F…). Студентам он начнёт выдаваться, когда вы одобрите все 20 вопросов.</p>
                 <div id="qVariantBox">
