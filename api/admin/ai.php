@@ -9,7 +9,7 @@
  * GET  ?action=sources                      — загруженные методички
  * POST action=review          {sessionId}   — запросить ИИ-оценку практики
  * POST action=source          multipart: file | text, title
- * POST action=generate_questions {sourceId, variant, count, topic}
+ * POST action=generate_questions {sourceId, variant, count, topic, template?: 'A'} — template A: 20 вопросов по образцу варианта A
  * POST action=generate_practical {pool, count, topic, sourceId?}
  * POST action=generate_complexity {count, topic}  — задание 3: текст → схема → ответы калькулятора
  * GET  ?action=job&id=...                  — статус фоновой задачи (queued|running|done|failed)
@@ -145,6 +145,7 @@ try {
             }
             aiStartJob($pdo, 'generate_questions', [
                 'sourceId' => (int)$input['sourceId'], 'variant' => $variant,
+                'template' => ($input['template'] ?? '') === 'A' ? 'A' : '',
                 'count' => (int)($input['count'] ?? 5), 'topic' => mb_substr(trim((string)($input['topic'] ?? '')), 0, 300),
             ], 'ai_questions_generated');
 
