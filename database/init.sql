@@ -178,3 +178,16 @@ WHEN trim(COALESCE(NEW.id, '')) = ''
 BEGIN
     SELECT RAISE(ABORT, 'Participant required fields must not be blank');
 END;
+
+-- Фоновые задачи ИИ (генерация, проверка практики)
+CREATE TABLE IF NOT EXISTS ai_job (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    action TEXT NOT NULL,
+    params_json TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'queued',
+    result_json TEXT,
+    error TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    started_at DATETIME,
+    finished_at DATETIME
+);

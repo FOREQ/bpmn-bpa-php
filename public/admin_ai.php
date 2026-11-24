@@ -338,20 +338,46 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
         renderSources(json.sources);
     });
 
+    // Генерация идёт фоновой задачей на сервере: запускаем и опрашиваем статус.
+    async function waitJob(jobId, onTick) {
+        const started = Date.now();
+        for (;;) {
+            await new Promise(r => setTimeout(r, 3000));
+            let json;
+            try {
+                json = await fetch(api + '?action=job&id=' + encodeURIComponent(jobId)).then(r => r.json());
+            } catch (e) {
+                continue; // сеть моргнула, пробуем дальше
+            }
+            if (!json.success) return json;
+            if (json.job.status === 'done' || json.job.status === 'failed') return json;
+            if (onTick) onTick(json.job, Math.round((Date.now() - started) / 1000));
+        }
+    }
+
     async function generate(formId, msgId, action) {
         const form = document.getElementById(formId);
         const button = form.querySelector('button[type=submit]');
         const data = Object.fromEntries(new FormData(form).entries());
         button.disabled = true;
-        message(msgId, 'ИИ генерирует, это может занять 1–2 минуты…', true);
+        message(msgId, 'Задача отправлена ИИ…', true);
         try {
-            const json = await postJson(Object.assign({action: action}, data, {count: Number(data.count), sourceId: Number(data.sourceId || 0)}));
-            if (!json.success) {
-                message(msgId, json.message || 'Ошибка', false);
+            const start = await postJson(Object.assign({action: action}, data, {count: Number(data.count), sourceId: Number(data.sourceId || 0)}));
+            if (!start.success) {
+                message(msgId, start.message || 'Ошибка', false);
                 return;
             }
-            message(msgId, 'Создано черновиков: ' + json.created + '. Проверьте их ниже.', true);
-            renderDrafts(json.drafts);
+            const json = (start.job && (start.job.status === 'done' || start.job.status === 'failed'))
+                ? {success: true, job: start.job}
+                : await waitJob(start.jobId, (job, sec) => message(msgId,
+                    (job.status === 'queued' ? 'В очереди' : 'ИИ генерирует') + ', прошло ' + sec + ' с. Обычно 1–3 минуты, страницу можно не держать открытой.', true));
+            if (!json.success || json.job.status === 'failed') {
+                message(msgId, json.message || json.job.error || 'Ошибка', false);
+                return;
+            }
+            message(msgId, 'Создано черновиков: ' + ((json.job.result || {}).created || 0) + '. Проверьте их ниже.', true);
+            const drafts = json.drafts || (await fetch(api + '?action=drafts').then(r => r.json())).drafts || [];
+            renderDrafts(drafts);
         } catch (e) {
             message(msgId, 'Не удалось связаться с сервером', false);
         } finally {
