@@ -150,6 +150,12 @@ function aiJobExecute(PDO $pdo, string $action, array $p): array
     ensureAiSchema($pdo);
     switch ($action) {
         case 'generate_questions':
+            if (($p['template'] ?? '') === 'A') {
+                $result = aiGenerateQuestionsByTemplate($pdo, (int)($p['sourceId'] ?? 0), (string)($p['variant'] ?? 'all'),
+                    (string)($p['topic'] ?? ''));
+
+                return ['created' => count($result['ids']), 'errors' => $result['errors']];
+            }
             $ids = aiGenerateQuestions($pdo, (int)($p['sourceId'] ?? 0), (string)($p['variant'] ?? 'all'),
                 (int)($p['count'] ?? 5), (string)($p['topic'] ?? ''));
 

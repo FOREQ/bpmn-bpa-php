@@ -43,6 +43,11 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
         .ai-two { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
         .ai-msg { margin-top: 8px; }
         .ai-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        .ai-bpmn-small { height: 190px; border: 1px solid #e2e6ee; border-radius: 10px; background: #fff; margin: 6px 0; }
+        .ai-fragments { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+        .ai-fragment { border: 1px solid #e2e6ee; border-radius: 10px; padding: 6px 8px; font-weight: 600; cursor: pointer; }
+        .ai-fragment input[type=radio] { width: auto; margin-right: 6px; }
+        .ai-fragment.correct { border-color: #2e7d32; box-shadow: 0 0 0 2px rgba(46,125,50,.15); }
         .ai-bpmn { height: 360px; border: 1px solid #e2e6ee; border-radius: 10px; background: #fff; margin: 8px 0; }
         .ai-answers { border-collapse: collapse; margin: 8px 0; }
         .ai-answers td { border-bottom: 1px solid #eef1f7; padding: 4px 10px 4px 0; }
@@ -92,6 +97,11 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
             <form id="questionsForm">
                 <label for="qSource">Методичка</label>
                 <select id="qSource" name="sourceId" required></select>
+                <label for="qTemplate">Как составлять</label>
+                <select id="qTemplate" name="template">
+                    <option value="A">По образцу варианта A: 20 вопросов тех же тем и форматов, со схемами</option>
+                    <option value="">Свободно по методичке (только текст)</option>
+                </select>
                 <label for="qVariant">Вариант теста</label>
                 <select id="qVariant" name="variant">
                     <option value="all">Все варианты</option>
@@ -99,8 +109,10 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
                     <option value="B">Вариант B</option>
                     <option value="C">Вариант C</option>
                 </select>
+                <div id="qCountBox">
                 <label for="qCount">Количество (1–20, полный набор — 20)</label>
                 <input id="qCount" type="number" name="count" min="1" max="20" value="20">
+                </div>
                 <label for="qTopic">Тема или акцент <small>· необязательно</small></label>
                 <input id="qTopic" type="text" name="topic" maxlength="300" placeholder="шлюзы, события, параметры оптимизации">
                 <button class="btn btn-primary" type="submit" <?= $generatorReady ? '' : 'disabled' ?>>Сгенерировать</button>
@@ -164,6 +176,7 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
         generatedDocuments: 'Порождаемые документы', managers: 'Руководители', steps: 'Шаги', businessRoles: 'Бизнес-роли',
         handoffs: 'Передачи', complexity: 'Сложность процесса'};
     const diagrams = {};
+    const viewers = {};
 
     function issuesHtml(list, title) {
         return list && list.length
@@ -206,7 +219,29 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
                 <table class="ai-answers">${rows}</table>
                 ${issuesHtml(p.issues, 'Замечания калькулятора к схеме')}`;
         }
+        if (d.kind === 'question' && p.format === 'image_options') {
+            const fragments = (p.option_xmls || []).map((xml, i) => {
+                diagrams['bpmn_' + d.id + '_o' + i] = xml;
+                return `<label class="ai-fragment ${Number(p.correct_index) === i ? 'correct' : ''}">
+                    <input type="radio" name="correct_${d.id}" value="${i}" ${Number(p.correct_index) === i ? 'checked' : ''}> Вариант ${i + 1}
+                    <div id="bpmn_${d.id}_o${i}" class="ai-bpmn-small" data-svg="option" data-index="${i}"></div></label>`;
+            }).join('');
+            return `
+                ${p.slot ? '<p class="small">Слот ' + Number(p.slot) + ' образца A: ' + escapeHtml(p.slot_topic || '') + '</p>' : ''}
+                <div class="ai-two">
+                    <div><label>Вопрос (RU)</label><textarea data-field="question_ru" rows="3">${escapeHtml(p.question_ru)}</textarea></div>
+                    <div><label>Вопрос (KZ)</label><textarea data-field="question_kk" rows="3">${escapeHtml(p.question_kk)}</textarea></div>
+                </div>
+                <label>Ответы-схемы, отметьте правильный</label>
+                <div class="ai-fragments">${fragments}</div>
+                ${p.explanation ? '<p class="small"><b>Обоснование ИИ:</b> ' + escapeHtml(p.explanation) + '</p>' : ''}
+                <label>Вариант теста</label>
+                <select data-field="target">${Object.entries(variantNames).map(([v, n]) => `<option value="${v}" ${d.target === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`;
+        }
         if (d.kind === 'question') {
+            if (p.stem_xml) {
+                diagrams['bpmn_' + d.id + '_stem'] = p.stem_xml;
+            }
             const options = [0, 1, 2, 3].map(i => `
                 <div class="ai-option">
                     <input type="radio" name="correct_${d.id}" value="${i}" ${Number(p.correct_index) === i ? 'checked' : ''} aria-label="Правильный ответ ${i + 1}">
@@ -217,6 +252,8 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
                     <input type="text" data-field="options_kk" data-index="${i}" value="${escapeHtml((p.options_kk || [])[i])}">
                 </div>`).join('');
             return `
+                ${p.slot ? '<p class="small">Слот ' + Number(p.slot) + ' образца A: ' + escapeHtml(p.slot_topic || '') + '</p>' : ''}
+                ${p.stem_xml ? `<label>Схема в вопросе</label><div id="bpmn_${d.id}_stem" class="ai-bpmn-small" data-svg="stem"></div>` : ''}
                 <div class="ai-two">
                     <div><label>Вопрос (RU)</label><textarea data-field="question_ru" rows="3">${escapeHtml(p.question_ru)}</textarea>
                         <label>Ответы (RU), отметьте правильный</label><div class="ai-options">${options}</div></div>
@@ -279,10 +316,33 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
                 const viewer = new BpmnJS({container: container});
                 await viewer.importXML(xml);
                 viewer.get('canvas').zoom('fit-viewport');
+                viewers[id] = viewer;
             } catch (e) {
                 container.textContent = 'Не удалось показать схему';
             }
         }
+    }
+
+    // Схемы вопросов сохраняются картинками SVG: участник видит их так же, как прежние PNG.
+    async function collectSvgs(article) {
+        const boxes = article.querySelectorAll('[data-svg]');
+        if (!boxes.length) {
+            return null;
+        }
+        const svgs = {options: []};
+        for (const box of boxes) {
+            const viewer = viewers[box.id];
+            if (!viewer) {
+                throw new Error('Схемы ещё не отрисованы, подождите пару секунд');
+            }
+            const {svg} = await viewer.saveSVG();
+            if (box.dataset.svg === 'stem') {
+                svgs.stem = svg;
+            } else {
+                svgs.options[Number(box.dataset.index)] = svg;
+            }
+        }
+        return svgs;
     }
 
     function collectEdits(article) {
@@ -303,6 +363,13 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
         return edited;
     }
 
+    // Подсветка выбранной правильной схемы.
+    document.getElementById('drafts').addEventListener('change', event => {
+        if (event.target.matches('.ai-fragment input[type=radio]')) {
+            event.target.closest('.ai-fragments').querySelectorAll('.ai-fragment').forEach(el => el.classList.toggle('correct', el.contains(event.target)));
+        }
+    });
+
     document.getElementById('drafts').addEventListener('click', async event => {
         const approve = event.target.closest('[data-approve]');
         const reject = event.target.closest('[data-reject]');
@@ -312,9 +379,21 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
         const article = event.target.closest('.ai-draft');
         const msg = article.querySelector('.ai-msg');
         event.target.disabled = true;
-        const json = approve
-            ? await postJson({action: 'approve_draft', id: Number(approve.dataset.approve), edited: collectEdits(article)})
-            : await postJson({action: 'reject_draft', id: Number(reject.dataset.reject)});
+        let json;
+        try {
+            if (approve) {
+                const edited = collectEdits(article);
+                const svgs = await collectSvgs(article);
+                if (svgs) {
+                    edited.svgs = svgs;
+                }
+                json = await postJson({action: 'approve_draft', id: Number(approve.dataset.approve), edited: edited});
+            } else {
+                json = await postJson({action: 'reject_draft', id: Number(reject.dataset.reject)});
+            }
+        } catch (e) {
+            json = {success: false, message: e.message || 'Не удалось связаться с сервером'};
+        }
         if (!json.success) {
             event.target.disabled = false;
             msg.innerHTML = '<p style="color:red;">' + escapeHtml(json.message || 'Ошибка') + '</p>';
@@ -375,7 +454,9 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
                 message(msgId, json.message || json.job.error || 'Ошибка', false);
                 return;
             }
-            message(msgId, 'Создано черновиков: ' + ((json.job.result || {}).created || 0) + '. Проверьте их ниже.', true);
+            const result = json.job.result || {};
+            message(msgId, 'Создано черновиков: ' + (result.created || 0) + '. Проверьте их ниже.'
+                + (result.errors && result.errors.length ? ' Не получились: ' + result.errors.join('; ') : ''), true);
             const drafts = json.drafts || (await fetch(api + '?action=drafts').then(r => r.json())).drafts || [];
             renderDrafts(drafts);
         } catch (e) {
@@ -384,6 +465,11 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
             button.disabled = false;
         }
     }
+
+    const qTemplate = document.getElementById('qTemplate');
+    const syncTemplate = () => { document.getElementById('qCountBox').style.display = qTemplate.value ? 'none' : ''; };
+    qTemplate.addEventListener('change', syncTemplate);
+    syncTemplate();
 
     document.getElementById('questionsForm').addEventListener('submit', e => { e.preventDefault(); generate('questionsForm', 'questionsMsg', 'generate_questions'); });
     document.getElementById('practicalForm').addEventListener('submit', e => { e.preventDefault(); generate('practicalForm', 'practicalMsg', 'generate_practical'); });

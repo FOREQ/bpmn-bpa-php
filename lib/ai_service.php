@@ -15,6 +15,7 @@ require_once __DIR__ . '/ai_bpmn.php';
 require_once __DIR__ . '/content_bank.php';
 require_once __DIR__ . '/practical_data.php';
 require_once __DIR__ . '/bpmn_services.php';
+require_once __DIR__ . '/bpmn_fragment.php';
 
 const AI_SOURCE_MAX_CHARS = 2_000_000;
 const AI_SOURCE_CHUNK_CHARS = 14_000;
@@ -510,6 +511,145 @@ function aiGenerateQuestions(PDO $pdo, int $sourceId, string $variant, int $coun
     return $created;
 }
 
+/**
+ * 20 вопросов по образцу варианта A: те же темы и форматы (config/ai_question_template_a.php).
+ * Для вопросов со схемами ИИ описывает фрагменты, а bpmn_fragment.php строит из них BPMN.
+ * Слоты идут порциями по 5, чтобы ответ модели оставался коротким.
+ */
+function aiGenerateQuestionsByTemplate(PDO $pdo, int $sourceId, string $variant, string $topic = '', ?array $slotNumbers = null, bool $retry = true): array
+{
+    ensureAiSchema($pdo);
+    $template = require __DIR__ . '/../config/ai_question_template_a.php';
+    $slots = $slotNumbers ? array_intersect_key($template, array_flip($slotNumbers)) : $template;
+    $existing = aiExistingQuestionTexts($pdo, 60);
+    $created = [];
+    $errors = [];
+
+    foreach (array_chunk($slots, 5, true) as $batch) {
+        $chunk = aiSourceChunk($pdo, $sourceId);
+        $json = aiChatJson([
+            ['role' => 'system', 'content' => aiTemplateSystemPrompt()],
+            ['role' => 'user', 'content' => aiTemplateUserPrompt($batch, $existing, $chunk, $topic)],
+        ], 'generator');
+
+        foreach ((array)($json['questions'] ?? []) as $q) {
+            $slot = (int)($q['slot'] ?? 0);
+            if (!isset($batch[$slot])) {
+                continue;
+            }
+            try {
+                $payload = aiBuildTemplateQuestion((array)$q, $batch[$slot]['format']);
+            } catch (InvalidArgumentException $e) {
+                $errors[$slot] = 'Слот ' . $slot . ': ' . $e->getMessage();
+                unset($batch[$slot]);
+                continue;
+            }
+            $payload['slot'] = $slot;
+            $payload['slot_topic'] = $batch[$slot]['topic'];
+            $created[] = aiInsertId($pdo, 'INSERT INTO ai_draft (kind, target, payload_json, source_id) VALUES (:k, :t, :p, :s)', [
+                ':k' => 'question', ':t' => $variant,
+                ':p' => json_encode($payload, JSON_UNESCAPED_UNICODE), ':s' => $sourceId,
+            ]);
+            $existing[] = $payload['question_ru'];
+            unset($batch[$slot]);
+        }
+        foreach ($batch as $slot => $_) {
+            $errors[$slot] = 'Слот ' . $slot . ': ИИ не вернул вопрос';
+        }
+    }
+
+    // Неудавшиеся слоты пробуем ещё раз одним запросом.
+    if ($errors && $retry) {
+        try {
+            $again = aiGenerateQuestionsByTemplate($pdo, $sourceId, $variant, $topic, array_keys($errors), false);
+            $created = array_merge($created, $again['ids']);
+            $errors = $again['errors'];
+        } catch (AiRequestException $e) {
+            // Первые вопросы уже сохранены — не теряем их из-за неудачного повтора.
+            $errors = array_map(static fn($err) => $err . ' (повтор тоже не удался)', $errors);
+        }
+    }
+    $errors = array_values($errors);
+
+    if (!$created && $errors) {
+        throw new AiRequestException("ИИ не смог составить вопросы:\n" . implode("\n", array_slice($errors, 0, 5)));
+    }
+
+    return ['ids' => $created, 'errors' => $errors];
+}
+
+function aiTemplateSystemPrompt(): string
+{
+    return "Ты составляешь тестовые вопросы для итогового экзамена по курсу «Практическое применение методики "
+        . "реинжиниринга бизнес-процессов государственных органов» (нотация BPMN 2.0, оптимизация процессов). "
+        . "Вопросы пишутся по образцу существующего варианта: тебе дают слоты — тему и формат каждого вопроса. "
+        . "Пиши НОВЫЙ вопрос той же темы и того же формата: другая формулировка, по возможности другой аспект темы. "
+        . "Один правильный ответ из четырёх, неправильные — правдоподобные. Опирайся на нотацию BPMN 2.0 и на "
+        . "фрагмент методички. Каждый вопрос дай на русском (ru) и казахском (kk); правильный ответ в обоих "
+        . "языках под одним индексом.\n\n"
+        . "Форматы:\n"
+        . "- text: options_ru и options_kk — 4 текстовых ответа.\n"
+        . "- image_options: варианты ответа — схемы. Дай option_fragments — ровно 4 фрагмента; options_ru = "
+        . "[\"Вариант 1\",\"Вариант 2\",\"Вариант 3\",\"Вариант 4\"], options_kk = [\"1-нұсқа\",\"2-нұсқа\",\"3-нұсқа\",\"4-нұсқа\"]. "
+        . "correct_index — индекс правильного фрагмента.\n"
+        . "- image_stem: в вопросе есть схема — дай stem_fragment и 4 текстовых ответа.\n\n"
+        . "Фрагмент схемы описывай только смыслом, без координат:\n"
+        . '{"nodes":[{"id":"n1","type":"startEvent","event":"none","name":"","highlight":false}],'
+        . '"flows":[{"from":"n1","to":"n2","name":"","kind":"","highlight":false}]}' . "\n"
+        . "type: startEvent, endEvent, intermediateCatchEvent, intermediateThrowEvent, task, userTask, serviceTask, "
+        . "sendTask, receiveTask, manualTask, scriptTask, businessRuleTask, subProcess, exclusiveGateway, "
+        . "parallelGateway, inclusiveGateway, eventBasedGateway.\n"
+        . "event (только у событий): none, message, timer, signal, terminate, error, escalation, conditional.\n"
+        . "kind у потока: \"\" (обычный), default (по умолчанию), conditional (условный).\n"
+        . "highlight: true — выделить элемент или поток, о котором спрашивают. Во фрагменте 1–8 элементов, "
+        . "названия короткие (до 30 знаков) или пустые. Схема не должна подсказывать ответ подписью "
+        . "(не подписывай «Шлюз И», «Таймер» и т.п.). Неправильные фрагменты в вопросах «найдите ошибку» "
+        . "допускаются и нужны — ошибка должна быть видна на схеме.\n\n"
+        . "Ответ — строго JSON:\n"
+        . '{"questions":[{"slot":1,"question_ru":"...","options_ru":["","","",""],"question_kk":"...",'
+        . '"options_kk":["","","",""],"correct_index":0,"explanation":"почему ответ верный",'
+        . '"stem_fragment":null,"option_fragments":null}]}';
+}
+
+function aiTemplateUserPrompt(array $batch, array $existing, string $chunk, string $topic): string
+{
+    $lines = [];
+    foreach ($batch as $n => $slot) {
+        $lines[] = "Слот {$n} [{$slot['format']}]: {$slot['topic']}" . (!empty($slot['hint']) ? "\n  Подсказка: {$slot['hint']}" : '');
+    }
+
+    return "Составь по одному вопросу на каждый слот:\n" . implode("\n", $lines)
+        . ($topic !== '' ? "\n\nОбщий акцент: {$topic}." : '')
+        . "\n\nУже есть такие вопросы (не повторять формулировки):\n- " . implode("\n- ", array_slice($existing, 0, 40))
+        . "\n\nФрагмент методички:\n<<<\n" . $chunk . "\n>>>";
+}
+
+/** Проверяет вопрос из шаблона и строит BPMN для схем. */
+function aiBuildTemplateQuestion(array $q, string $format): array
+{
+    if ($format === 'image_options') {
+        $q['options_ru'] = ['Вариант 1', 'Вариант 2', 'Вариант 3', 'Вариант 4'];
+        $q['options_kk'] = ['1-нұсқа', '2-нұсқа', '3-нұсқа', '4-нұсқа'];
+    }
+    $payload = aiNormalizeQuestion($q);
+    if ($payload === null) {
+        throw new InvalidArgumentException('нет текста, 4 ответов или правильного ответа');
+    }
+    $payload['format'] = $format;
+
+    if ($format === 'image_stem') {
+        $payload['stem_xml'] = bpmnFragmentToXml($q['stem_fragment'] ?? null)['xml'];
+    } elseif ($format === 'image_options') {
+        $fragments = array_values((array)($q['option_fragments'] ?? []));
+        if (count($fragments) !== 4) {
+            throw new InvalidArgumentException('нужно ровно 4 схемы-ответа');
+        }
+        $payload['option_xmls'] = array_map(static fn($f) => bpmnFragmentToXml($f)['xml'], $fragments);
+    }
+
+    return $payload;
+}
+
 function aiNormalizeQuestion(array $q): ?array
 {
     $ru = trim((string)($q['question_ru'] ?? ''));
@@ -727,6 +867,25 @@ function aiStoreBpmnFile(string $directory, string $xml): string
     return $name;
 }
 
+/** Сохраняет схему вопроса (SVG из bpmn-js) в assets/custom_questions и возвращает путь для теста. */
+function aiStoreQuestionSvg(string $svg): string
+{
+    if ($svg === '') {
+        throw new InvalidArgumentException('Схема вопроса не выгрузилась. Дождитесь, пока схемы отрисуются, и нажмите «Одобрить» ещё раз.');
+    }
+    $svg = bpmnSanitizeSvg($svg);
+    $dir = __DIR__ . '/../assets/custom_questions';
+    if (!is_dir($dir) && !mkdir($dir, 0755, true)) {
+        throw new RuntimeException('Не удалось создать папку custom_questions');
+    }
+    $name = 'ai_' . bin2hex(random_bytes(10)) . '.svg';
+    if (file_put_contents($dir . '/' . $name, $svg) === false) {
+        throw new RuntimeException('Не удалось сохранить схему вопроса');
+    }
+
+    return '../assets/custom_questions/' . $name;
+}
+
 function aiListDrafts(PDO $pdo, string $status = 'pending'): array
 {
     ensureAiSchema($pdo);
@@ -758,22 +917,44 @@ function aiApproveDraft(PDO $pdo, int $draftId, array $edited = []): int
         throw new InvalidArgumentException('Черновик не найден или уже обработан');
     }
 
-    $payload = array_merge(json_decode($draft['payload_json'], true) ?: [], $edited);
+    $svgs = is_array($edited['svgs'] ?? null) ? $edited['svgs'] : [];
+    unset($edited['svgs']);
+    $original = json_decode($draft['payload_json'], true) ?: [];
+    // Схемы правит только генерация: из браузера принимаем текст, а не XML.
+    unset($edited['stem_xml'], $edited['option_xmls'], $edited['format']);
+    $payload = array_merge($original, $edited);
     $target = (string)($edited['target'] ?? $draft['target']);
 
     if ($draft['kind'] === 'question') {
+        $format = (string)($original['format'] ?? 'text');
+        $extra = array_intersect_key($original, array_flip(['format', 'slot', 'slot_topic', 'stem_xml', 'option_xmls']));
         $payload = aiNormalizeQuestion($payload);
         if ($payload === null || !in_array($target, ['A', 'B', 'C', 'all'], true)) {
             throw new InvalidArgumentException('Вопрос заполнен не полностью: нужен текст, 4 ответа и правильный ответ');
         }
+        $image = null;
+        $optionsRu = $payload['options_ru'];
+        $optionsKk = $payload['options_kk'];
+        if ($format === 'image_stem') {
+            $image = aiStoreQuestionSvg((string)($svgs['stem'] ?? ''));
+        } elseif ($format === 'image_options') {
+            $images = [];
+            for ($i = 0; $i < 4; $i++) {
+                $images[$i] = aiStoreQuestionSvg((string)($svgs['options'][$i] ?? ''));
+            }
+            $optionsRu = array_map(static fn($text, $img) => ['text' => $text, 'image' => $img], $optionsRu, $images);
+            $optionsKk = $optionsKk ? array_map(static fn($text, $img) => ['text' => $text, 'image' => $img], $optionsKk, $images) : [];
+        }
+        $payload += $extra;
         $publishedId = aiInsertId($pdo, 'INSERT INTO custom_question (variant, question_text, question_text_kk, options_json, options_json_kk, correct_index, image_path)
-            VALUES (:v, :q, :qk, :o, :ok, :c, NULL)', [
+            VALUES (:v, :q, :qk, :o, :ok, :c, :img)', [
             ':v' => $target,
             ':q' => $payload['question_ru'],
             ':qk' => $payload['question_kk'] !== '' ? $payload['question_kk'] : null,
-            ':o' => json_encode($payload['options_ru'], JSON_UNESCAPED_UNICODE),
-            ':ok' => $payload['options_kk'] ? json_encode($payload['options_kk'], JSON_UNESCAPED_UNICODE) : null,
+            ':o' => json_encode($optionsRu, JSON_UNESCAPED_UNICODE),
+            ':ok' => $optionsKk ? json_encode($optionsKk, JSON_UNESCAPED_UNICODE) : null,
             ':c' => $payload['correct_index'],
+            ':img' => $image,
         ]);
     } elseif ($draft['kind'] === 'complexity') {
         if (empty($payload['xml']) || empty($payload['answers'])) {
