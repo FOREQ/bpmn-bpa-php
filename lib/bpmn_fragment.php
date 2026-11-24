@@ -328,33 +328,3 @@ function bpmnFragmentToXml(array $fragment, string $processName = 'Фрагме�
 
     return ['xml' => $xml, 'fragment' => $fragment];
 }
-
-/**
- * Проверяет SVG, выгруженный из bpmn-js в браузере администратора, перед сохранением.
- * SVG показывается участникам через <img>, где скрипты не выполняются, но всё равно чистим.
- */
-function bpmnSanitizeSvg(string $svg): string
-{
-    $svg = trim($svg);
-    $svg = preg_replace('/^<\?xml[^>]*\?>\s*/', '', $svg) ?? '';
-    $svg = preg_replace('/<!--.*?-->\s*/s', '', $svg) ?? '';
-    $svg = trim(preg_replace('/<!DOCTYPE[^>]*>\s*/i', '', $svg) ?? '');
-    if (!str_starts_with($svg, '<svg') || strlen($svg) > 3_000_000) {
-        throw new InvalidArgumentException('Схема не выгрузилась в SVG');
-    }
-    $svg = preg_replace('#<(script|foreignObject|iframe|object|embed)\b.*?</\1\s*>#is', '', $svg) ?? '';
-    $svg = preg_replace('#<(script|foreignObject|iframe|object|embed)\b[^>]*/>#is', '', $svg) ?? '';
-    $svg = preg_replace('/\son[a-z]+\s*=\s*("[^"]*"|\'[^\']*\')/i', '', $svg) ?? '';
-    $svg = preg_replace('/\s(xlink:)?href\s*=\s*("(?!#)[^"]*"|\'(?!#)[^\']*\')/i', '', $svg) ?? '';
-
-    $previous = libxml_use_internal_errors(true);
-    $doc = new DOMDocument();
-    $ok = $doc->loadXML($svg, LIBXML_NONET);
-    libxml_clear_errors();
-    libxml_use_internal_errors($previous);
-    if (!$ok || $doc->documentElement?->localName !== 'svg') {
-        throw new InvalidArgumentException('SVG схемы повреждён');
-    }
-
-    return '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . $svg;
-}

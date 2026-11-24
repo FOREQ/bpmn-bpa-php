@@ -70,6 +70,8 @@ $testUi = [
     </div>
 </section>
 
+<script src="https://unpkg.com/bpmn-js@17.9.1/dist/bpmn-viewer.production.min.js"></script>
+<script src="bpmn_static.js"></script>
 <script>
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('sessionId');

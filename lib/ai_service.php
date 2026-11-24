@@ -886,23 +886,14 @@ function aiStoreBpmnFile(string $directory, string $xml): string
     return $name;
 }
 
-/** Сохраняет схему вопроса (SVG из bpmn-js) в assets/custom_questions и возвращает путь для теста. */
-function aiStoreQuestionSvg(string $svg): string
+/** Сохраняет схему вопроса (BPMN XML) в assets/question_bpmn и возвращает путь, как у картинок вопросов. */
+function aiStoreQuestionBpmn(string $xml): string
 {
-    if ($svg === '') {
-        throw new InvalidArgumentException('Схема вопроса не выгрузилась. Дождитесь, пока схемы отрисуются, и нажмите «Одобрить» ещё раз.');
-    }
-    $svg = bpmnSanitizeSvg($svg);
-    $dir = __DIR__ . '/../assets/custom_questions';
-    if (!is_dir($dir) && !mkdir($dir, 0755, true)) {
-        throw new RuntimeException('Не удалось создать папку custom_questions');
-    }
-    $name = 'ai_' . bin2hex(random_bytes(10)) . '.svg';
-    if (file_put_contents($dir . '/' . $name, $svg) === false) {
-        throw new RuntimeException('Не удалось сохранить схему вопроса');
+    if ($xml === '' || !aiXmlParses($xml)) {
+        throw new InvalidArgumentException('В черновике нет корректной схемы BPMN');
     }
 
-    return '../assets/custom_questions/' . $name;
+    return '../assets/question_bpmn/' . aiStoreBpmnFile('question_bpmn', $xml);
 }
 
 function aiListDrafts(PDO $pdo, string $status = 'pending'): array
@@ -936,8 +927,6 @@ function aiApproveDraft(PDO $pdo, int $draftId, array $edited = []): int
         throw new InvalidArgumentException('Черновик не найден или уже обработан');
     }
 
-    $svgs = is_array($edited['svgs'] ?? null) ? $edited['svgs'] : [];
-    unset($edited['svgs']);
     $original = json_decode($draft['payload_json'], true) ?: [];
     // Схемы правит только генерация: из браузера принимаем текст, а не XML.
     unset($edited['stem_xml'], $edited['option_xmls'], $edited['format']);
@@ -957,12 +946,13 @@ function aiApproveDraft(PDO $pdo, int $draftId, array $edited = []): int
         $image = null;
         $optionsRu = $payload['options_ru'];
         $optionsKk = $payload['options_kk'];
+        // Схемы хранятся как BPMN XML и рисуются у участника из XML (public/bpmn_static.js).
         if ($format === 'image_stem') {
-            $image = aiStoreQuestionSvg((string)($svgs['stem'] ?? ''));
+            $image = aiStoreQuestionBpmn((string)($original['stem_xml'] ?? ''));
         } elseif ($format === 'image_options') {
             $images = [];
             for ($i = 0; $i < 4; $i++) {
-                $images[$i] = aiStoreQuestionSvg((string)($svgs['options'][$i] ?? ''));
+                $images[$i] = aiStoreQuestionBpmn((string)($original['option_xmls'][$i] ?? ''));
             }
             $optionsRu = array_map(static fn($text, $img) => ['text' => $text, 'image' => $img], $optionsRu, $images);
             $optionsKk = $optionsKk ? array_map(static fn($text, $img) => ['text' => $text, 'image' => $img], $optionsKk, $images) : [];

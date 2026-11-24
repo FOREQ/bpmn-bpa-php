@@ -68,6 +68,7 @@ $h = static fn(string $value): string => htmlspecialchars($value, ENT_QUOTES, 'U
 </main>
 
 <script src="https://unpkg.com/bpmn-js@17.9.1/dist/bpmn-modeler.development.js"></script>
+<script src="bpmn_static.js"></script>
 <script>
     const ui = <?= json_encode($ui, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
     const pageLocale = <?= json_encode(i18nLocale()) ?>;

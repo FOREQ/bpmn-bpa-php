@@ -181,7 +181,6 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
         generatedDocuments: 'Порождаемые документы', managers: 'Руководители', steps: 'Шаги', businessRoles: 'Бизнес-роли',
         handoffs: 'Передачи', complexity: 'Сложность процесса'};
     const diagrams = {};
-    const viewers = {};
 
     function issuesHtml(list, title) {
         return list && list.length
@@ -229,7 +228,7 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
                 diagrams['bpmn_' + d.id + '_o' + i] = xml;
                 return `<label class="ai-fragment ${Number(p.correct_index) === i ? 'correct' : ''}">
                     <input type="radio" name="correct_${d.id}" value="${i}" ${Number(p.correct_index) === i ? 'checked' : ''}> Вариант ${i + 1}
-                    <div id="bpmn_${d.id}_o${i}" class="ai-bpmn-small" data-svg="option" data-index="${i}"></div></label>`;
+                    <div id="bpmn_${d.id}_o${i}" class="ai-bpmn-small"></div></label>`;
             }).join('');
             return `
                 ${p.slot ? '<p class="small">Слот ' + Number(p.slot) + ' образца A: ' + escapeHtml(p.slot_topic || '') + '</p>' : ''}
@@ -258,7 +257,7 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
                 </div>`).join('');
             return `
                 ${p.slot ? '<p class="small">Слот ' + Number(p.slot) + ' образца A: ' + escapeHtml(p.slot_topic || '') + '</p>' : ''}
-                ${p.stem_xml ? `<label>Схема в вопросе</label><div id="bpmn_${d.id}_stem" class="ai-bpmn-small" data-svg="stem"></div>` : ''}
+                ${p.stem_xml ? `<label>Схема в вопросе</label><div id="bpmn_${d.id}_stem" class="ai-bpmn-small"></div>` : ''}
                 <div class="ai-two">
                     <div><label>Вопрос (RU)</label><textarea data-field="question_ru" rows="3">${escapeHtml(p.question_ru)}</textarea>
                         <label>Ответы (RU), отметьте правильный</label><div class="ai-options">${options}</div></div>
@@ -321,33 +320,10 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
                 const viewer = new BpmnJS({container: container});
                 await viewer.importXML(xml);
                 viewer.get('canvas').zoom('fit-viewport');
-                viewers[id] = viewer;
             } catch (e) {
                 container.textContent = 'Не удалось показать схему';
             }
         }
-    }
-
-    // Схемы вопросов сохраняются картинками SVG: участник видит их так же, как прежние PNG.
-    async function collectSvgs(article) {
-        const boxes = article.querySelectorAll('[data-svg]');
-        if (!boxes.length) {
-            return null;
-        }
-        const svgs = {options: []};
-        for (const box of boxes) {
-            const viewer = viewers[box.id];
-            if (!viewer) {
-                throw new Error('Схемы ещё не отрисованы, подождите пару секунд');
-            }
-            const {svg} = await viewer.saveSVG();
-            if (box.dataset.svg === 'stem') {
-                svgs.stem = svg;
-            } else {
-                svgs.options[Number(box.dataset.index)] = svg;
-            }
-        }
-        return svgs;
     }
 
     function collectEdits(article) {
@@ -388,10 +364,6 @@ $schemesReady = $generatorReady && cctMcpEnabled() && calculatorEnabled();
         try {
             if (approve) {
                 const edited = collectEdits(article);
-                const svgs = await collectSvgs(article);
-                if (svgs) {
-                    edited.svgs = svgs;
-                }
                 json = await postJson({action: 'approve_draft', id: Number(approve.dataset.approve), edited: edited});
             } else {
                 json = await postJson({action: 'reject_draft', id: Number(reject.dataset.reject)});
